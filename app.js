@@ -3,8 +3,8 @@ var path = require('path');
 var favicon = require('serve-favicon');
 var logger = require('morgan');
 
-var routes = require('./routes/index1');
-var index = require(path.join(__dirname, 'routes/index1'));
+var routes = require('./routes/index');
+var index = require(path.join(__dirname, 'routes/index'));
 
 var Config = require('./environment'),
 conf = new Config();

@@ -1,29 +1,14 @@
-// ==UserScript==
-// @name         chat.me client
-// @namespace    http://tampermonkey.net/
-// @version      0.1
-// @description  Description
-// @author       pietrogiucastro@alice.it
-// @match        http://stackoverflow.com/
-// @match        https://*
-// @match        http://*
-// @match        https://*/*
-// @match        http://*/*
-// @require      http://code.jquery.com/jquery-latest.js
-// @grant        GM_setValue
-// @grant        GM_getValue
-// ==/UserScript==
+
 var settings_page = 'chat.me';
-var server = '68.66.241.102';
-server = 'localhost';
+var server = document.domain;
 var version = '001';
 
 var connection;
-var sess_token = GM_getValue('sess_token');
-var sess_user = GM_getValue('sess_user');
+var sess_token = '';
+var sess_user = '';
 var wheel   = document.createElement('img');
 wheel.id    = 'cm-wheel';
-wheel.src   = 'http://campaign.childfund.or.kr/resources/images/common/icon_loading.gif';
+wheel.src   = 'https://media.tenor.com/images/85d269dc9595a7bcf87fd0fa4039dd9f/tenor.gif';
 wheel.style = 'width:40px;';
 
 var input;
@@ -33,18 +18,19 @@ var input;
 window.WebSocket = window.WebSocket || window.MozWebSocket;
 // if browser doesn't support WebSocket, just show
 // some notification and exit
-if (!window.WebSocket) {
-    content.html($('<p>', { text:'Sorry, but your browser doesn\'t support WebSocket.'}));
-    //handle disable code
-    return;
-}
 
 
 (function() {
     'use strict';
 
-    if (document.domain == settings_page) return document.write('chat me settings. Under construction..');
-    if (document.domain == server) return;
+    if (document.domain == settings_page) document.write('chat me settings. Under construction..');
+
+    if (!window.WebSocket) {
+        content.html($('<p>', { text:'Sorry, but your browser doesn\'t support WebSocket.'}));
+        //handle disable code
+        return;
+    }
+
 
     function setMessage(msg) {
         var rescroll = false;
@@ -125,7 +111,6 @@ if (!window.WebSocket) {
     }
     function InitDisplay() {
         sess_token = ''; sess_user = '';
-        GM_setValue('sess_user', sess_user); GM_setValue('sess_token', sess_token);
         $('#chat-me-cont').html('');
         $('#chat-me-cont').append('<label for=cm-user class=cm-label>Username:</label><input type=text id=cm-user class=cm-input placeholder=Username></input><br>');
         $('#chat-me-cont').append('<label for=cm-pass class=cm-label>Password:</label><input type=password id=cm-pass class=cm-input placeholder=Password></input><br>');
@@ -146,8 +131,6 @@ if (!window.WebSocket) {
                 if (e.result == 'success') {
                     sess_user = e.user;
                     sess_token = e.token;
-                    GM_setValue('sess_user', sess_user);
-                    GM_setValue('sess_token', sess_token);
                     LoggedDisplay();
                 }
                 else $('#cm-error-cont').html(e.error);
@@ -243,52 +226,48 @@ if (!window.WebSocket) {
             if (json.type === 'history') { // entire message history
                 setHistory(json.data);
             } else if (json.type === 'message') { // it's a single message
-                input.removeAttr('disabled');
-                setMessage(json.data);
-            } else {
-                console.log('Hmm..., I\'ve never seen JSON like this:', json);
-            }
-        };
+            input.removeAttr('disabled');
+            input.focus();
+            setMessage(json.data);
+        } else {
+            console.log('Hmm..., I\'ve never seen JSON like this:', json);
+        }
+    };
 
 
-        var bigwheel = document.createElement('img');
-        bigwheel.src = 'http://campaign.childfund.or.kr/resources/images/common/icon_loading.gif';
-        bigwheel.id = 'spinner';
-        bigwheel.style.width='50px';
-        bigwheel.style.position='absolute';
-        bigwheel.style.top='29%';
-        bigwheel.style.left='45%';
+    var bigwheel = document.createElement('img');
+    bigwheel.src = 'https://media.tenor.com/images/85d269dc9595a7bcf87fd0fa4039dd9f/tenor.gif';
+    bigwheel.id = 'spinner';
+    bigwheel.style.width='50px';
+    bigwheel.style.position='absolute';
+    bigwheel.style.top='29%';
+    bigwheel.style.left='45%';
 
-        wheel.style.width='30px';
-        wheel.style['margin-top']='-9px';
+    wheel.style.width='30px';
+    wheel.style['margin-top']='-9px';
 
-        $('#chat-me-cont').html('');
-        $('#chat-me-cont').append('<div id=cm-online> <ul id=cm-online-list></ul> </div>');
-        $('#chat-me-cont').append('<div id=cm-chat> <ul id=cm-chat-list></ul> </div>');
-        $('#chat-me-cont').append('<div style="position:absolute; bottom:7px;"><input style="margin:0px; width:282px; padding:8px 10px;" type=text id=cm-message-input class=cm-input placeholder=Message></input><button style="margin-left:11px; height:27px;" id=cm-send class=cm-button>Send</button></div>');
+    $('#chat-me-cont').html('');
+    $('#chat-me-cont').append('<div id=cm-online> <ul id=cm-online-list></ul> </div>');
+    $('#chat-me-cont').append('<div id=cm-chat> <ul id=cm-chat-list></ul> </div>');
+    $('#chat-me-cont').append('<div style="position:absolute; bottom:7px;"><input style="margin:0px; width:282px; padding:8px 10px;" type=text id=cm-message-input class=cm-input placeholder=Message></input><button style="margin-left:11px; height:27px;" id=cm-send class=cm-button>Send</button></div>');
 
-        $('#cm-chat-list').html(bigwheel);
+    $('#cm-chat-list').html(bigwheel);
 
-        input = $('#cm-message-input');
+    input = $('#cm-message-input');
 
-        input.keydown(function(e) {
+    input.keydown(function(e) {
             e = e || event; // to deal with IE
             if (e.keyCode == 13) postMessage();
         });
 
-        $('#cm-send').click(postMessage);
-    }
-    !function main() {
-        /*css*/ $('head').append('<style type=text/css>#chat-me-cont {position:fixed; z-index:99999999999999999999; box-sizing:border-box; padding:11px; bottom:20px; right:20px; width:404px; height:174px; background-color:rgba(50,80,100,1.0); border:1px solid rgb(100,130,100); border-radius:3px; font-family:tahoma !important;} .cm-label {display:inline-block; color:rgb(230,230,230); font-weight:bold; margin:10px; width:65px;} .cm-button {position:absolute; width:65px; font-size:10px; background-color:rgb(10,200,50); border:0px; box-shadow:none !important;} .cm-input {background-color:rgb(240,240,240)!important; border:0px; font-size:12px!important; width:230px; height:9px; border:0px; border-radius:2px;} #cm-error-cont {color:rgb(220,0,0); font-size:12px; margin-left:8px; margin-top:10px; max-width:200px} #cm-chat {width:81%; height:80%; background-color:rgb(240,240,240); border-radius:2px; overflow-y:scroll; float:right;} #cm-chat-list {margin:0; padding:5px; font-size:11px;} .cm-message-name {font-weight:bold; margin-right:10px; color:rgb(0,130,0);} .cm-message-text {display:block; margin-right:10px; max-width:310px; word-wrap:break-word; color:rgb(30,30,30)} .cm-message-date {float:right; color:grey;} #cm-online {width:60px; height:80%; float:left; margin-left:1px; background-color:rgb(240,240,240); overflow-y:scroll; border-radius:2px;} #cm-online-list {margin:0; padding:5px; font-size:11px;}</style>');
+    $('#cm-send').click(postMessage);
+}
+!function main() {
+    /*css*/ $('head').append('<style type=text/css>#chat-me-cont {position:fixed; z-index:99999999999999999999; box-sizing:border-box; padding:11px; bottom:20px; top:20px; left:5%; width:404px; height:174px; background-color:rgba(50,80,100,1.0); border:1px solid rgb(100,130,100); border-radius:3px; font-family:tahoma !important;} .cm-label {display:inline-block; color:rgb(230,230,230); font-weight:bold; margin:10px; width:65px;} .cm-button {position:absolute; width:65px; font-size:10px; background-color:rgb(10,200,50); border:0px; box-shadow:none !important;} .cm-input {background-color:rgb(240,240,240)!important; border:0px; font-size:12px!important; width:230px; height:9px; border:0px; border-radius:2px;} #cm-error-cont {color:rgb(220,0,0); font-size:12px; margin-left:8px; margin-top:10px; max-width:200px} #cm-chat {width:81%; height:80%; background-color:rgb(240,240,240); border-radius:2px; overflow-y:scroll; float:right;} #cm-chat-list {margin:0; padding:5px; font-size:11px;} .cm-message-name {font-weight:bold; margin-right:10px; color:rgb(0,130,0);} .cm-message-text {display:block; margin-right:10px; max-width:310px; word-wrap:break-word; color:rgb(30,30,30)} .cm-message-date {float:right; color:grey;} #cm-online {width:60px; height:80%; float:left; margin-left:1px; background-color:rgb(240,240,240); overflow-y:scroll; border-radius:2px;} #cm-online-list {margin:0; padding:5px; font-size:11px;}</style>');
         //  /*el*/  $('body').append('<div id=chat-me-cont></div>');
-        /*$.get('https://'+server+':60000/client/'+version, function(res) {
-            $('body').append(res);
-            if (!$('#chat-me-cont').length) return;
-            if (!sess_token || !sess_user)
-                InitDisplay();
-            else LoggedDisplay();
-        });*/
-        $('body').append('<iframe style="position:fixed; bottom:30px; right:30px; width="300" height="300" src="https://'+server+':60000/"></iframe>');
+        if (!$('#chat-me-cont').length) return;
+        if (!sess_token || !sess_user) InitDisplay();
+        else LoggedDisplay();
     }();
 
 })();
