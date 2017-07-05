@@ -1,14 +1,56 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8">
-    <title>WebSockets - Simple chat</title>
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js">
-    </script>
-  </head>
-  <body>
+<head>
+  <meta charset="utf-8">
+  <title>WebSockets - Simple chat</title>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js">
+  </script>
+  <style type="text/css">
+    #chat-me-tabs {
+      font-size: 0;
+      position: absolute;
+      top:0%;
+      width: 100%;
+      background-color: #aaa;
+    }
+    #chat-me-tabs .chat-tab {
+      border-right: 1px solid #aaa;
+      display: inline-block;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 13px;
+      padding: 4px 6px;
+      background-color: #ddd;
+    }
+   .chat-tab:last-child {
+      border-right: 0 !important;
+    }
+    .chat-tab.sel {
+      background: -webkit-linear-gradient(bottom, #eee, #fff);
+      background: -o-linear-gradient(bottom, #eee, #fff);
+      background: linear-gradient(to top, #eee, #fff);
+    }
+    .opts-chat-btn {
+      float: right;
+      padding: 3px 8px;
+      font-size: 14px;
+      background-color: #eee;
+      border: 1px solid #ddd;
+      margin-left: 2px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div id="chat-me">
     <div id="chat-me-cont"></div>
-    <script type="text/javascript" src="/versions/001.js"></script>
-    <!-- <script src="/javascripts/frontend.js"></script> -->
-  </body>
+  </div>
+  <script type="text/javascript" src="/versions/001.js"></script>
+  <script type="text/javascript">
+    $(document).on('click', '.chat-tab', function() {
+      $('#chat-me-tabs .chat-tab').removeClass('sel');
+      $(this).addClass('sel');
+    });
+  </script>
+</body>
 </html>

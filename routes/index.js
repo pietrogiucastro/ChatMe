@@ -48,7 +48,7 @@ var options = {
 /**
  * HTTP server
  */
- var server = https.createServer(options, function(request, response) {
+ var server = http.createServer(function(request, response) {
   // Not important for us. We're writing WebSocket server,
   // not HTTP server
 });

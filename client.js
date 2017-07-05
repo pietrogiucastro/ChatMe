@@ -23,7 +23,7 @@ var sess_token = GM_getValue('sess_token');
 var sess_user = GM_getValue('sess_user');
 var wheel   = document.createElement('img');
 wheel.id    = 'cm-wheel';
-wheel.src   = 'http://campaign.childfund.or.kr/resources/images/common/icon_loading.gif';
+//wheel.src   = 'http://campaign.childfund.or.kr/resources/images/common/icon_loading.gif';
 wheel.style = 'width:40px;';
 
 var input;
@@ -252,7 +252,7 @@ if (!window.WebSocket) {
 
 
         var bigwheel = document.createElement('img');
-        bigwheel.src = 'http://campaign.childfund.or.kr/resources/images/common/icon_loading.gif';
+        //bigwheel.src = 'http://campaign.childfund.or.kr/resources/images/common/icon_loading.gif';
         bigwheel.id = 'spinner';
         bigwheel.style.width='50px';
         bigwheel.style.position='absolute';
@@ -288,7 +288,8 @@ if (!window.WebSocket) {
                 InitDisplay();
             else LoggedDisplay();
         });*/
-        $('body').append('<iframe style="position:fixed; bottom:30px; right:30px; width="300" height="300" src="https://'+server+':60000/"></iframe>');
+        $('head').append('<style type=text/css> #chat-me-frame { position:fixed; z-index:99999999999999999999; bottom:20px; right:20px; width:404px; height:198px; border:0;} </style>');
+        $('body').append('<iframe id="chat-me-frame" src="https://'+server+':60000/"></iframe>');
     }();
 
 })();
