@@ -16,7 +16,6 @@ router.use(function(req, res, next) {
   next();
 });
 
-
 process.title = 'node-chat';
 
 var webSocketsServerPort = 1337;

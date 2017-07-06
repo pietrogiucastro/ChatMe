@@ -2,7 +2,7 @@ var settings_page = 'chat.me';
 var server = document.domain;
 var version = '001';
 
-var connection;
+var socket = io();
 var sess_token = '';
 var sess_user = '';
 var wheel   = document.createElement('img');
@@ -87,7 +87,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
             InitDisplay();
             return;
         }
-        connection.send(msg);
+        socket.emit('send message', msg);
         input.val('').attr('disabled', 'disabled');
 
         /*
@@ -200,32 +200,27 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     }
     function LoggedDisplay() {
 
-        connection = new WebSocket('ws://'+server+':1337/'+sess_user);
-        connection.onopen = function () {
-            input.removeAttr('disabled');
-        };
-        connection.onerror = function (error) {
+        socket = io();
+
+        socket.on('error', function (error) {
             // just in there were some problems with connection...
             content.html($('<p>', {
                 text: 'Sorry, but there\'s some problem with your '
                 + 'connection or the server is down.'
             }));
-        };
-        connection.onmessage = function (message) {
+        });
+        socket.on('new message', function (message) {
             // try to parse JSON message. Because we know that the server
             // always returns JSON this should work without any problem but
-            // we should make sure that the massage is not chunked or
+            // we should make sure that the message is not chunked or
             // otherwise damaged.
-            var json;
-            try {
-                json = JSON.parse(message.data);
-            } catch (e) {
-                console.log('Invalid JSON: ', message.data);
-                return;
-            }
-            // NOTE: if you're not sure about the JSON structure
-            // check the server source code above
-            // first response from the server with user's color
+            console.log(message);
+            input.removeAttr('disabled');
+            input.focus();
+            setMessage(message.msg);
+
+            /*
+
             if (json.type === 'history') { // entire message history
                 setHistory(json.data);
             } else if (json.type === 'message') { // it's a single message
@@ -235,45 +230,46 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
         } else {
             console.log('Hmm..., I\'ve never seen JSON like this:', json);
         }
-    };
+        */
+    });
+        socket.on('history', function(messages) {
+            setHistory(messages);
+        });
+
+        var bigwheel = $('<img src="https://media.tenor.com/images/85d269dc9595a7bcf87fd0fa4039dd9f/tenor.gif" style="width:30px; margin:auto; margin-top:100px;">')[0];
+
+        $('#chat-me').find(tabs).remove();
+        $('#chat-me').prepend(tabs);
 
 
-    var bigwheel = document.createElement('img');
-    bigwheel.src = 'https://media.tenor.com/images/85d269dc9595a7bcf87fd0fa4039dd9f/tenor.gif';
-    bigwheel.id = 'spinner';
-    bigwheel.style.width='50px';
-    bigwheel.style.position='absolute';
-    bigwheel.style.top='29%';
-    bigwheel.style.left='45%';
+        $('#chat-me-cont').html('');
+        $('#chat-me-cont').append('<div id=cm-online> <ul id=cm-online-list></ul> </div>');
+        $('#chat-me-cont').append('<div id=cm-chat> <ul id=cm-chat-list></ul> </div>');
+        $('#chat-me-cont').append('<div style="position:absolute; bottom:7px;"><input style="margin:0px; width:282px; padding:8px 10px;" type=text id=cm-message-input class=cm-input placeholder=Message></input><button style="margin-left:11px; height:27px;" id=cm-send class=cm-button>Send</button></div>');
 
-    wheel.style.width='30px';
-    wheel.style['margin-top']='-9px';
+        $('#cm-chat-list').html(bigwheel);
 
-    $('#chat-me').find(tabs).remove();
-    $('#chat-me').prepend(tabs);
+        input = $('#cm-message-input');
 
-
-    $('#chat-me-cont').html('');
-    $('#chat-me-cont').append('<div id=cm-online> <ul id=cm-online-list></ul> </div>');
-    $('#chat-me-cont').append('<div id=cm-chat> <ul id=cm-chat-list></ul> </div>');
-    $('#chat-me-cont').append('<div style="position:absolute; bottom:7px;"><input style="margin:0px; width:282px; padding:8px 10px;" type=text id=cm-message-input class=cm-input placeholder=Message></input><button style="margin-left:11px; height:27px;" id=cm-send class=cm-button>Send</button></div>');
-
-    $('#cm-chat-list').html(bigwheel);
-
-    input = $('#cm-message-input');
-
-    input.keydown(function(e) {
+        input.keydown(function(e) {
             e = e || event; // to deal with IE
             if (e.keyCode == 13) postMessage();
         });
 
-    $('#cm-send').click(postMessage);
-}
-!function main() {
-    /*css*/ $('head').append('<style type=text/css>body {margin: 0;} #chat-me {position:relative; height:100vh;} #chat-me-cont {box-sizing:border-box; padding:11px; padding-top:35px; width:100%; height:100%; background-color:rgba(50,80,100,1.0); border:1px solid rgb(100,130,100); border-radius:3px; font-family:tahoma !important;} .cm-label {display:inline-block; color:rgb(230,230,230); font-weight:bold; margin:10px; width:65px;} .cm-button {position:absolute; width:65px; font-size:10px; background-color:rgb(10,200,50); border:0px; box-shadow:none !important;} .cm-input {background-color:rgb(240,240,240)!important; border:0px; font-size:12px!important; width:230px; height:9px; border:0px; border-radius:2px;} #cm-error-cont {color:rgb(220,0,0); font-size:12px; margin-left:8px; margin-top:10px; max-width:200px} #cm-chat {width:81%; height:80%; background-color:rgb(240,240,240); border-radius:2px; overflow-y:scroll; float:right;} #cm-chat-list {margin:0; padding:5px; font-size:11px;} .cm-message-name {font-weight:bold; margin-right:10px; color:rgb(0,130,0);} .cm-message-text {display:block; margin-right:10px; max-width:310px; word-wrap:break-word; color:rgb(30,30,30)} .cm-message-date {float:right; color:grey;} #cm-online {width:60px; height:80%; float:left; margin-left:1px; background-color:rgb(240,240,240); overflow-y:scroll; border-radius:2px;} #cm-online-list {margin:0; padding:5px; font-size:11px;}</style>');
+        $('#cm-send').click(postMessage);
+    }
+    !function main() {
+        /*css*/ $('head').append('<style type=text/css>body {margin: 0;} #chat-me {position:relative; height:100vh;} #chat-me-cont {box-sizing:border-box; padding:11px; padding-top:35px; width:100%; height:100%; background-color:rgba(50,80,100,1.0); border:1px solid rgb(100,130,100); border-radius:3px; font-family:tahoma !important;} .cm-label {display:inline-block; color:rgb(230,230,230); font-weight:bold; margin:10px; width:65px;} .cm-button {position:absolute; width:65px; font-size:10px; background-color:rgb(10,200,50); border:0px; box-shadow:none !important;} .cm-input {background-color:rgb(240,240,240)!important; border:0px; font-size:12px!important; width:230px; height:9px; border:0px; border-radius:2px;} #cm-error-cont {color:rgb(220,0,0); font-size:12px; margin-left:8px; margin-top:10px; max-width:200px} #cm-chat {width:81%; height:80%; background-color:rgb(240,240,240); border-radius:2px; overflow-y:scroll; float:right;} #cm-chat-list {margin:0; padding:5px; font-size:11px;} .cm-message-name {font-weight:bold; margin-right:10px; color:rgb(0,130,0);} .cm-message-text {display:block; margin-right:10px; max-width:310px; word-wrap:break-word; color:rgb(30,30,30)} .cm-message-date {float:right; color:grey;} #cm-online {width:60px; height:80%; float:left; margin-left:1px; background-color:rgb(240,240,240); overflow-y:scroll; border-radius:2px;} #cm-online-list {margin:0; padding:5px; font-size:11px;}</style>');
     // /*css*/ $('head').append('<style type=text/css>#chat-me-cont {position:fixed; z-index:99999999999999999999; box-sizing:border-box; padding:11px; bottom:20px; top:20px; left:5%; width:404px; height:174px; background-color:rgba(50,80,100,1.0); border:1px solid rgb(100,130,100); border-radius:3px; font-family:tahoma !important;} .cm-label {display:inline-block; color:rgb(230,230,230); font-weight:bold; margin:10px; width:65px;} .cm-button {position:absolute; width:65px; font-size:10px; background-color:rgb(10,200,50); border:0px; box-shadow:none !important;} .cm-input {background-color:rgb(240,240,240)!important; border:0px; font-size:12px!important; width:230px; height:9px; border:0px; border-radius:2px;} #cm-error-cont {color:rgb(220,0,0); font-size:12px; margin-left:8px; margin-top:10px; max-width:200px} #cm-chat {width:81%; height:80%; background-color:rgb(240,240,240); border-radius:2px; overflow-y:scroll; float:right;} #cm-chat-list {margin:0; padding:5px; font-size:11px;} .cm-message-name {font-weight:bold; margin-right:10px; color:rgb(0,130,0);} .cm-message-text {display:block; margin-right:10px; max-width:310px; word-wrap:break-word; color:rgb(30,30,30)} .cm-message-date {float:right; color:grey;} #cm-online {width:60px; height:80%; float:left; margin-left:1px; background-color:rgb(240,240,240); overflow-y:scroll; border-radius:2px;} #cm-online-list {margin:0; padding:5px; font-size:11px;}</style>');
         //  /*el*/  $('body').append('<div id=chat-me-cont></div>');
         if (!$('#chat-me-cont').length) return;
+
+        sess_user = "speep90";
+        LoggedDisplay();
+
+        return;
+
+
         if (!sess_token || !sess_user) InitDisplay();
         else LoggedDisplay();
     }();

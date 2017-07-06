@@ -5,6 +5,7 @@ var logger = require('morgan');
 
 var routes = require('./routes/index');
 var index = require(path.join(__dirname, 'routes/index'));
+var socket = require(path.join(__dirname, 'routes/socket'));
 
 var Config = require('./environment'),
 conf = new Config();
@@ -22,7 +23,8 @@ app.use(logger('dev'));
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', routes);
+//app.use('/', routes);
+app.use('/', index);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
@@ -57,6 +59,5 @@ app.use(function(err, req, res, next) {
     error: {}
   });
 });
-
 
 module.exports = app;
