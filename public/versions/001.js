@@ -2,6 +2,15 @@ var settings_page = 'chat.me';
 var server = document.domain;
 var version = '001';
 
+var site = (window.location != window.parent.location) ? document.referrer : document.location.href;
+function url_domain(data) {
+  var    a      = document.createElement('a');
+         a.href = data;
+  return a.hostname;
+}
+
+site = url_domain(site);
+
 var socket = io();
 var sess_token = '';
 var sess_user = '';
@@ -12,7 +21,8 @@ wheel.style = 'width:40px;';
 
 var input;
 
-var tabs = $('<div id="chat-me-tabs"><div class="chat-tab sel">Global</div><div class="chat-tab">Site</div><div class="opts-chat-btn">v</div></div>');
+var tabs = $('<div id="chat-me-tabs"><div class="chat-tab global-tab sel">Global</div><div class="chat-tab site-tab">Site</div><div class="opts-chat-btn"><i class="fa fa-caret-down"></i></div></div>');
+var options = $('#chat-me-options');
 
 
 // if user is running mozilla then use it's built-in WebSocket

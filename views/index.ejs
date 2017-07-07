@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <title>WebSockets - Simple chat</title>
-  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js">
-  </script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
   <style type="text/css">
     #chat-me-tabs {
       font-size: 0;
@@ -22,7 +22,35 @@
       padding: 4px 6px;
       background-color: #ddd;
     }
-   .chat-tab:last-child {
+    #chat-me-options {
+      position: fixed;
+      display: flex;
+      align-items: center;
+      width: 100%;
+      height: 100%;
+      z-index: 99999999;
+      border: 1px solid #aaa;
+      background-color: rgba(200,200,200, 0.9);
+      color: #444;
+    }
+    #chat-me-options .options-block {
+      width: 70%;
+      margin: auto;
+    }
+    #chat-me-options .option {
+      text-align: center;
+      padding: 5px;
+      cursor: pointer;
+      border-bottom: 1px solid grey;
+      font-size: 11px;
+      font-weight: bold;
+      height: 20px;
+      line-height: 20px;
+    }
+    .option:last-child {
+      border-bottom: 0 !important;
+    }
+    .chat-tab:last-child {
       border-right: 0 !important;
     }
     .chat-tab.sel {
@@ -34,23 +62,66 @@
       float: right;
       padding: 3px 8px;
       font-size: 14px;
-      background-color: #eee;
       border: 1px solid #ddd;
       margin-left: 2px;
+      cursor: pointer;
+    }
+    #chat-me-options .close-options {
+      position: absolute;
+      top: 5px;
+      right: 5px;
       cursor: pointer;
     }
   </style>
 </head>
 <body>
   <div id="chat-me">
+
+    <div id="chat-me-options" style="display:none">
+      <i class="fa fa-times close-options" aria-hidden="true" onclick="hideOpts()"></i>
+      <div class="options-block">
+        <div class="option">ADD CHAT</div>
+        <div class="option">SETTINGS</div>  
+      </div>
+    </div>
+
     <div id="chat-me-cont"></div>
   </div>
   <script src="/socket.io/socket.io.js"></script>
   <script type="text/javascript" src="/versions/001.js"></script>
   <script type="text/javascript">
+    function hideOpts() {
+      $('#chat-me-options').hide();
+    }
     $(document).on('click', '.chat-tab', function() {
       $('#chat-me-tabs .chat-tab').removeClass('sel');
       $(this).addClass('sel');
+    });
+    $(document).on('click', '.site-tab', function() {
+      socket.emit('site', site);
+    });
+    $(document).on('click', '.global-tab', function() {
+      socket.emit('global');
+    });
+    $(document).on('click', '.opts-chat-btn', function() {
+      options.show();
+    });
+    $(document).on('mouseenter', '.option', function() {
+      $(this).css({
+        'background-color': 'rgb(157,162,164)',
+        'color'           : 'navajowhite'
+      });
+      $(this).animate({
+        'font-size': '14px'
+      }, {queue: false, duration: 50});
+    }).on('mouseleave', '.option', function() {
+      $(this).css({
+        'background-color': '',
+        'color': ''
+      });
+      $(this).animate({
+        'font-size': '13px'
+      }, {queue: false, duration: 50});
     });
   </script>
 </body>
