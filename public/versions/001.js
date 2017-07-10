@@ -5,13 +5,14 @@ var version = '001';
 var site = (window.location != window.parent.location) ? document.referrer : document.location.href;
 function url_domain(data) {
   var    a      = document.createElement('a');
-         a.href = data;
+  a.href = data;
   return a.hostname;
 }
 
 site = url_domain(site);
 
-var socket = io();
+var socket;
+var currentchat = 'global';
 var sess_token = '';
 var sess_user = '';
 var wheel   = document.createElement('img');
@@ -21,7 +22,7 @@ wheel.style = 'width:40px;';
 
 var input;
 
-var tabs = $('<div id="chat-me-tabs"><div class="chat-tab global-tab sel">Global</div><div class="chat-tab site-tab">Site</div><div class="opts-chat-btn"><i class="fa fa-caret-down"></i></div></div>');
+var tabs = $('<div id="chat-me-tabs"><div class="opts-chat-btn"><i class="fa fa-caret-down"></i></div><div class="chat-tab global-tab sel" onclick="switchchat(\'global\')">Global</div><div class="chat-tab site-tab">Site</div></div>');
 var options = $('#chat-me-options');
 
 
@@ -228,22 +229,24 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
             input.removeAttr('disabled');
             input.focus();
             setMessage(message.msg);
-
-            /*
-
-            if (json.type === 'history') { // entire message history
-                setHistory(json.data);
-            } else if (json.type === 'message') { // it's a single message
-            input.removeAttr('disabled');
-            input.focus();
-            setMessage(json.data);
-        } else {
-            console.log('Hmm..., I\'ve never seen JSON like this:', json);
-        }
-        */
-    });
+        });
         socket.on('history', function(messages) {
             setHistory(messages);
+        });
+        socket.on('room created', function(room) {
+            hideOpts();
+            tabs.append('<div class="chat-tab" data-name="' + room.name + '" onclick="switchchat(\'custom room\', {name:\''+room.name+'\', pass: \''+room.pass+'\'})">'+room.name+'</div>');
+            selectchat(room.name);
+        });
+        socket.on('warning', function(warning) {
+            switch (warning.type) {
+                case 'roomexists':
+                    console.log('room exists!');
+                    chatOptions.container.find('#addchat-message').html(warning.message);
+                break;
+                default:
+                    console.log('unhandled warning type');
+            }
         });
 
         var bigwheel = $('<img src="https://media.tenor.com/images/85d269dc9595a7bcf87fd0fa4039dd9f/tenor.gif" style="width:30px; margin:auto; margin-top:100px;">')[0];
@@ -285,3 +288,42 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     }();
 
 })();
+
+var chatOptions = {
+    display : {
+        options : '<div class="options-block"><div class="option" onclick="chatOptions.addchatDis()">ADD CHAT</div><div class="option" onclick="chatOptions.settingsDis()">SETTINGS</div></div>',
+        settings : '<center>under construction.</center>',
+        addchat : '<div class="add-chat"><center> <label>Chat name: <input id="addchat-name" type="text" maxlength="30"></label> <label>Chat password (empty for no password): <input id="addchat-pass" type="password" maxlength="15"></label> <button class="addchat-btn" onclick="chatOptions.submitChat()">ADD CHAT</button> <div id="addchat-message"></div> </center> </div>'
+    },
+
+    container : $('#options-content'),
+
+    initOptions : function() {
+        chatOptions.container.html(chatOptions.display.options);
+    },
+    settingsDis: function() {
+        chatOptions.container.html(chatOptions.display.settings);
+    },
+    addchatDis : function() {
+        chatOptions.container.html(chatOptions.display.addchat);
+    },
+    submitChat : function() {
+        chatOptions.container.find('#addchat-message').html('');
+        var chatname = chatOptions.container.find('#addchat-name').val();
+        var chatpass = chatOptions.container.find('#addchat-pass').val();
+
+        socket.emit('create room' , {name: chatname, pass: chatpass});
+    }
+}
+
+function switchchat(chat, room={}) {
+    //switchchat('custom room', {name: roomname, pass: roompass});
+    currentchat = chat;
+    room.type = chat;
+    socket.emit('switch room', room);
+}
+
+function selectchat(chatname) {
+    tabs.find('.chat-tab').removeClass('sel');
+    tabs.find('.chat-tab[data-name=' + chatname + ']').addClass('sel');
+}

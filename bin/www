@@ -131,31 +131,77 @@ io.sockets.on('connection', function(socket) {
     history[room] = history[room].slice(-100);
   });
 
-  socket.on('global', function() {
-    joinroom(socket, 'global');
+  socket.on('switch room', function(room) {
+    switch(room.type) {
+
+      case 'global':
+        joinroom(socket, 'global');
+        break;
+
+      case 'site':
+        joinroom(socket, room.name);
+        break;
+
+      case 'custom room':
+        var roomname = room.name;
+        var roompass = room.pass;
+        joinroom(socket, roomname);
+        break;
+
+      default:
+        console.log('ERROR! Unhandled chat type!');
+        Jsonerror(socket);
+
+    }
   });
 
-  socket.on('site', function(site) {
-    joinroom(socket, site);
-  });
+  socket.on('create room', function(room) {
+    var roomname = room.name;
+    var roompass = room.pass;
 
-  socket.on('custom room', function (room) {
-    joinroom(socket, room);
+    if (io.sockets.adapter.rooms[roomname]) {
+      console.log(roomname + ' room already exists');
+      Jsonwarn(socket, 'roomexists', 'the room already exists');
+      return;
+    }
+
+    createroom(socket, roomname, roompass);
   });
 
   // ================ //
 
 });
 
-function joinroom(socket, room) {
+function joinroom(socket, roomname, callback) {
   var currentroom = getroom(socket);
   if (currentroom) socket.leave(currentroom);
-  console.log('joined room ' + room);
-  if (!history[room]) history[room] = [];
-  socket.join(room);
-  socket.emit('history', history[room]);
+  console.log('joined room ' + roomname);
+  if (!history[roomname]) history[roomname] = [];
+  if (callback) socket.join(roomname, callback);
+  else socket.join(roomname);
+  socket.emit('history', history[roomname]);
+}
+
+function createroom(socket, roomname, roompass) {
+  joinroom(socket, roomname, function() {
+    io.sockets.adapter.rooms[roomname].password = roompass;
+    console.log('new room created: ' + roomname + ' password: ' + !!roompass);
+    socket.emit('room created', {name: roomname, pass: roompass});
+  });
 }
 
 function getroom(socket) {
   return Object.keys(socket.rooms)[1];
+}
+
+function roomexists(roomname) {
+  return !!io.sockets.adapter.rooms[roomname];
+}
+
+function Jsonerror(socket, message='Internal error. Retry later.') {
+  socket.emit('error', message);
+}
+
+function Jsonwarn(socket, type='stdwarn', message='') {
+  socket.emit('warning', {type: type, message: message});
 }

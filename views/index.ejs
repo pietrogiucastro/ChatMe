@@ -11,7 +11,9 @@
       position: absolute;
       top:0%;
       width: 100%;
-      background-color: #aaa;
+      background: -webkit-linear-gradient(#6d727a, #7f8595, #b4bdd1);
+      background: -o-linear-gradient(#6d727a, #7f8595, #b4bdd1);
+      background: linear-gradient(#6d727a, #7f8595, #b4bdd1);
     }
     #chat-me-tabs .chat-tab {
       border-right: 1px solid #aaa;
@@ -32,6 +34,9 @@
       border: 1px solid #aaa;
       background-color: rgba(200,200,200, 0.9);
       color: #444;
+    }
+    #options-content {
+      width: 100%;
     }
     #chat-me-options .options-block {
       width: 70%;
@@ -72,6 +77,37 @@
       right: 5px;
       cursor: pointer;
     }
+    .add-chat {
+      width: 70%;
+      margin: auto;
+      margin-top: -15px;
+    }
+    .add-chat label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+    .add-chat input {
+      display: block;
+      width: 100%;
+      text-align: center;
+    }
+    .add-chat .addchat-btn {
+      margin-top: 20px;
+      font-weight: bold;
+      font-size: 11px;
+      background-color: #2d48db;
+      color: white;
+      border: 0;
+      padding: 7px 10px;
+      cursor: pointer;
+    }
+    .add-chat #addchat-message {
+      padding: 6px;
+      margin-top: 5px;
+      height: 12px;
+      color: darkred;
+    }
   </style>
 </head>
 <body>
@@ -79,9 +115,8 @@
 
     <div id="chat-me-options" style="display:none">
       <i class="fa fa-times close-options" aria-hidden="true" onclick="hideOpts()"></i>
-      <div class="options-block">
-        <div class="option">ADD CHAT</div>
-        <div class="option">SETTINGS</div>  
+      <div id="options-content">
+        
       </div>
     </div>
 
@@ -98,13 +133,11 @@
       $(this).addClass('sel');
     });
     $(document).on('click', '.site-tab', function() {
-      socket.emit('site', site);
-    });
-    $(document).on('click', '.global-tab', function() {
-      socket.emit('global');
+      switchchat('site', {name: site});
     });
     $(document).on('click', '.opts-chat-btn', function() {
       options.show();
+      chatOptions.initOptions();
     });
     $(document).on('mouseenter', '.option', function() {
       $(this).css({
@@ -112,7 +145,7 @@
         'color'           : 'navajowhite'
       });
       $(this).animate({
-        'font-size': '14px'
+        'font-size': '13px'
       }, {queue: false, duration: 50});
     }).on('mouseleave', '.option', function() {
       $(this).css({
@@ -120,7 +153,7 @@
         'color': ''
       });
       $(this).animate({
-        'font-size': '13px'
+        'font-size': '11px'
       }, {queue: false, duration: 50});
     });
   </script>
