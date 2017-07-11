@@ -16,6 +16,7 @@
       background: linear-gradient(#6d727a, #7f8595, #b4bdd1);
     }
     #chat-me-tabs .chat-tab {
+      position: relative;
       border-right: 1px solid #aaa;
       display: inline-block;
       cursor: pointer;
@@ -23,6 +24,33 @@
       font-size: 13px;
       padding: 4px 6px;
       background-color: #ddd;
+      max-width: 20%;
+      vertical-align: middle;
+    }
+    .chat-tab.pass {
+      padding-left: 17px !important;
+    }
+    .chat-tab.pass:before {
+      position: absolute;
+      font-family: fontawesome;
+      content: "\f023";
+      font-size: 11px;
+      left: 5px; top: 7px;
+    }
+    .chat-tab.custom {
+      padding-right: 15px !important;
+    }
+    .chat-tab .remove-tab {
+      position: absolute;
+      right: 4px;
+      top: 4px;
+      font-size: 9px;
+      padding: 3px;
+      padding-right: 0px;
+    }
+    .chat-tab .tab-text {
+      overflow: hidden;
+      white-space: nowrap;
     }
     #chat-me-options {
       position: fixed;

@@ -45,6 +45,7 @@ if (!window.WebSocket) {
 
     if (document.domain == settings_page) return document.write('chat me settings. Under construction..');
     if (document.domain == server) return;
+    if (window.location.href != window.parent.location.href) return; //if it's in iframe, return
 
     function setMessage(msg) {
         var rescroll = false;

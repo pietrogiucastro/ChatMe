@@ -156,7 +156,7 @@ io.sockets.on('connection', function(socket) {
   });
 
   socket.on('create room', function(room) {
-    var roomname = room.name;
+    var roomname = room.name.replace(/ /g, '');
     var roompass = room.pass;
 
     if (io.sockets.adapter.rooms[roomname]) {

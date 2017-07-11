@@ -130,7 +130,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
         $('#chat-me-cont').append('<div id=cm-error-cont></div>');
         $('#chat-me-cont').append('<div style="position:absolute; bottom:28%; right:6%; width:140px;"><button style=left:0%; id=cm-login class=cm-button>Login</button><button style=right:0% id=cm-register class=cm-button>Register</button></div>');
 
-        $('#cm-login').click(function(){
+        $('#cm-login').click(function() {
             $('#cm-error-cont').html(wheel);
             var user = $('#cm-user').val();
             var pass = $('#cm-pass').val();
@@ -235,7 +235,9 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
         });
         socket.on('room created', function(room) {
             hideOpts();
-            tabs.append('<div class="chat-tab" data-name="' + room.name + '" onclick="switchchat(\'custom room\', {name:\''+room.name+'\', pass: \''+room.pass+'\'})">'+room.name+'</div>');
+            var newTab = $('<div class="chat-tab custom" data-name="' + room.name.replace(/ /g, '') + '" onclick="switchchat(\'custom room\', {name:\''+room.name+'\', pass: \''+room.pass+'\'})"><div class="tab-text">'+room.name+'</div><i class="fa fa-times remove-tab"></i></div>');
+            if(room.pass) newTab.addClass('pass');
+            tabs.append(newTab);
             selectchat(room.name);
         });
         socket.on('warning', function(warning) {
