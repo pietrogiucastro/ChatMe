@@ -132,7 +132,14 @@ io.sockets.on('connection', function(socket) {
   });
 
   socket.on('switch room', function(room) {
-    switch(room.type) {
+
+    if (typeof room.name !== 'string') {
+      Jsonerror(socket);
+      return;
+    }
+
+    room.name = room.name ? room.name.replace(/ /g, '') : '';
+    switch(room.name) {
 
       case 'global':
         joinroom(socket, 'global');
@@ -142,16 +149,10 @@ io.sockets.on('connection', function(socket) {
         joinroom(socket, room.name);
         break;
 
-      case 'custom room':
+      default: //custom room
         var roomname = room.name;
         var roompass = room.pass;
-        joinroom(socket, roomname);
-        break;
-
-      default:
-        console.log('ERROR! Unhandled chat type!');
-        Jsonerror(socket);
-
+        joinroom(socket, roomname, roompass);
     }
   });
 
@@ -172,10 +173,12 @@ io.sockets.on('connection', function(socket) {
 
 });
 
-function joinroom(socket, roomname, callback) {
+function joinroom(socket, roomname, roompass, callback) {
   var currentroom = getroom(socket);
   if (currentroom) socket.leave(currentroom);
+
   console.log('joined room ' + roomname);
+  
   if (!history[roomname]) history[roomname] = [];
   if (callback) socket.join(roomname, callback);
   else socket.join(roomname);
@@ -183,7 +186,7 @@ function joinroom(socket, roomname, callback) {
 }
 
 function createroom(socket, roomname, roompass) {
-  joinroom(socket, roomname, function() {
+  joinroom(socket, roomname, null, function() {
     io.sockets.adapter.rooms[roomname].password = roompass;
     console.log('new room created: ' + roomname + ' password: ' + !!roompass);
     socket.emit('room created', {name: roomname, pass: roompass});

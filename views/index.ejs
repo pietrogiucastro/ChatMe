@@ -48,6 +48,9 @@
       padding: 3px;
       padding-right: 0px;
     }
+    .chat-tab .remove-tab:hover {
+      color: red;
+    }
     .chat-tab .tab-text {
       overflow: hidden;
       white-space: nowrap;
@@ -157,11 +160,8 @@
       $('#chat-me-options').hide();
     }
     $(document).on('click', '.chat-tab', function() {
-      $('#chat-me-tabs .chat-tab').removeClass('sel');
-      $(this).addClass('sel');
-    });
-    $(document).on('click', '.site-tab', function() {
-      switchchat('site', {name: site});
+      // $('#chat-me-tabs .chat-tab').removeClass('sel');
+      // $(this).addClass('sel');
     });
     $(document).on('click', '.opts-chat-btn', function() {
       options.show();

@@ -22,7 +22,7 @@ wheel.style = 'width:40px;';
 
 var input;
 
-var tabs = $('<div id="chat-me-tabs"><div class="opts-chat-btn"><i class="fa fa-caret-down"></i></div><div class="chat-tab global-tab sel" onclick="switchchat(\'global\')">Global</div><div class="chat-tab site-tab">Site</div></div>');
+var tabs = $('<div id="chat-me-tabs"><div class="opts-chat-btn"><i class="fa fa-caret-down"></i></div><div class="chat-tab global-tab sel" data-name="global" onclick="switchchat(this)">Global</div><div class="chat-tab site-tab" data-name="site" onclick="switchchat(this)">Site</div></div>');
 var options = $('#chat-me-options');
 
 
@@ -235,7 +235,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
         });
         socket.on('room created', function(room) {
             hideOpts();
-            var newTab = $('<div class="chat-tab custom" data-name="' + room.name.replace(/ /g, '') + '" onclick="switchchat(\'custom room\', {name:\''+room.name+'\', pass: \''+room.pass+'\'})"><div class="tab-text">'+room.name+'</div><i class="fa fa-times remove-tab"></i></div>');
+            var newTab = $('<div class="chat-tab custom" data-name="' + room.name + '" onclick="switchchat(this)"><div class="tab-text">'+room.name+'</div><i class="fa fa-times remove-tab" onclick="removeTab(this)"></i></div>');
             if(room.pass) newTab.addClass('pass');
             tabs.append(newTab);
             selectchat(room.name);
@@ -260,7 +260,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
         $('#chat-me-cont').html('');
         $('#chat-me-cont').append('<div id=cm-online> <ul id=cm-online-list></ul> </div>');
         $('#chat-me-cont').append('<div id=cm-chat> <ul id=cm-chat-list></ul> </div>');
-        $('#chat-me-cont').append('<div style="position:absolute; bottom:7px;"><input style="margin:0px; width:282px; padding:8px 10px;" type=text id=cm-message-input class=cm-input placeholder=Message></input><button style="margin-left:11px; height:27px;" id=cm-send class=cm-button>Send</button></div>');
+        $('#chat-me-cont').append('<div style="position:absolute; bottom:7px;"><input style="margin:0px; width:282px; padding:8px 10px;" type=text id=cm-message-input class=cm-input placeholder=Message></input><button style="margin-left:11px; height:25px; border-radius:2px" id=cm-send class=cm-button>Send</button></div>');
 
         $('#cm-chat-list').html(bigwheel);
 
@@ -318,14 +318,32 @@ var chatOptions = {
     }
 }
 
-function switchchat(chat, room={}) {
+function switchchat(tab) {
+    tab = $(tab);
     //switchchat('custom room', {name: roomname, pass: roompass});
-    currentchat = chat;
-    room.type = chat;
+    roomname = tab.data('name');
+    roompass = tab.data('pass');
+    var room = {
+        name: roomname,
+        pass: roompass
+    }
+    //currentchat = chat;
+    //room.type = chat;
     socket.emit('switch room', room);
 }
 
 function selectchat(chatname) {
     tabs.find('.chat-tab').removeClass('sel');
     tabs.find('.chat-tab[data-name=' + chatname + ']').addClass('sel');
+}
+
+function removeTab(el) {
+    leaveCustomChat($(el).parent());
+}
+
+function leaveCustomChat(tab, callback) {
+    callback = callback || function() {}
+    prevTab = tab.prev();
+    tab.remove();
+    switchchat(prevTab);
 }
