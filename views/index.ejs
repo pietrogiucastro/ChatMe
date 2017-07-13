@@ -24,18 +24,28 @@
       font-size: 13px;
       padding: 4px 6px;
       background-color: #ddd;
+      color: #333;
       max-width: 20%;
       vertical-align: middle;
-    }
-    .chat-tab.pass {
       padding-left: 17px !important;
     }
-    .chat-tab.pass:before {
+    .chat-tab:before {
       position: absolute;
       font-family: fontawesome;
-      content: "\f023";
       font-size: 11px;
       left: 5px; top: 7px;
+    }
+    .chat-tab.global-tab:before {
+      content: "\f0ac";
+    }
+    .chat-tab.site-tab:before {
+      content: "\f042";
+    }
+    .chat-tab.pass:before {
+      content: "\f023";
+    }
+    .chat-tab.free:before {
+      content: "\f0ac";
     }
     .chat-tab.custom {
       padding-right: 15px !important;
@@ -89,10 +99,14 @@
     .chat-tab:last-child {
       border-right: 0 !important;
     }
+    .chat-tab:hover {
+      background-color: white !important;
+    }
     .chat-tab.sel {
       background: -webkit-linear-gradient(bottom, #eee, #fff);
       background: -o-linear-gradient(bottom, #eee, #fff);
       background: linear-gradient(to top, #eee, #fff);
+      color: #0e508d !important;
     }
     .opts-chat-btn {
       float: right;
@@ -107,6 +121,9 @@
       top: 5px;
       right: 5px;
       cursor: pointer;
+    }
+    .close-options:hover {
+      color: navajowhite;
     }
     .add-chat {
       width: 70%;
@@ -155,35 +172,5 @@
   </div>
   <script src="/socket.io/socket.io.js"></script>
   <script type="text/javascript" src="/versions/001.js"></script>
-  <script type="text/javascript">
-    function hideOpts() {
-      $('#chat-me-options').hide();
-    }
-    $(document).on('click', '.chat-tab', function() {
-      // $('#chat-me-tabs .chat-tab').removeClass('sel');
-      // $(this).addClass('sel');
-    });
-    $(document).on('click', '.opts-chat-btn', function() {
-      options.show();
-      chatOptions.initOptions();
-    });
-    $(document).on('mouseenter', '.option', function() {
-      $(this).css({
-        'background-color': 'rgb(157,162,164)',
-        'color'           : 'navajowhite'
-      });
-      $(this).animate({
-        'font-size': '13px'
-      }, {queue: false, duration: 50});
-    }).on('mouseleave', '.option', function() {
-      $(this).css({
-        'background-color': '',
-        'color': ''
-      });
-      $(this).animate({
-        'font-size': '11px'
-      }, {queue: false, duration: 50});
-    });
-  </script>
 </body>
 </html>

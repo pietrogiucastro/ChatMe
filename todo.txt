@@ -1,0 +1,3 @@
+- take window screenshots and send
+- minimize chat
+- custom settings
