@@ -22,6 +22,9 @@ var connection;
 var sess_token = GM_getValue('sess_token');
 var sess_user = GM_getValue('sess_user');
 
+var shw = '404px', shh = '174px',
+    hiw = '30px', hih = '30px',
+    hir = '20px', hib = '20px';
 
 var input;
 
@@ -33,8 +36,8 @@ var input;
     if (window.location.href != window.parent.location.href) return; //if it's in iframe, return
 
     !function main() {
-        /*css*/ $('head').append('<style type=text/css>#chat-me-cont {position:fixed; z-index:99999999999999999999; box-sizing:border-box; padding:11px; bottom:20px; right:20px; width:404px; height:174px; background-color:rgba(50,80,100,1.0); border:1px solid rgb(100,130,100); border-radius:3px; font-family:tahoma !important;} .cm-label {display:inline-block; color:rgb(230,230,230); font-weight:bold; margin:10px; width:65px;} .cm-button {position:absolute; width:65px; font-size:10px; background-color:rgb(10,200,50); border:0px; box-shadow:none !important;} .cm-input {background-color:rgb(240,240,240)!important; border:0px; font-size:12px!important; width:230px; height:9px; border:0px; border-radius:2px;} #cm-error-cont {color:rgb(220,0,0); font-size:12px; margin-left:8px; margin-top:10px; max-width:200px} #cm-chat {width:81%; height:80%; background-color:rgb(240,240,240); border-radius:2px; overflow-y:scroll; float:right;} #cm-chat-list {margin:0; padding:5px; font-size:11px;} .cm-message-name {font-weight:bold; margin-right:10px; color:rgb(0,130,0);} .cm-message-text {display:block; margin-right:10px; max-width:310px; word-wrap:break-word; color:rgb(30,30,30)} .cm-message-date {float:right; color:grey;} #cm-online {width:60px; height:80%; float:left; margin-left:1px; background-color:rgb(240,240,240); overflow-y:scroll; border-radius:2px;} #cm-online-list {margin:0; padding:5px; font-size:11px;}</style>');
-        $('head').append('<style type=text/css>#chat-me-cover { position:absolute; width:100%; height:100%; background-color:rgb(50,80,100); top:0; opacity:0.0; display:none; cursor:pointer; } #cm-frame-tabs { position:absolute; margin:0; z-index:-1; top:0; right:1px; padding:0 6px; font-size:30px; line-height:15px; background:#ddd; cursor:pointer } #chat-me-container {position: fixed; z-index:99999999999999999999; bottom:20px; right:20px; width:404px; height:198px;} #chat-me-frame {border:0; width:100%; height:100%; overflow:hidden;} </style>');
+        $('head').append('<style type=text/css>#chat-me-cover { position:absolute; width:100%; height:100%; background-color:rgb(50,80,100); top:0; opacity:0.0; display:none; cursor:pointer; } #cm-frame-tabs { position:absolute; margin:0; z-index:-1; top:0; right:1px; padding:0 6px; font-size:30px; line-height:15px; background:#ddd; cursor:pointer } #chat-me-container {position: fixed; z-index:99999999999999999999; bottom:20px; right:20px; width:' + shw + '; height:' + shh + ';} #chat-me-frame {border:0; width:100%; height:100%; overflow:hidden;} </style>');
+        $('head').append('<style type=text/css> #cm-frame-tabs.cm-hidden { display:none !important; } </style>');
         $('body').append('<div id="chat-me-container"></div>');
         $('#chat-me-container').append('<button id="cm-frame-tabs">-</button>');
         $('#chat-me-container').append('<iframe id="chat-me-frame" src="https://'+server+':60000/"></iframe><div id="chat-me-cover"></div>');
@@ -50,27 +53,108 @@ var input;
             }, {duration: 60, queue: false});
         });
         $('#cm-frame-tabs').click(hideChatMe);
+        $('#chat-me-cover').click(showChatMe);
+
+        var container = document.getElementById('chat-me-container');
+
+        var windoww = $(window).width();
+        var windowh = $(window).height();
+
+        $(window).mousemove(function(event) {
+
+            if($(container).is(':not(.cm-hidden)')) return;
+
+            event = event || window.event; // IE-ism
+            var cursorX = windoww - event.clientX;
+            var cursorY = windowh - event.clientY;
+
+            if(cursorX < 120 && cursorY < 120 && $(container).is('.cm-out')) {
+                inChatMe();
+            }
+            else if (cursorX > 120 && cursorY > 120 && $(container).is(':not(.cm-out)')) {
+                outChatMe();
+            }
+
+        });
+
+        function setChatMeHidden() {
+            $('#cm-frame-tabs').addClass('cm-hidden');
+            $('#chat-me-cover').show();
+            $('#chat-me-cover').css({
+                opacity: '1.0',
+                'border-radius': '50%'
+            });
+             $('#chat-me-frame').css({
+                'border-radius': '50%'
+            });
+            $('#chat-me-container').addClass('cm-hidden').css({
+                width: hiw, height: hih,
+                bottom: '10px', right: '10x'
+            });
+        }
 
         function hideChatMe() {
-            $('#cm-frame-tabs').hide();
+            $('#cm-frame-tabs').addClass('cm-hidden');
             $('#chat-me-cover').show();
             $('#chat-me-cover').animate({
                 opacity: '1.0',
                 'border-radius': '50%'
-            }, 300);
+            }, 200);
             $('#chat-me-frame').animate({
                 'border-radius': '50%'
-            }, 300);
-            $('#chat-me-container').animate({
-                width: '40px', height: '40px',
-                bottom: '30px', right: '30x'
-            }, 300);
+            }, 200);
+            $('#chat-me-container').addClass('cm-hidden').animate({
+                width: hiw, height: hih,
+                bottom: '10px', right: '10x'
+            }, 200);
+            GM_setValue('isHidden', '1');
         }
+        function showChatMe() {
+            $('#cm-frame-tabs').removeClass('cm-hidden');
+
+            $('#chat-me-cover').animate({
+                opacity: '0.0',
+                'border-radius': '0%'
+            }, 200, function() {
+                $('#chat-me-cover').hide();
+            });
+            $('#chat-me-frame').animate({
+                'border-radius': '0%'
+            }, 200);
+
+            $('#chat-me-container').removeClass('cm-hidden').animate({
+                width: shw, height: shh,
+                bottom: hib, right: hir
+            }, 200);
+            GM_setValue('isHidden', '');
+        }
+        function outChatMe() {
+            $(container).addClass('cm-out');
+            var outr = '-'+hiw;
+            var outb = '-'+hih;
+            $(container).animate({
+                bottom: outr,
+                right: outb
+            }, {duration: 100, queue: false});
+        }
+        function inChatMe() {
+            $(container).removeClass('cm-out');
+            $(container).animate({
+                bottom: hib,
+                right: hir
+            }, {duration: 100, queue: false});
+        }
+
+
+        if (GM_getValue('isHidden')) {
+            setChatMeHidden();
+        }
+
+
         //         worth it?           //
         var dragging = false;
         var cover = document.getElementById('chat-me-cover');
-        var container = document.getElementById('chat-me-container');
-        console.log(cover);
+        /*console.log(cover);
         cover.onmousedown = function() {
             dragging = true;
             console.log('asd');
@@ -87,8 +171,8 @@ var input;
             $(container).css('top', cursorY).css('left', cursorX);
 
             console.log(cursorX + "  " + cursorY);
-        };
-        
+        };*/
+
         // ////////////////////// //
     }();
 

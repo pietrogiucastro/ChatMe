@@ -1,3 +1,4 @@
 - take window screenshots and send
-- minimize chat
 - custom settings
+- search chat
+- chat password backend control

@@ -124,7 +124,7 @@ io.sockets.on('connection', function(socket) {
   });
 
   socket.on('send message', function(msg) {
-    var room = getroom(socket);
+    var room = getsocketroom(socket);
     console.log('sending message on room' + JSON.stringify(room));
     io.sockets.in(room).emit('new message', {msg: {type: 'message', text: msg, time: new Date(), author: 'speep90'}});
     history[room].push({type: 'message', text: msg, time: new Date(), author: 'speep90'});
@@ -137,6 +137,8 @@ io.sockets.on('connection', function(socket) {
       Jsonerror(socket);
       return;
     }
+
+    if (!room.pass) room.pass = '';
 
     room.name = room.name ? room.name.replace(/ /g, '') : '';
     switch(room.name) {
@@ -173,11 +175,17 @@ io.sockets.on('connection', function(socket) {
 
 });
 
-function joinroom(socket, roomname, roompass, callback) {
-  var currentroom = getroom(socket);
+function joinroom(socket, roomname, sentpass, callback) {
+  var currentroom = getsocketroom(socket);
   if (currentroom) socket.leave(currentroom);
 
   console.log('joined room ' + roomname);
+
+  var roompass = getroom(roomname).password;
+
+  if (roompass && sentpass != roompass) {
+    return Jsonerror(socket, 'Wrong password!');
+  }
   
   if (!history[roomname]) history[roomname] = [];
   if (callback) socket.join(roomname, callback);
@@ -193,7 +201,11 @@ function createroom(socket, roomname, roompass) {
   });
 }
 
-function getroom(socket) {
+function getroom(roomname) {
+  return io.sockets.adapter.rooms[roomname];
+}
+
+function getsocketroom(socket) {
   return Object.keys(socket.rooms)[1];
 }
 
