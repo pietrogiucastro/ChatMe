@@ -2,3 +2,4 @@
 - custom settings
 - search chat
 - chat password backend control
+- remove rooms if not used anymore

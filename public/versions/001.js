@@ -317,6 +317,9 @@ var chatOptions = {
     }
 }
 
+function leavechat(name) {
+    socket.emit('leave chat', name);
+}
 function switchchat(tab) {
     tab = $(tab);
     //switchchat('custom room', {name: roomname, pass: roompass});
@@ -344,6 +347,7 @@ function removeTab(el) {
 function leaveCustomChat(tab, callback) {
     callback = callback || function() {}
     prevTab = tab.prev();
+    leavechat(tab.data('name'));
     tab.remove();
     switchchat(prevTab);
 }
