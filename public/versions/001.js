@@ -23,7 +23,7 @@ wheel.style = 'width:40px;';
 var input;
 
 var tabs = $('<div id="chat-me-tabs"><div class="opts-chat-btn"><i class="fa fa-caret-down"></i></div><div class="chat-tab global-tab sel" data-name="global">Global</div><div class="chat-tab site-tab" data-name="site">Site</div></div>');
-
+var roomresultModel = $('<div class="chat-row"><span class="chat-name"></span> <span class="chat-online">online users: <span class="online-num"></span></span></div>')[0];
 // if user is running mozilla then use it's built-in WebSocket
 window.WebSocket = window.WebSocket || window.MozWebSocket;
 // if browser doesn't support WebSocket, just show
@@ -231,21 +231,37 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
         socket.on('history', function(messages) {
             setHistory(messages);
         });
-        socket.on('room created', function(room) {
+        socket.on('set room', function(room) {
             hideOpts();
             var newTab = $('<div class="chat-tab custom" data-name="' + room.name + '" data-pass="' + room.pass + '"><div class="tab-text">'+room.name+'</div><i class="fa fa-times remove-tab" onclick="removeTab(this)"></i></div>');
-            newTab.addClass(room.pass? 'pass' : 'free');
+            newTab.addClass(room.pass ? 'pass' : 'free');
             tabs.append(newTab);
             selectchat(room.name);
         });
+        socket.on('rooms result', function(result) {
+            $('.search-body').html('');
+            result.rooms.forEach(function(room) {
+                var roomresult = $(roomresultModel.cloneNode(true));
+                var typeclass = room.haspass ? 'pass' : 'free';
+
+                var htmlquery = '<span class="sel">' + result.query + '</span>';
+                var htmlname = room.name.replace(result.query, htmlquery);
+
+                roomresult.addClass(typeclass).find('.chat-name').html(htmlname).data('name', room.name);
+                roomresult.find('.online-num').html(room.users);
+
+                
+                $('.search-body').append(roomresult);
+            });
+        });
         socket.on('warning', function(warning) {
             switch (warning.type) {
-                case 'roomexists':
-                    console.log('room exists!');
-                    chatOptions.container.find('#addchat-message').html(warning.message);
+                case 'invalidroomname':
+                console.log('invalid room name');
+                chatOptions.container.find('#addchat-message').html(warning.message);
                 break;
                 default:
-                    console.log('unhandled warning type');
+                console.log('unhandled warning type');
             }
         });
 
@@ -292,8 +308,9 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
 var options = $('#chat-me-options');
 var chatOptions = {
     display : {
-        options : '<div class="options-block"><div class="option" onclick="chatOptions.addchatDis()">ADD CHAT</div><div class="option" onclick="chatOptions.settingsDis()">SETTINGS</div></div>',
-        settings : '<center>under construction.</center>',
+        options : '<div class="options-center"><div class="options-block"><div class="option" onclick="chatOptions.searchChatDis()">SEARCH CHAT</div><div class="option" onclick="chatOptions.addchatDis()">ADD CHAT</div><div class="option" onclick="chatOptions.settingsDis()">SETTINGS</div></div></div>',
+        settings : '<center style="margin-top:50px;">under construction.</center>',
+        searchchat: '<div class="search-chat"><center class="search-chat-cont"><input class="search-chat-input" placeholder="Search chat"><span class="search-chat-icon"></span></center><hr class="search-div"><div class="search-body"></div></div>',
         addchat : '<div class="add-chat"><center> <label>Chat name: <input id="addchat-name" type="text" maxlength="30"></label> <label>Chat password (empty for no password): <input id="addchat-pass" type="password" maxlength="15"></label> <button class="addchat-btn" onclick="chatOptions.submitChat()">ADD CHAT</button> <div id="addchat-message"></div> </center> </div>'
     },
 
@@ -304,6 +321,14 @@ var chatOptions = {
     },
     settingsDis: function() {
         chatOptions.container.html(chatOptions.display.settings);
+    },
+    searchChatDis: function() {
+        chatOptions.container.html(chatOptions.display.searchchat);
+        $('.search-body').append('<div class="chat-row free"><span class="chat-name">Lol123</span> <span class="chat-online">online users: <span class="online-num">3</span></span></div>');
+        $('.search-body').append('<div class="chat-row pass"><span class="chat-name">caiano</span> <span class="chat-online">online users: <span class="online-num">3</span></span></div>');
+        $('.search-body').append('<div class="chat-row free"><span class="chat-name">misara</span> <span class="chat-online">online users: <span class="online-num">3</span></span></div>');
+        $('.search-body').append('<div class="chat-row pass"><span class="chat-name">mortimer</span> <span class="chat-online">online users: <span class="online-num">3</span></span></div>');
+        $('.search-body').append('<div class="chat-row pass"><span class="chat-name">ciao</span> <span class="chat-online">online users: <span class="online-num">3</span></span></div>');
     },
     addchatDis : function() {
         chatOptions.container.html(chatOptions.display.addchat);
@@ -368,16 +393,27 @@ $(document).on('mouseenter', '.option', function() {
   $(this).css({
     'background-color': 'rgb(157,162,164)',
     'color'           : 'navajowhite'
-  });
+});
   $(this).animate({
     'font-size': '13px'
-  }, {queue: false, duration: 50});
+}, {queue: false, duration: 50});
 }).on('mouseleave', '.option', function() {
   $(this).css({
     'background-color': '',
     'color': ''
-  });
+});
   $(this).animate({
     'font-size': '11px'
-  }, {queue: false, duration: 50});
+}, {queue: false, duration: 50});
+});
+$(document).on('keyup', '.search-chat-input', function() {
+
+    console.log('as');
+
+    var roomname = $(this).val();
+    if (roomname.length >= 3) {
+        socket.emit('search rooms', roomname);
+    } else {
+        $('.search-body').empty();
+    }
 });

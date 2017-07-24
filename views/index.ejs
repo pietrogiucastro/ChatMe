@@ -67,8 +67,6 @@
     }
     #chat-me-options {
       position: fixed;
-      display: flex;
-      align-items: center;
       width: 100%;
       height: 100%;
       z-index: 99999999;
@@ -78,6 +76,12 @@
     }
     #options-content {
       width: 100%;
+      height: 100%;
+    }
+    #chat-me-options .options-center {
+      display: flex;
+      align-items: center;
+      height: 100%;
     }
     #chat-me-options .options-block {
       width: 70%;
@@ -128,7 +132,7 @@
     .add-chat {
       width: 70%;
       margin: auto;
-      margin-top: -15px;
+      margin-top: -13px;
     }
     .add-chat label {
       display: block;
@@ -155,6 +159,73 @@
       margin-top: 5px;
       height: 12px;
       color: darkred;
+    }
+    .search-chat {
+      box-sizing: border-box;
+      height: 100%;
+      padding: 15px 40px;
+    }
+    .search-chat-cont {
+      margin: auto;
+      display: flex;
+      align-items: center;
+      width: 200px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background-color: white;
+    }
+    .search-chat-input {
+      width: 100%;
+      outline: none;
+      border: 0;
+    }
+    .search-chat-icon:before {
+      font-family: fontawesome;
+      content: "\f002";
+      margin-left: 7px;
+    }
+    .search-div {
+      width: 80%;
+      margin-top: 12px;
+    }
+    .search-body {
+      overflow-y: scroll;
+      width: 80%;
+      margin: auto;
+    }
+    .search-chat .chat-row {
+      display: flex;
+      align-items: center;
+      padding: 5px;
+      cursor: pointer;
+    }
+    .search-chat .chat-row:hover {
+      background-color: #ddd;
+    }
+    .chat-row .chat-name {
+      font-weight: bold;
+      color: #32472d;
+      margin-right: auto;
+    }
+    .chat-row .chat-online {
+      color: #333;
+      float: right;
+      font-size: 13px;
+      margin-right: 5px;
+      font-weight: bold;
+    }
+    .chat-row.pass .chat-name:before {
+      font-family: fontawesome;
+      content: "\f023";
+      margin-right: 7px;
+    }
+    .chat-row.free .chat-name:before {
+      font-family: fontawesome;
+      content: "\f0ac";
+      margin-right: 7px;
+    }
+    .chat-name .sel {
+      color: #36ad3c;
     }
   </style>
 </head>

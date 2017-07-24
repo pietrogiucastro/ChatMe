@@ -3,3 +3,5 @@
 - search chat
 - chat password backend control
 - remove rooms if not used anymore
+- send message check if password is ok
+- overflow-x scroll in tabs

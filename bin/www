@@ -126,11 +126,32 @@ io.sockets.on('connection', function(socket) {
 
   socket.on('send message', function(msg) {
     var room = getsocketroom(socket);
-    console.log('sending message on room' + JSON.stringify(room));
+    console.log('sending message on room ' + JSON.stringify(room));
     io.sockets.in(room).emit('new message', {msg: {type: 'message', text: msg, time: new Date(), author: 'speep90'}});
     rooms[room].history.push({type: 'message', text: msg, time: new Date(), author: 'speep90'});
 
     rooms[room].history = rooms[room].history.slice(-100);
+  });
+
+  socket.on('search rooms', function(roomquery) {
+    if (roomquery.length < 3) {
+      console.log('roomquery query too short');
+      Jsonwarn(socket, 'invalidroomname', 'internal error. Try later.');
+      return;
+    }
+
+    var result = {query: roomquery, rooms: []};
+
+    Object.keys(rooms).forEach(function(thisroom) {
+      if (thisroom.match(roomquery)) {
+        var haspass = !!rooms[thisroom].password;
+        var users = 3;
+        result.rooms.push({name: thisroom, haspass: haspass, users: users});
+      }
+    });
+
+    socket.emit('rooms result', result);
+
   });
 
   socket.on('switch room', function(room) {
@@ -164,9 +185,14 @@ io.sockets.on('connection', function(socket) {
     var roomname = room.name.replace(/ /g, '');
     var roompass = room.pass;
 
+    if (roomname.length < 3) {
+      console.log(roomname + ": name too short");
+      Jsonwarn(socket, 'invalidroomname', 'the room already exists');
+      return;
+    }
     if (roomexists(roomname)) {
       console.log(roomname + ' room already exists');
-      Jsonwarn(socket, 'roomexists', 'the room already exists');
+      Jsonwarn(socket, 'invalidroomname', 'the room already exists');
       return;
     } // else
 
@@ -194,9 +220,9 @@ function joinroom(socket, roomname, sentpass, callback) {
       return Jsonerror(socket, 'Wrong password!');
     }
 
+  } else {
+    setroom(roomname);
   }
-  
-  if (!rooms[roomname].history) rooms[roomname].history = [];
 
   if (callback) socket.join(roomname, callback);
   else socket.join(roomname);
@@ -210,7 +236,7 @@ function createroom(socket, roomname, roompass) {
   joinroom(socket, roomname, null, function() {
     rooms[roomname].password = roompass;
     console.log('new room created: ' + roomname + ' password: ' + !!roompass);
-    socket.emit('room created', {name: roomname, pass: roompass});
+    socket.emit('set room', {name: roomname, pass: roompass});
   });
 }
 
@@ -229,7 +255,7 @@ function getrooms(callback) {
   callback(rooms);
 }
 function setroom(roomname, callback) {
-  rooms[roomname] = { history: []};
+  rooms[roomname] = { history: [] };
   if (callback) callback();
 }
 function getsocketroom(socket) {
