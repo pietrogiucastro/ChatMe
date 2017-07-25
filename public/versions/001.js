@@ -13,8 +13,8 @@ site = url_domain(site);
 
 var socket;
 var currentchat = 'global';
-var sess_token = '';
-var sess_user = '';
+var sess_token = $.cookie('sess_token');
+var sess_user = $.cookie('sess_user');
 var wheel   = document.createElement('img');
 wheel.id    = 'cm-wheel';
 wheel.src   = 'https://media.tenor.com/images/85d269dc9595a7bcf87fd0fa4039dd9f/tenor.gif';
@@ -92,7 +92,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     function postMessage() {
         var msg = input.val();
         if (!msg) return;
-        if (msg == 'quit') {
+        if (msg == '/quit') {
             InitDisplay();
             return;
         }
@@ -120,7 +120,11 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
         */
     }
     function InitDisplay() {
+        socket.disconnect();
+        socket = io();
         sess_token = ''; sess_user = '';
+        $.removeCookie('sess_token');
+        $.removeCookie('sess_user');
         $('#chat-me').find(tabs).remove();
         $('#chat-me-cont').html('');
         $('#chat-me-cont').append('<label for=cm-user class=cm-label>Username:</label><input type=text id=cm-user class=cm-input placeholder=Username></input><br>');
@@ -142,6 +146,8 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
                 if (e.result == 'success') {
                     sess_user = e.user;
                     sess_token = e.token;
+                    $.cookie('sess_token', sess_token);
+                    $.cookie('sess_user', sess_user);
                     LoggedDisplay();
                 }
                 else $('#cm-error-cont').html(e.error);
@@ -157,7 +163,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     }
     function RegisterDisplay(user, pass) {
         $('#chat-me').find(tabs).remove();
-        $('#chat-me-cont').html('<div style="font-weight:bold; color:white; margin-bottom:-8px">Register</div><br>');
+        $('#chat-me-cont').html('<div style="font-weight:bold; color:white; margin-bottom:-8px; margin-top:-36px;">Register</div><br>');
         $('#chat-me-cont').append('<div class=reg-up width:100%;"><label for=cm-user class=cm-label>Username:</label><input style="width:20%;" type=text id=cm-user class=cm-input placeholder=Username></input>  <label style="width:50px;" for=cm-email class=cm-label>E-mail:</label><input style="width:25%;" type=text id=cm-email class=cm-input placeholder=E-mail></input></div>');
         $('#chat-me-cont').append('<div class=reg-down width:100%;"><label for=cm-pass class=cm-label>Password:</label><input style="width:20%;" type=password id=cm-pass class=cm-input placeholder=Password></input>  <label style="width:50px;" for=cm-confirm class=cm-label>Confirm:</label><input style="width:25%;" type=password id=cm-confirm class=cm-input placeholder=Confirm></input></div>');
         $('#chat-me-cont').append('<div id=cm-error-cont></div>');
@@ -211,19 +217,13 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
 
         socket = io();
 
-        socket.on('error', function (error) {
-            // just in there were some problems with connection...
-            content.html($('<p>', {
-                text: 'Sorry, but there\'s some problem with your '
-                + 'connection or the server is down.'
-            }));
-        });
+        socket.emit('define user', sess_user);
+
         socket.on('new message', function (message) {
             // try to parse JSON message. Because we know that the server
             // always returns JSON this should work without any problem but
             // we should make sure that the message is not chunked or
             // otherwise damaged.
-            console.log(message);
             input.removeAttr('disabled');
             input.focus();
             setMessage(message.msg);
@@ -233,7 +233,8 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
         });
         socket.on('set room', function(room) {
             hideOpts();
-            var newTab = $('<div class="chat-tab custom" data-name="' + room.name + '" data-pass="' + room.pass + '"><div class="tab-text">'+room.name+'</div><i class="fa fa-times remove-tab" onclick="removeTab(this)"></i></div>');
+            $('.chat-tab[data-name='+room.name+']').remove();
+            var newTab = $('<div class="chat-tab custom" data-name="' + room.name + '" data-pass="' + room.pass + '"><div class="tab-text">'+room.name+'</div><i class="fa fa-times remove-tab"></i></div>');
             newTab.addClass(room.pass ? 'pass' : 'free');
             tabs.append(newTab);
             selectchat(room.name);
@@ -247,21 +248,38 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
                 var htmlquery = '<span class="sel">' + result.query + '</span>';
                 var htmlname = room.name.replace(result.query, htmlquery);
 
-                roomresult.addClass(typeclass).find('.chat-name').html(htmlname).data('name', room.name);
+                roomresult.addClass(typeclass).data('name', room.name).find('.chat-name').html(htmlname);
                 roomresult.find('.online-num').html(room.users);
 
                 
                 $('.search-body').append(roomresult);
             });
         });
-        socket.on('warning', function(warning) {
-            switch (warning.type) {
-                case 'invalidroomname':
-                console.log('invalid room name');
-                chatOptions.container.find('#addchat-message').html(warning.message);
-                break;
+        socket.on('jsonerror', function(error) {
+            switch (error.type) {
+                case 'stderror':
+                    console.log(error.message);
+                    break;
+                case 'wrongpassword':
+                    var tab = $('.chat-tab[data-name=' + error.data.name + ']');
+                    leaveChat(tab);
+                    $('#type-password-message').html(error.message);
+                    break;
                 default:
-                console.log('unhandled warning type');
+                    console.log('unhandled error type');
+            }
+        });
+        socket.on('jsonwarning', function(warning) {
+            switch (warning.type) {
+                case 'stdwarn':
+                    console.log(warning.message);
+                    break;
+                case 'invalidroomname':
+                    console.log('invalid room name');
+                    chatOptions.container.find('#addchat-message').html(warning.message);
+                    break;
+                default:
+                    console.log('unhandled warning type');
             }
         });
 
@@ -274,7 +292,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
         $('#chat-me-cont').html('');
         $('#chat-me-cont').append('<div id=cm-online> <ul id=cm-online-list></ul> </div>');
         $('#chat-me-cont').append('<div id=cm-chat> <ul id=cm-chat-list></ul> </div>');
-        $('#chat-me-cont').append('<div style="position:absolute; bottom:6px;"><input style="margin:0px; width:282px; padding:8px 10px;" type=text id=cm-message-input class=cm-input placeholder=Message></input><button style="margin-left:11px; height:25px; border-radius:2px" id=cm-send class=cm-button>Send</button></div>');
+        $('#chat-me-cont').append('<div style="position:absolute; bottom:6px;"><input style="margin:0px; width:282px; padding:8px 10px; height:9px;" type=text id=cm-message-input class=cm-input placeholder=Message></input><button style="margin-left:11px; height:25px; border-radius:2px" id=cm-send class=cm-button>Send</button></div>');
 
         $('#cm-chat-list').html(bigwheel);
 
@@ -288,16 +306,14 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
         $('#cm-send').click(postMessage);
     }
     !function main() {
-        /*css*/ $('head').append('<style type=text/css>body {margin: 0;} #chat-me {position:relative; overflow:hidden; height:100vh;} #chat-me-cont {box-sizing:border-box; padding:11px; padding-top:35px; width:100%; height:100%; background-color:rgba(50,80,100,1.0); border:1px solid rgb(100,130,100); border-radius:3px; font-family:tahoma !important;} .cm-label {display:inline-block; color:rgb(230,230,230); font-weight:bold; margin:10px; width:65px;} .cm-button {position:absolute; width:65px; font-size:10px; background-color:rgb(10,200,50); border:0px; box-shadow:none !important; cursor:pointer;} .cm-input {background-color:rgb(240,240,240)!important; border:0px; font-size:12px!important; width:230px; height:9px; border:0px; border-radius:2px;} #cm-error-cont {color:rgb(220,0,0); font-size:12px; margin-left:8px; margin-top:10px; max-width:200px} #cm-chat {width:81%; height:80%; background-color:rgb(240,240,240); border-radius:2px; overflow-y:scroll; float:right;} #cm-chat-list {margin:0; padding:5px; font-size:11px;} .cm-message-name {font-weight:bold; margin-right:10px; color:rgb(0,130,0);} .cm-message-text {display:block; margin-right:10px; max-width:310px; word-wrap:break-word; color:rgb(30,30,30)} .cm-message-date {float:right; color:grey;} #cm-online {width:60px; height:80%; float:left; margin-left:1px; background-color:rgb(240,240,240); overflow-y:scroll; border-radius:2px;} #cm-online-list {margin:0; padding:5px; font-size:11px;}</style>');
-    // /*css*/ $('head').append('<style type=text/css>#chat-me-cont {position:fixed; z-index:99999999999999999999; box-sizing:border-box; padding:11px; bottom:20px; top:20px; left:5%; width:404px; height:174px; background-color:rgba(50,80,100,1.0); border:1px solid rgb(100,130,100); border-radius:3px; font-family:tahoma !important;} .cm-label {display:inline-block; color:rgb(230,230,230); font-weight:bold; margin:10px; width:65px;} .cm-button {position:absolute; width:65px; font-size:10px; background-color:rgb(10,200,50); border:0px; box-shadow:none !important;} .cm-input {background-color:rgb(240,240,240)!important; border:0px; font-size:12px!important; width:230px; height:9px; border:0px; border-radius:2px;} #cm-error-cont {color:rgb(220,0,0); font-size:12px; margin-left:8px; margin-top:10px; max-width:200px} #cm-chat {width:81%; height:80%; background-color:rgb(240,240,240); border-radius:2px; overflow-y:scroll; float:right;} #cm-chat-list {margin:0; padding:5px; font-size:11px;} .cm-message-name {font-weight:bold; margin-right:10px; color:rgb(0,130,0);} .cm-message-text {display:block; margin-right:10px; max-width:310px; word-wrap:break-word; color:rgb(30,30,30)} .cm-message-date {float:right; color:grey;} #cm-online {width:60px; height:80%; float:left; margin-left:1px; background-color:rgb(240,240,240); overflow-y:scroll; border-radius:2px;} #cm-online-list {margin:0; padding:5px; font-size:11px;}</style>');
-        //  /*el*/  $('body').append('<div id=chat-me-cont></div>');
+        /*css*/ $('head').append('<style type=text/css>body {margin: 0;} #chat-me {position:relative; overflow:hidden; height:100vh;} #chat-me-cont {box-sizing:border-box; padding:11px; padding-top:35px; width:100%; height:100%; background-color:rgba(50,80,100,1.0); border:1px solid rgb(100,130,100); border-radius:3px; font-family:tahoma !important;} .cm-label {display:inline-block; color:rgb(230,230,230); font-weight:bold; margin:10px; width: 25%;} .cm-button {position:absolute; width:65px; font-size:10px; background-color:rgb(10,200,50); border:0px; box-shadow:none !important; cursor:pointer; padding: 6px 0; border-radius: 2px;} .cm-input {background-color:rgb(240,240,240)!important; border:0px; font-size:12px!important; width:230px; border:0px; border-radius:2px;} #cm-error-cont {color:rgb(220,0,0); font-size:12px; margin-left:8px; margin-top:10px; max-width:200px} #cm-chat {width:81%; height:80%; background-color:rgb(240,240,240); border-radius:2px; overflow-y:scroll; float:right;} #cm-chat-list {margin:0; padding:5px; font-size:11px;} .cm-message-name {font-weight:bold; margin-right:10px; color:rgb(0,130,0);} .cm-message-text {display:block; margin-right:10px; max-width:310px; word-wrap:break-word; color:rgb(30,30,30)} .cm-message-date {float:right; color:grey;} #cm-online {width:60px; height:80%; float:left; margin-left:1px; background-color:rgb(240,240,240); overflow-y:scroll; border-radius:2px;} #cm-online-list {margin:0; padding:5px; font-size:11px;}</style>');
         if (!$('#chat-me-cont').length) return;
 
-        sess_user = "speep90";
+/*        sess_user = "speep90";
         LoggedDisplay();
 
         return;
-
+*/
 
         if (!sess_token || !sess_user) InitDisplay();
         else LoggedDisplay();
@@ -310,8 +326,8 @@ var chatOptions = {
     display : {
         options : '<div class="options-center"><div class="options-block"><div class="option" onclick="chatOptions.searchChatDis()">SEARCH CHAT</div><div class="option" onclick="chatOptions.addchatDis()">ADD CHAT</div><div class="option" onclick="chatOptions.settingsDis()">SETTINGS</div></div></div>',
         settings : '<center style="margin-top:50px;">under construction.</center>',
-        searchchat: '<div class="search-chat"><center class="search-chat-cont"><input class="search-chat-input" placeholder="Search chat"><span class="search-chat-icon"></span></center><hr class="search-div"><div class="search-body"></div></div>',
-        addchat : '<div class="add-chat"><center> <label>Chat name: <input id="addchat-name" type="text" maxlength="30"></label> <label>Chat password (empty for no password): <input id="addchat-pass" type="password" maxlength="15"></label> <button class="addchat-btn" onclick="chatOptions.submitChat()">ADD CHAT</button> <div id="addchat-message"></div> </center> </div>'
+        searchchat: '<div class="search-chat"><div id="type-password-mod" style="display:none"><i class="fa fa-remove hidetypepass" onclick="hideTypePass()"></i><div class="type-password-cont"><div id="type-password-text">password for room <div id="type-password-name"></div></div><input id="type-password" type="password" placeholder="password" autofocus="true"><div id="type-password-message"></div></div></div><center class="search-chat-cont"><input class="search-chat-input" placeholder="Search chat"><span class="search-chat-icon"></span></center><hr class="search-div"><div class="search-body"></div></div>',
+        addchat : '<div class="add-chat"> <center> <label>Chat name: <input id="addchat-name" type="text" maxlength="30"></label> <label>Chat password (empty for no password): <input id="addchat-pass" type="password" maxlength="15"></label> <button class="addchat-btn" onclick="chatOptions.submitChat()">ADD CHAT</button> <div id="addchat-message"></div> </center> </div>'
     },
 
     container : $('#options-content'),
@@ -324,11 +340,6 @@ var chatOptions = {
     },
     searchChatDis: function() {
         chatOptions.container.html(chatOptions.display.searchchat);
-        $('.search-body').append('<div class="chat-row free"><span class="chat-name">Lol123</span> <span class="chat-online">online users: <span class="online-num">3</span></span></div>');
-        $('.search-body').append('<div class="chat-row pass"><span class="chat-name">caiano</span> <span class="chat-online">online users: <span class="online-num">3</span></span></div>');
-        $('.search-body').append('<div class="chat-row free"><span class="chat-name">misara</span> <span class="chat-online">online users: <span class="online-num">3</span></span></div>');
-        $('.search-body').append('<div class="chat-row pass"><span class="chat-name">mortimer</span> <span class="chat-online">online users: <span class="online-num">3</span></span></div>');
-        $('.search-body').append('<div class="chat-row pass"><span class="chat-name">ciao</span> <span class="chat-online">online users: <span class="online-num">3</span></span></div>');
     },
     addchatDis : function() {
         chatOptions.container.html(chatOptions.display.addchat);
@@ -342,20 +353,15 @@ var chatOptions = {
     }
 }
 
-function leavechat(name) {
-    socket.emit('leave chat', name);
-}
 function switchchat(tab) {
     tab = $(tab);
-    //switchchat('custom room', {name: roomname, pass: roompass});
     roomname = tab.data('name');
     roompass = tab.data('pass');
+    console.log(roompass);
     var room = {
         name: roomname,
         pass: roompass
     }
-    //currentchat = chat;
-    //room.type = chat;
     selectchat(roomname);
     socket.emit('switch room', room);
 }
@@ -366,20 +372,19 @@ function selectchat(chatname) {
 }
 
 function removeTab(el) {
-    leaveCustomChat($(el).parent());
+    leaveChat($(el).parent());
 }
 
-function leaveCustomChat(tab, callback) {
+function leaveChat(tab, callback) {
     callback = callback || function() {}
     prevTab = tab.prev();
-    leavechat(tab.data('name'));
     tab.remove();
     switchchat(prevTab);
 }
 
 $(document).on('click', '.chat-tab', function(e) {
-    if ($(e.target).is('.remove-tab')) return;
-    switchchat(this);
+    if ($(e.target).is('.remove-tab')) removeTab(e.target);
+    else switchchat(this);
 });
 
 function hideOpts() {
@@ -407,13 +412,45 @@ $(document).on('mouseenter', '.option', function() {
 }, {queue: false, duration: 50});
 });
 $(document).on('keyup', '.search-chat-input', function() {
-
-    console.log('as');
-
     var roomname = $(this).val();
     if (roomname.length >= 3) {
         socket.emit('search rooms', roomname);
     } else {
         $('.search-body').empty();
     }
+});
+
+function showTypePass(roomname) {
+    $('#type-password-name').html(roomname);
+    $('#type-password-mod').data('name', roomname).show();
+}
+
+function hideTypePass() {
+    $('#type-password-message').empty();
+    $('#type-password-mod').hide();
+}
+
+function joinPassRoom() {
+    $('#type-password-message').empty();
+    var roomname = $('#type-password-mod').data('name');
+    var roompass = $('#type-password').val();
+    var room = {
+        name: roomname,
+        pass: roompass
+    };
+    socket.emit('join room', room);
+}
+
+$(document).on('click', '.chat-row', function() {
+    roomname = $(this).data('name');
+    var room = {name: roomname};
+    if ($(this).is('.free')) {
+        socket.emit('join room', room);
+    }
+    else {
+        showTypePass(roomname);
+    }
+}).on('keydown', '#type-password', function(e) {
+    e = e || event; // to deal with IE
+    if (e.keyCode == 13) joinPassRoom();
 });

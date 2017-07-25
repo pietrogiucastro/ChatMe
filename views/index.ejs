@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <title>WebSockets - Simple chat</title>
   <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
   <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
   <style type="text/css">
     #chat-me-tabs {
@@ -226,6 +227,47 @@
     }
     .chat-name .sel {
       color: #36ad3c;
+    }
+    #type-password-mod {
+      position: fixed;
+      display: flex;
+      align-items: center;
+      left: 20%; top: 15%;
+      width: 60%; height: 70%;
+      background-color: rgba(200, 200, 200, 1);
+      border: 1px solid #999;
+    }
+    #type-password-mod .hidetypepass {
+      position: absolute;
+      right: 3px;
+      top: 3px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    #type-password-mod .type-password-cont {
+      margin: 10px auto;
+    }
+    #type-password-text {
+      text-align: center;
+      margin-bottom: 10px;
+      font-weight: bold;
+      color: #444;
+    }
+    #type-password-name {
+      color: green;
+    }
+    #type-password {
+      border-radius: 5px;
+      line-height: 20px;
+      border: 0;
+      text-align: center;
+    }
+    #type-password-message {
+      color: darkred;
+      text-align: center;
+      height: 20px;
+      line-height: 20px;
+      margin-top: 10px;
     }
   </style>
 </head>

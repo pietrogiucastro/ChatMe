@@ -1,7 +1,10 @@
 - take window screenshots and send
 - custom settings
-- search chat
-- chat password backend control
 - remove rooms if not used anymore
-- send message check if password is ok
 - overflow-x scroll in tabs
+- substitute tab data-name and data-pass with just id and the password will be stored in the cookies as a token
+- user and rooms in db
+- sort rooms result by relevance
+- prevent global room to appear in search
+- query rooms from db
+- change font

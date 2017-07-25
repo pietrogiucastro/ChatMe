@@ -108,7 +108,7 @@ io.sockets.on('connection', function(socket) {
 
   // init connection //
 
-  joinroom(socket, r_global);
+  switchroom(socket, r_global);
   
   //connections.push(socket);
 
@@ -124,152 +124,178 @@ io.sockets.on('connection', function(socket) {
     console.log('user disconnected');
   });
 
-  socket.on('send message', function(msg) {
-    var room = getsocketroom(socket);
-    console.log('sending message on room ' + JSON.stringify(room));
-    io.sockets.in(room).emit('new message', {msg: {type: 'message', text: msg, time: new Date(), author: 'speep90'}});
-    rooms[room].history.push({type: 'message', text: msg, time: new Date(), author: 'speep90'});
-
-    rooms[room].history = rooms[room].history.slice(-100);
-  });
-
-  socket.on('search rooms', function(roomquery) {
-    if (roomquery.length < 3) {
-      console.log('roomquery query too short');
-      Jsonwarn(socket, 'invalidroomname', 'internal error. Try later.');
-      return;
-    }
-
-    var result = {query: roomquery, rooms: []};
-
-    Object.keys(rooms).forEach(function(thisroom) {
-      if (thisroom.match(roomquery)) {
-        var haspass = !!rooms[thisroom].password;
-        var users = 3;
-        result.rooms.push({name: thisroom, haspass: haspass, users: users});
-      }
-    });
-
-    socket.emit('rooms result', result);
-
-  });
-
-  socket.on('switch room', function(room) {
-
-    if (typeof room.name !== 'string') {
+  socket.on('define user', function(token) {
+    if (!token) {
       Jsonerror(socket);
       return;
     }
+    socket.name = token; // change with db call for username
+    socket.token = token;
 
-    if (!room.pass) room.pass = '';
+    socket.on('send message', function(msg) {
+      var room = getsocketroom(socket);
+      console.log('sending message on room ' + JSON.stringify(room));
+      var msgobj = {type: 'message', text: msg, time: new Date(), author: socket.name};
+      io.sockets.in(room).emit('new message', {msg: msgobj});
+      rooms[room].history.push(msgobj);
 
-    room.name = room.name ? room.name.replace(/ /g, '') : '';
-    switch(room.name) {
+      rooms[room].history = rooms[room].history.slice(-100);
+    });
 
-      case 'global':
-        joinroom(socket, 'global');
-        break;
+    socket.on('search rooms', function(roomquery) {
+      if (roomquery.length < 3) {
+        console.log('roomquery query too short');
+        Jsonwarn(socket, 'invalidroomname', 'internal error. Try later.');
+        return;
+      }
 
-      case 'site':
-        joinroom(socket, room.name);
-        break;
+      var result = {query: roomquery, rooms: []};
 
-      default: //custom room
-        var roomname = room.name;
-        var roompass = room.pass;
-        joinroom(socket, roomname, roompass);
-    }
+      Object.keys(rooms).forEach(function(thisroom) {
+        if (thisroom.match(roomquery) && thisroom != 'global') {
+          var haspass = !!rooms[thisroom].password;
+          var users = 3;
+          result.rooms.push({name: thisroom, haspass: haspass, users: users});
+        }
+      });
+
+      socket.emit('rooms result', result);
+
+    });
+
+    socket.on('switch room', function(room) {
+
+      if (typeof room.name !== 'string') {
+        Jsonerror(socket);
+        return;
+      }
+
+      if (!room.pass) room.pass = '';
+
+      room.name = room.name ? room.name.replace(/ /g, '') : '';
+      switch(room.name) {
+
+        case 'global':
+          switchroom(socket, 'global');
+          break;
+
+        case 'site':
+          switchroom(socket, room.name);
+          break;
+
+        default: //custom room
+          switchroom(socket, room.name, room.pass);
+      }
+
+    });
+
+    socket.on('join room', function(room) {
+      if(!room.name) {
+        Jsonerror(socket);
+        return;
+      }
+      switchroom(socket, room.name, room.pass, function() {
+        socket.emit('set room', {name: room.name, pass: room.pass});
+      });
+    });
+
+
+    socket.on('create room', function(room) {
+      if (!room.name) {
+        Jsonerror(socket);
+        return;
+      }
+      var roomname = room.name.replace(/ /g, '');
+      var roompass = room.pass;
+
+      if (roomname.length < 3) {
+        console.log(roomname + ": name too short");
+        Jsonwarn(socket, 'invalidroomname', 'name too short!');
+        return;
+      }
+      if (roomexists(roomname)) {
+        console.log(roomname + ' room already exists');
+        Jsonwarn(socket, 'invalidroomname', 'the room already exists');
+        return;
+      } // else
+
+      createroom(socket, roomname, roompass);
+    });
+
+    socket.on('leave room', function(roomname) {
+      leaveroom(roomname);
+    });
+
+    // ================ //
+
   });
 
-  socket.on('create room', function(room) {
-    var roomname = room.name.replace(/ /g, '');
-    var roompass = room.pass;
+  function switchroom(socket, roomname, sentpass, callback) {
+    var currentroom = getsocketroom(socket);
+    if (currentroom) socket.leave(currentroom);
 
-    if (roomname.length < 3) {
-      console.log(roomname + ": name too short");
-      Jsonwarn(socket, 'invalidroomname', 'the room already exists');
-      return;
-    }
     if (roomexists(roomname)) {
-      console.log(roomname + ' room already exists');
-      Jsonwarn(socket, 'invalidroomname', 'the room already exists');
-      return;
-    } // else
 
-    createroom(socket, roomname, roompass);
-  });
+      var roompass = getroom(roomname).password;
 
-  socket.on('leave room', function(roomname) {
-    leaveroom(roomname);
-  });
+      if (roompass && sentpass != roompass) {
+        Jsonerror(socket, 'wrongpassword', 'Wrong password!', {name : roomname});
+        return;
+      }
 
-  // ================ //
-
-});
-
-function joinroom(socket, roomname, sentpass, callback) {
-  var currentroom = getsocketroom(socket);
-  if (currentroom) socket.leave(currentroom);
-
-  if (roomexists(roomname)) {
-
-
-    var roompass = getroom(roomname).password;
-
-    if (roompass && sentpass != roompass) {
-      return Jsonerror(socket, 'Wrong password!');
+    } else {
+      setroom(roomname);
     }
 
-  } else {
-    setroom(roomname);
+    if (callback) socket.join(roomname, callback);
+    else socket.join(roomname);
+
+    console.log('joined room ' + roomname);
+
+    socket.emit('history', rooms[roomname].history);
   }
 
-  if (callback) socket.join(roomname, callback);
-  else socket.join(roomname);
+  function createroom(socket, roomname, roompass) {
+    switchroom(socket, roomname, null, function() {
+      rooms[roomname].password = roompass;
+      console.log('new room created: ' + roomname + ' password: ' + !!roompass);
+      socket.emit('set room', {name: roomname, pass: roompass});
+    });
+  }
 
-  console.log('joined room ' + roomname);
+  function leaveroom(socket, roomname) {
+    socket.leave(roomname, function() {
+      console.log('left room.' + roomname);
+      // delete user joined rooms in db
+    });
+  }
 
-  socket.emit('history', rooms[roomname].history);
-}
+  function getroom(roomname) {
+    return rooms[roomname];
+  }
 
-function createroom(socket, roomname, roompass) {
-  joinroom(socket, roomname, null, function() {
-    rooms[roomname].password = roompass;
-    console.log('new room created: ' + roomname + ' password: ' + !!roompass);
-    socket.emit('set room', {name: roomname, pass: roompass});
-  });
-}
+  function getrooms(callback) {
+    callback(rooms);
+  }
+  function setroom(roomname, callback) {
+    rooms[roomname] = { history: [] };
+    if (callback) callback();
+  }
+  function getsocketroom(socket) {
+    return Object.keys(socket.rooms)[1];
+  }
 
-function leaveroom(socket, roomname) {
-  socket.leave(roomname, function() {
-    console.log('left room.' + roomname);
-    // delete user joined rooms in db
-  });
-}
+  function roomexists(roomname) {
+    return !!rooms[roomname];
+  }
 
-function getroom(roomname) {
-  return rooms[roomname];
-}
+  function Jsonerror(socket, type='stderror', message='Internal error. Retry later.', data = {}) {
+    socket.emit('jsonerror', {type: type, message: message, data: data});
+  }
 
-function getrooms(callback) {
-  callback(rooms);
-}
-function setroom(roomname, callback) {
-  rooms[roomname] = { history: [] };
-  if (callback) callback();
-}
-function getsocketroom(socket) {
-  return Object.keys(socket.rooms)[1];
-}
+  function Jsonwarn(socket, type='stdwarn', message='') {
+    socket.emit('jsonwarning', {type: type, message: message});
+  }
 
-function roomexists(roomname) {
-  return !!rooms[roomname];
-}
 
-function Jsonerror(socket, message='Internal error. Retry later.') {
-  socket.emit('error', message);
-}
-
-function Jsonwarn(socket, type='stdwarn', message='') {
-  socket.emit('warning', {type: type, message: message});
-}
+});
