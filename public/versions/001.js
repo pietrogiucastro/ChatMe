@@ -120,8 +120,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
         */
     }
     function InitDisplay() {
-        socket.disconnect();
-        socket = io();
+        if (socket) socket.disconnect();
         sess_token = ''; sess_user = '';
         $.removeCookie('sess_token');
         $.removeCookie('sess_user');
