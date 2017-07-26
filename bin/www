@@ -100,9 +100,15 @@ var server = https.createServer(options, app);
 var users = [];
 var connections = [];
 var history = {};
-var rooms = {};
 var io = require('socket.io').listen(server);
 var r_global = 'global';
+
+var rooms = {};
+var customrooms = [];
+// init rooms //
+rooms.global = {
+  history: []
+}
 
 io.sockets.on('connection', function(socket) {
 
@@ -134,6 +140,10 @@ io.sockets.on('connection', function(socket) {
 
     socket.on('send message', function(msg) {
       var room = getsocketroom(socket);
+      if (!roomexists(room)) {
+        Jsonerror(socket, 'stderror', 'room does not exist!');
+        return;
+      }
       console.log('sending message on room ' + JSON.stringify(room));
       var msgobj = {type: 'message', text: msg, time: new Date(), author: socket.name};
       io.sockets.in(room).emit('new message', {msg: msgobj});
@@ -145,13 +155,13 @@ io.sockets.on('connection', function(socket) {
     socket.on('search rooms', function(roomquery) {
       if (roomquery.length < 3) {
         console.log('roomquery query too short');
-        Jsonwarn(socket, 'invalidroomname', 'internal error. Try later.');
+        Jsonwarn(socket, 'invalidroomname');
         return;
       }
 
       var result = {query: roomquery, rooms: []};
 
-      Object.keys(rooms).forEach(function(thisroom) {
+      customrooms.forEach(function(thisroom) {
         if (thisroom.match(roomquery) && thisroom != 'global') {
           var haspass = !!rooms[thisroom].password;
           var users = 3;
@@ -173,18 +183,23 @@ io.sockets.on('connection', function(socket) {
       if (!room.pass) room.pass = '';
 
       room.name = room.name ? room.name.replace(/ /g, '') : '';
-      switch(room.name) {
+      switch(room.type) {
 
         case 'global':
           switchroom(socket, 'global');
           break;
 
         case 'site':
-          switchroom(socket, room.name);
+          switchsiteroom(socket, room.name);
           break;
 
-        default: //custom room
+        case 'custom': //custom room
           switchroom(socket, room.name, room.pass);
+          break;
+
+        default:
+          Jsonerror(socket);
+          return;
       }
 
     });
@@ -194,7 +209,7 @@ io.sockets.on('connection', function(socket) {
         Jsonerror(socket);
         return;
       }
-      switchroom(socket, room.name, room.pass, function() {
+      switchroom(socket, room.name, room.pass, false, function() {
         socket.emit('set room', {name: room.name, pass: room.pass});
       });
     });
@@ -210,7 +225,12 @@ io.sockets.on('connection', function(socket) {
 
       if (roomname.length < 3) {
         console.log(roomname + ": name too short");
-        Jsonwarn(socket, 'invalidroomname', 'name too short!');
+        Jsonwarn(socket, 'invalidroomname', 'name is too short!');
+        return;
+      }
+      if (roomname.startsWith('site://') || roomname.startsWith('http://') || roomname.startsWith('https://') || roomname.startsWith('www.')) {
+        console.log(roomname + ": invalid name");
+        Jsonwarn(socket, 'invalidroomname', 'invalid name!');
         return;
       }
       if (roomexists(roomname)) {
@@ -230,21 +250,35 @@ io.sockets.on('connection', function(socket) {
 
   });
 
-  function switchroom(socket, roomname, sentpass, callback) {
+  function switchsiteroom(socket, roomname) {
+    if (!roomexists(roomname)) setsiteroom(roomname);
+    socket.join(roomname);
+    console.log('joined site room ' + roomname);
+    socket.emit('history', rooms[roomname].history);
+  }
+
+  function switchroom(socket, roomname, sentpass, forcecreate, callback) {
     var currentroom = getsocketroom(socket);
     if (currentroom) socket.leave(currentroom);
 
-    if (roomexists(roomname)) {
+    if (!roomexists(roomname)) {
+
+      if (!forcecreate) {
+        console.log('error! room  %s does not exist', roomname);
+        Jsonerror(socket, 'stderror', 'room does not exist!');
+        return;
+      } else {
+        setroom(roomname, sentpass);
+      }
+
+    } else {
 
       var roompass = getroom(roomname).password;
-
       if (roompass && sentpass != roompass) {
         Jsonerror(socket, 'wrongpassword', 'Wrong password!', {name : roomname});
         return;
       }
 
-    } else {
-      setroom(roomname);
     }
 
     if (callback) socket.join(roomname, callback);
@@ -256,8 +290,8 @@ io.sockets.on('connection', function(socket) {
   }
 
   function createroom(socket, roomname, roompass) {
-    switchroom(socket, roomname, null, function() {
-      rooms[roomname].password = roompass;
+    setroom(roomname, roompass);
+    switchroom(socket, roomname, roompass, false, function() {
       console.log('new room created: ' + roomname + ' password: ' + !!roompass);
       socket.emit('set room', {name: roomname, pass: roompass});
     });
@@ -267,6 +301,12 @@ io.sockets.on('connection', function(socket) {
     socket.leave(roomname, function() {
       console.log('left room.' + roomname);
       // delete user joined rooms in db
+
+      // delete room if no users are in the room
+      // delete customrooms[romname];
+      //
+      /*var index = customrooms.indexOf(5);
+      if (index + 1) customrooms.splice(index, 1);*/
     });
   }
 
@@ -277,9 +317,13 @@ io.sockets.on('connection', function(socket) {
   function getrooms(callback) {
     callback(rooms);
   }
-  function setroom(roomname, callback) {
-    rooms[roomname] = { history: [] };
+  function setroom(roomname, roompass, callback) {
+    rooms[roomname] = { history: [], password: roompass };
+    customrooms.push(roomname);
     if (callback) callback();
+  }
+  function setsiteroom(roomname) {
+    rooms[roomname] = { history: [] };
   }
   function getsocketroom(socket) {
     return Object.keys(socket.rooms)[1];
@@ -293,7 +337,7 @@ io.sockets.on('connection', function(socket) {
     socket.emit('jsonerror', {type: type, message: message, data: data});
   }
 
-  function Jsonwarn(socket, type='stdwarn', message='') {
+  function Jsonwarn(socket, type='stdwarn', message='Internal error. Retry later.') {
     socket.emit('jsonwarning', {type: type, message: message});
   }
 

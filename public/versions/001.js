@@ -4,12 +4,12 @@ var version = '001';
 
 var site = (window.location != window.parent.location) ? document.referrer : document.location.href;
 function url_domain(data) {
-  var    a      = document.createElement('a');
+  var a = document.createElement('a');
   a.href = data;
   return a.hostname;
 }
 
-site = url_domain(site);
+site = 'site://' + url_domain(site);
 
 var socket;
 var currentchat = 'global';
@@ -22,8 +22,8 @@ wheel.style = 'width:40px;';
 
 var input;
 
-var tabs = $('<div id="chat-me-tabs"><div class="opts-chat-btn"><i class="fa fa-caret-down"></i></div><div class="chat-tab global-tab sel" data-name="global">Global</div><div class="chat-tab site-tab" data-name="site">Site</div></div>');
-var roomresultModel = $('<div class="chat-row"><span class="chat-name"></span> <span class="chat-online">online users: <span class="online-num"></span></span></div>')[0];
+var tabs = $('<div id="chat-me-tabs"><div class="opts-chat-btn"><i class="fa fa-caret-down"></i></div><div class="chat-tab global-tab sel" data-name="global" data-type="global">Global</div><div class="chat-tab site-tab" data-type="site">Site</div></div>');
+var roomresultModel = $('<div class="chat-row"><span class="chat-name"></span> <span class="chat-online"><i class="fa fa-user" style="margin-right:4px;"></i><span class="online-num"></span></span></div>')[0];
 // if user is running mozilla then use it's built-in WebSocket
 window.WebSocket = window.WebSocket || window.MozWebSocket;
 // if browser doesn't support WebSocket, just show
@@ -233,13 +233,18 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
         socket.on('set room', function(room) {
             hideOpts();
             $('.chat-tab[data-name='+room.name+']').remove();
-            var newTab = $('<div class="chat-tab custom" data-name="' + room.name + '" data-pass="' + room.pass + '"><div class="tab-text">'+room.name+'</div><i class="fa fa-times remove-tab"></i></div>');
+            var newTab = $('<div class="chat-tab custom" data-type="custom" data-name="' + room.name + '" data-pass="' + room.pass + '"><div class="tab-text">'+room.name+'</div><i class="fa fa-times remove-tab"></i></div>');
             newTab.addClass(room.pass ? 'pass' : 'free');
             tabs.append(newTab);
             selectchat(room.name);
         });
         socket.on('rooms result', function(result) {
+            hideOptsWait();
             $('.search-body').html('');
+            if (!result.rooms.length) {
+                $('.search-body').append('<center style="color:darkgrey; font-weight:bold; margin-top:25px;"><i>no results found</i></center>');
+                return;
+            }
             result.rooms.forEach(function(room) {
                 var roomresult = $(roomresultModel.cloneNode(true));
                 var typeclass = room.haspass ? 'pass' : 'free';
@@ -260,6 +265,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
                     console.log(error.message);
                     break;
                 case 'wrongpassword':
+                hideOptsWait();
                     var tab = $('.chat-tab[data-name=' + error.data.name + ']');
                     leaveChat(tab);
                     $('#type-password-message').html(error.message);
@@ -274,6 +280,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
                     console.log(warning.message);
                     break;
                 case 'invalidroomname':
+                    hideOptsWait();
                     console.log('invalid room name');
                     chatOptions.container.find('#addchat-message').html(warning.message);
                     break;
@@ -321,18 +328,24 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
 })();
 
 var options = $('#chat-me-options');
+var spinner = $('<center id="opts-spinner-cont" style="display:none;"><div class="opts-spinner"></div></center>');
+
+options.prepend(spinner);
+
 var chatOptions = {
     display : {
         options : '<div class="options-center"><div class="options-block"><div class="option" onclick="chatOptions.searchChatDis()">SEARCH CHAT</div><div class="option" onclick="chatOptions.addchatDis()">ADD CHAT</div><div class="option" onclick="chatOptions.settingsDis()">SETTINGS</div></div></div>',
         settings : '<center style="margin-top:50px;">under construction.</center>',
-        searchchat: '<div class="search-chat"><div id="type-password-mod" style="display:none"><i class="fa fa-remove hidetypepass" onclick="hideTypePass()"></i><div class="type-password-cont"><div id="type-password-text">password for room <div id="type-password-name"></div></div><input id="type-password" type="password" placeholder="password" autofocus="true"><div id="type-password-message"></div></div></div><center class="search-chat-cont"><input class="search-chat-input" placeholder="Search chat"><span class="search-chat-icon"></span></center><hr class="search-div"><div class="search-body"></div></div>',
-        addchat : '<div class="add-chat"> <center> <label>Chat name: <input id="addchat-name" type="text" maxlength="30"></label> <label>Chat password (empty for no password): <input id="addchat-pass" type="password" maxlength="15"></label> <button class="addchat-btn" onclick="chatOptions.submitChat()">ADD CHAT</button> <div id="addchat-message"></div> </center> </div>'
+        searchchat: '<div class="search-chat"><div id="type-password-mod" style="display:none"><i class="fa fa-remove hidetypepass" onclick="hideTypePass()"></i><div class="type-password-cont"><div id="type-password-text">password for room <div id="type-password-name"></div></div><input id="type-password" type="password" placeholder="password" autofocus="true"><div id="type-password-message"></div></div></div><center class="search-chat-cont"><input class="search-chat-input" placeholder="Search chat" autofocus="true"><span class="search-chat-icon"></span></center><hr class="search-div"><div class="search-body"></div></div>',
+        addchat : '<div class="add-chat"> <center> <label>Chat name: <input id="addchat-name" type="text" maxlength="30"></label> <label>Chat password (empty for no password): <input id="addchat-pass" type="password" maxlength="15"></label> <button class="addchat-btn" onclick="chatOptions.submitChat()">ADD CHAT</button> <div id="addchat-message"></div> </center> </div>',
     },
 
     container : $('#options-content'),
+    spinner: null,
 
     initOptions : function() {
         chatOptions.container.html(chatOptions.display.options);
+        spinner.hide();
     },
     settingsDis: function() {
         chatOptions.container.html(chatOptions.display.settings);
@@ -347,27 +360,33 @@ var chatOptions = {
         chatOptions.container.find('#addchat-message').html('');
         var chatname = chatOptions.container.find('#addchat-name').val();
         var chatpass = chatOptions.container.find('#addchat-pass').val();
-
+        showOptsWait('full');
         socket.emit('create room' , {name: chatname, pass: chatpass});
     }
 }
 
 function switchchat(tab) {
     tab = $(tab);
-    roomname = tab.data('name');
+    roomtype = tab.data('type');
+    roomname = roomtype == 'site' ? site : tab.data('name');
     roompass = tab.data('pass');
-    console.log(roompass);
+    
     var room = {
+        type: roomtype,
         name: roomname,
         pass: roompass
     }
-    selectchat(roomname);
+    selectchat(tab);
     socket.emit('switch room', room);
 }
 
-function selectchat(chatname) {
+function selectchat(chat) {
     tabs.find('.chat-tab').removeClass('sel');
-    tabs.find('.chat-tab[data-name=' + chatname + ']').addClass('sel');
+    if (typeof chat == 'string') {
+        tabs.find('.chat-tab[data-name=' + chat + ']').addClass('sel');
+    } else if (typeof chat == 'object') {
+        tabs.find(chat).addClass('sel');
+    }
 }
 
 function removeTab(el) {
@@ -383,7 +402,7 @@ function leaveChat(tab, callback) {
 
 $(document).on('click', '.chat-tab', function(e) {
     if ($(e.target).is('.remove-tab')) removeTab(e.target);
-    else switchchat(this);
+    else if ($(this).is(':not(.sel)')) switchchat(this);
 });
 
 function hideOpts() {
@@ -412,12 +431,21 @@ $(document).on('mouseenter', '.option', function() {
 });
 $(document).on('keyup', '.search-chat-input', function() {
     var roomname = $(this).val();
+    $('.search-body').empty();
     if (roomname.length >= 3) {
+        showOptsWait('light');
         socket.emit('search rooms', roomname);
     } else {
         $('.search-body').empty();
     }
 });
+function showOptsWait(typeclass='full') { //typeclass can be 'full' or 'light'
+    spinner.removeClass('full light').addClass(typeclass).show();
+}
+
+function hideOptsWait() {
+    spinner.hide();
+}
 
 function showTypePass(roomname) {
     $('#type-password-name').html(roomname);

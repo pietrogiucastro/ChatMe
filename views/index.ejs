@@ -123,6 +123,7 @@
     }
     #chat-me-options .close-options {
       position: absolute;
+      z-index: 100;
       top: 5px;
       right: 5px;
       cursor: pointer;
@@ -190,7 +191,6 @@
       margin-top: 12px;
     }
     .search-body {
-      overflow-y: scroll;
       width: 80%;
       margin: auto;
     }
@@ -268,6 +268,25 @@
       height: 20px;
       line-height: 20px;
       margin-top: 10px;
+    }
+    #opts-spinner-cont {
+      position: fixed;
+      left: 0%; top: 0%;
+      width: 100%; height: 100%;
+      padding-top: 15%;
+    }
+    .opts-spinner {
+      background-image: url('/images/spinner1.gif');
+      background-size: 100% 100%;
+      width: 80px;
+      height: 80px;
+    }
+    #opts-spinner-cont.light {
+      z-index: -1;
+    }
+    #opts-spinner-cont.full {
+      z-index: 1;
+      background-color: rgba(80, 80, 80, 0.4);
     }
   </style>
 </head>
