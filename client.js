@@ -22,7 +22,7 @@ var connection;
 var sess_token = GM_getValue('sess_token');
 var sess_user = GM_getValue('sess_user');
 
-var shw = '404px', shh = '174px',
+var shw = '404px',shh = '174px',
     hiw = '30px', hih = '30px',
     hir = '20px', hib = '20px';
 
@@ -36,9 +36,12 @@ var input;
     if (window.location.href != window.parent.location.href) return; //if it's in iframe, return
 
     !function main() {
-        $('head').append('<style type=text/css>#chat-me-cover { position:absolute; width:100%; height:100%; background-color:rgb(50,80,100); top:0; opacity:0.0; display:none; cursor:pointer; } #cm-frame-tabs { position:absolute; margin:0; z-index:-1; top:0; right:1px; padding:0 6px; font-size:30px; line-height:15px; background:#ddd; cursor:pointer } #chat-me-container {position: fixed; z-index:99999999999999999999; bottom:20px; right:20px; width:' + shw + '; height:' + shh + ';} #chat-me-frame {border:0; width:100%; height:100%; overflow:hidden;} </style>');
+        $('head').append('<style type=text/css>#chat-me-cover { position:absolute; width:100%; height:100%; background-color:rgb(50,80,100); top:0; opacity:0.0; display:none; cursor:pointer; } #cm-frame-tabs { position:absolute; margin:0; z-index:-1; top:0; right:1px; padding:0 6px; font-size:30px; line-height:15px; background:#ddd; cursor:pointer } #chat-me-container {position: fixed; z-index:99999999999999999999; bottom:20px; right:20px;} #chat-me-frame {border:0; width:100%; height:100%; overflow:hidden;} </style>');
+
+        $('head').append('<style type=text/css>.xs {width: 404px; height: 174px;} .sm {width: 504px; height: 220px} .lg {width: 600px; height: 400px;}</style>');
+
         $('head').append('<style type=text/css> #cm-frame-tabs.cm-hidden { display:none !important; } </style>');
-        $('body').append('<div id="chat-me-container"></div>');
+        $('body').append('<div id="chat-me-container" class="xs"></div>');
         $('#chat-me-container').append('<button id="cm-frame-tabs">-</button>');
         $('#chat-me-container').append('<iframe id="chat-me-frame" src="https://'+server+':60000/"></iframe><div id="chat-me-cover"></div>');
 
@@ -84,7 +87,7 @@ var input;
                 opacity: '1.0',
                 'border-radius': '50%'
             });
-             $('#chat-me-frame').css({
+            $('#chat-me-frame').css({
                 'border-radius': '50%'
             });
             $('#chat-me-container').addClass('cm-hidden').css({
@@ -94,6 +97,9 @@ var input;
         }
 
         function hideChatMe() {
+            shw = $('#chat-me-container').width();
+            shh = $('#chat-me-container').height();
+
             $('#cm-frame-tabs').addClass('cm-hidden');
             $('#chat-me-cover').show();
             $('#chat-me-cover').animate({
@@ -125,7 +131,14 @@ var input;
             $('#chat-me-container').removeClass('cm-hidden').animate({
                 width: shw, height: shh,
                 bottom: hib, right: hir
-            }, 200);
+            }, 200, function() {
+                $(this).css({
+                    'width': '',
+                    'height': '',
+                    'bottom': '',
+                    'right': ''
+                });
+            });
             GM_setValue('isHidden', '');
         }
         function outChatMe() {
@@ -144,6 +157,9 @@ var input;
                 right: hir
             }, {duration: 100, queue: false});
         }
+        window.setWindowSize = function(size) {
+            $('#chat-me-container').removeClass().addClass(size);
+        };
 
 
         if (GM_getValue('isHidden')) {
@@ -175,5 +191,16 @@ var input;
 
         // ////////////////////// //
     }();
+
+    window.addEventListener('message', function(event) {
+        if (event.data.type != 'cm-event') return;
+        switch (event.data.key) {
+            case "windowsize":
+                setWindowSize(event.data.value);
+                break;
+            default:
+                console.log('unhandled event: ' + event.data);
+        }
+    });
 
 })();

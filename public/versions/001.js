@@ -467,6 +467,9 @@ function joinPassRoom() {
     };
     socket.emit('join room', room);
 }
+function postParentMessage(key, value) {
+    parent.postMessage({key: key, value: value, type: 'cm-event'}, '*');
+}
 
 $(document).on('click', '.chat-row', function() {
     roomname = $(this).data('name');
@@ -480,4 +483,12 @@ $(document).on('click', '.chat-row', function() {
 }).on('keydown', '#type-password', function(e) {
     e = e || event; // to deal with IE
     if (e.keyCode == 13) joinPassRoom();
+});
+
+$(document).on('change', '#select-size', function() {
+    postParentMessage('windowsize', $(this).val());
+});
+
+window.addEventListener('message', function(event) { 
+    console.log(event.data);
 });

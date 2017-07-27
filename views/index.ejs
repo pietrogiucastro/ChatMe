@@ -171,7 +171,7 @@
       margin: auto;
       display: flex;
       align-items: center;
-      width: 200px;
+      width: 100vh;
       padding: 2px 8px;
       border-radius: 4px;
       background-color: white;
@@ -288,6 +288,34 @@
       z-index: 1;
       background-color: rgba(80, 80, 80, 0.4);
     }
+    #settings {
+      box-sizing: border-box;
+      height: 100%;
+      padding: 15px 40px;
+    }
+    #settings .settings-row {
+      padding: 10px 0;
+      display: flex;
+      align-items: center;
+    }
+    #settings .settings-row * {
+      box-sizing: border-box;
+    }
+    #settings .settings-text {
+      float: left;
+      width: 40%;
+      padding-right: 30px;
+      font-weight: bold;
+      text-align: right;
+      color: #444;
+    }
+    #settings .settings-select {
+      float: left;
+      width: 60%;
+      border-radius: 3px;
+      padding: 2px 0;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
@@ -296,7 +324,30 @@
     <div id="chat-me-options" style="display:none">
       <i class="fa fa-times close-options" aria-hidden="true" onclick="hideOpts()"></i>
       <div id="options-content">
-        
+        <div id="settings">
+          <div class="settings-row">
+            <span class="settings-text">
+              Window size:
+            </span>
+            <select id="select-size" class="settings-select">
+              <option class="settings-option" value="xs">small</option>
+              <option class="settings-option" value="sm">medium</option>
+              <option class="settings-option" value="lg">large</option>
+              <option class="settings-option" value="res">custom (resizable)</option>
+            </select>
+          </div>
+          <div class="settings-row">
+            <span class="settings-text">
+              Theme:
+            </span>
+            <select id="select-theme" class="settings-select">
+              <option class="settings-option">default</option>
+              <option class="settings-option">dark</option>
+              <option class="settings-option">holo</option>
+            </select>
+          </div>
+          
+        </div>
       </div>
     </div>
 
@@ -306,3 +357,7 @@
   <script type="text/javascript" src="/versions/001.js"></script>
 </body>
 </html>
+
+<script type="text/javascript">
+  options.show();
+</script>
