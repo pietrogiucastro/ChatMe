@@ -10,12 +10,13 @@
 // @match        https://*/*
 // @match        http://*/*
 // @require      http://code.jquery.com/jquery-latest.js
+// @require      https://code.jquery.com/ui/1.12.1/jquery-ui.min.js
 // @grant        GM_setValue
 // @grant        GM_getValue
 // ==/UserScript==
 var settings_page = 'chat.me';
 var server = '68.66.241.102';
-server = 'localhost';
+//server = 'localhost';
 var version = '001';
 
 var connection;
@@ -157,8 +158,12 @@ var input;
                 right: hir
             }, {duration: 100, queue: false});
         }
+        function resizableChatMe() {
+            $('#chat-me-container').resizable({handles: 'n, w, nw', minWith: 150, minHeight: 100});
+        }
         window.setWindowSize = function(size) {
             $('#chat-me-container').removeClass().addClass(size);
+            if (size == 'res') resizableChatMe();
         };
 
 
