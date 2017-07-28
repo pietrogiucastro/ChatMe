@@ -88,7 +88,23 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
 
     }
 
-
+    function setUsers(users) {
+        $('#cm-online-list').empty();
+        for (var username in users) {
+             var user = users[username];
+             appendUser(user);
+        }
+    }
+    function appendUser(user) {
+        $('#cm-online-list').append('<li class=cm-message-name id="user-'+user.name+'"><div>'+user.name+'</div><div class="cm-message-status">'+user.status+'</div></li>');
+    }
+    function refreshUser(user) {
+        $('#user-'+user.name).remove();
+        appendUser(user);
+    }
+    function removeUser(username) {
+        $('#user-'+username).remove();
+    }
     function postMessage() {
         var msg = input.val();
         if (!msg) return;
@@ -96,6 +112,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
             InitDisplay();
             return;
         }
+
         socket.emit('send message', msg);
         input.val('').attr('disabled', 'disabled');
 
@@ -218,6 +235,11 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
 
         socket.emit('define user', sess_user);
 
+
+        socket.on('initchat', function() {
+            switchchat($('.global-tab')); //change with cookie last chat
+        });
+
         socket.on('new message', function (message) {
             // try to parse JSON message. Because we know that the server
             // always returns JSON this should work without any problem but
@@ -227,8 +249,15 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
             input.focus();
             setMessage(message.msg);
         });
-        socket.on('history', function(messages) {
-            setHistory(messages);
+        socket.on('history_users', function(data) {
+            setHistory(data.history);
+            setUsers(data.users);
+        });
+        socket.on('refresh_user', function(user) {
+            refreshUser(user);
+        });
+        socket.on('remove_user', function(username) {
+            removeUser(username);
         });
         socket.on('set room', function(room) {
             hideOpts();
@@ -296,8 +325,8 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
 
 
         $('#chat-me-cont').html('');
-        $('#chat-me-cont').append('<div id=cm-online> <ul id=cm-online-list></ul> </div>');
-        $('#chat-me-cont').append('<div id=cm-chat> <ul id=cm-chat-list></ul> </div>');
+        $('#chat-me-cont').append('<div id=cm-online class="cm-scroll"> <ul id=cm-online-list></ul> </div>');
+        $('#chat-me-cont').append('<div id=cm-chat class="cm-scroll"> <ul id=cm-chat-list></ul> </div>');
         $('#chat-me-cont').append('<div style="position:absolute; bottom:6px;"><input style="margin:0px; width:282px; padding:8px 10px; height:9px;" type=text id=cm-message-input class=cm-input placeholder=Message></input><button style="margin-left:11px; height:25px; border-radius:2px" id=cm-send class=cm-button>Send</button></div>');
 
         $('#cm-chat-list').html(bigwheel);
@@ -311,8 +340,9 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
 
         $('#cm-send').click(postMessage);
     }
+
     !function main() {
-        /*css*/ $('head').append('<style type=text/css>body {margin: 0;} #chat-me {position:relative; overflow:hidden; height:100vh;} #chat-me-cont {box-sizing:border-box; padding:11px; padding-top:35px; width:100%; height:100%; background-color:rgba(50,80,100,1.0); border:1px solid rgb(100,130,100); border-radius:3px; font-family:tahoma !important;} .cm-label {display:inline-block; color:rgb(230,230,230); font-weight:bold; margin:10px; width: 25%;} .cm-button {position:absolute; width:65px; font-size:10px; background-color:rgb(10,200,50); border:0px; box-shadow:none !important; cursor:pointer; padding: 6px 0; border-radius: 2px;} .cm-input {background-color:rgb(240,240,240)!important; border:0px; font-size:12px!important; width:230px; border:0px; border-radius:2px;} #cm-error-cont {color:rgb(220,0,0); font-size:12px; margin-left:8px; margin-top:10px; max-width:200px} #cm-chat {width:81%; height:80%; background-color:rgb(240,240,240); border-radius:2px; overflow-y:scroll; float:right;} #cm-chat-list {margin:0; padding:5px; font-size:11px;} .cm-message-name {font-weight:bold; margin-right:10px; color:rgb(0,130,0);} .cm-message-text {display:block; margin-right:10px; max-width:310px; word-wrap:break-word; color:rgb(30,30,30)} .cm-message-date {float:right; color:grey;} #cm-online {width:60px; height:80%; float:left; margin-left:1px; background-color:rgb(240,240,240); overflow-y:scroll; border-radius:2px;} #cm-online-list {margin:0; padding:5px; font-size:11px;}</style>');
+        /*css*/ $('head').append('<style type=text/css>body {margin: 0;} #chat-me {position:relative; overflow:hidden; height:100vh;} #chat-me-cont {box-sizing:border-box; padding:11px; padding-top:35px; width:100%; height:100%; background-color:rgba(50,80,100,1.0); border:1px solid rgb(100,130,100); border-radius:3px; font-family:tahoma !important;} .cm-label {display:inline-block; color:rgb(230,230,230); font-weight:bold; margin:10px; width: 25%;} .cm-button {position:absolute; width:65px; font-size:10px; background-color:rgb(10,200,50); border:0px; box-shadow:none !important; cursor:pointer; padding: 6px 0; border-radius: 2px;} .cm-input {background-color:rgb(240,240,240)!important; border:0px; font-size:12px!important; width:230px; border:0px; border-radius:2px;} #cm-error-cont {color:rgb(220,0,0); font-size:12px; margin-left:8px; margin-top:10px; max-width:200px} #cm-chat {width:81%; height:80%; background-color:rgb(240,240,240); border-radius:2px; float:right;} #cm-chat-list {margin:0; padding:5px; font-size:11px;} .cm-message-name {font-weight:bold; margin-right:10px; color:rgb(0,130,0); font-size:9px;} .cm-message-status {color:grey; font-size: 8px;} .cm-message-text {display:block; margin-right:10px; max-width:310px; word-wrap:break-word; color:rgb(30,30,30)} .cm-message-date {float:right; color:grey;} #cm-online {width:60px; height:80%; float:left; margin-left:1px; background-color:rgb(240,240,240); border-radius:2px;} #cm-online-list {margin:0; padding:5px 0; font-size:11px;}</style>');
         if (!$('#chat-me-cont').length) return;
 
 /*        sess_user = "speep90";
@@ -335,8 +365,14 @@ options.prepend(spinner);
 var chatOptions = {
     display : {
         options : '<div class="options-center"><div class="options-block"><div class="option" onclick="chatOptions.searchChatDis()">SEARCH CHAT</div><div class="option" onclick="chatOptions.addchatDis()">ADD CHAT</div><div class="option" onclick="chatOptions.settingsDis()">SETTINGS</div></div></div>',
-        settings : '<center style="margin-top:50px;">under construction.</center>',
+
+        settings : '<div id="settings"><div class="settings-row"><span class="settings-text">Window size:</span><select id="select-size" class="settings-select">'
+              + '<option class="settings-option" value="xs">small</option><option class="settings-option" value="sm">medium</option><option class="settings-option" value="lg">large</option><option class="settings-option" value="res">custom (resizable)</option></select></div>'
+              + '<div class="settings-row"><span class="settings-text">Theme:</span><select id="select-theme" class="settings-select">'
+              + '<option class="settings-option">default</option><option class="settings-option">dark</option><option class="settings-option">holo</option></select></div></div>',
+
         searchchat: '<div class="search-chat"><div id="type-password-mod" style="display:none"><i class="fa fa-remove hidetypepass" onclick="hideTypePass()"></i><div class="type-password-cont"><div id="type-password-text">password for room <div id="type-password-name"></div></div><input id="type-password" type="password" placeholder="password" autofocus="true"><div id="type-password-message"></div></div></div><center class="search-chat-cont"><input class="search-chat-input" placeholder="Search chat" autofocus="true"><span class="search-chat-icon"></span></center><hr class="search-div"><div class="search-body"></div></div>',
+
         addchat : '<div class="add-chat"> <center> <label>Chat name: <input id="addchat-name" type="text" maxlength="30"></label> <label>Chat password (empty for no password): <input id="addchat-pass" type="password" maxlength="15"></label> <button class="addchat-btn" onclick="chatOptions.submitChat()">ADD CHAT</button> <div id="addchat-message"></div> </center> </div>',
     },
 

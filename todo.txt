@@ -10,3 +10,5 @@
 - change font
 - keep rooms even when switching page
 - max 5 chat per user
+- modal for generic error handling
+- fix multi tabs name disappear bug
