@@ -11,4 +11,8 @@
 - keep rooms even when switching page
 - max 5 chat per user
 - modal for generic error handling
+- prevent xss
 - fix multi tabs name disappear bug
+- fix resizable
+- auto select chat size and theme from cookies
+- check username must be without spaces

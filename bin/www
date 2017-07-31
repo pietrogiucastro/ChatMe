@@ -105,6 +105,14 @@ var r_global = 'global';
 var rooms = { global: { history : [], users: {} } };
 var customrooms = [];
 
+var status = {
+  online : {message: 'Online', classname: 'isonline'},
+  offline : {message: 'Offline', classname: 'isoffline'},
+  busy : {message: 'Busy', classname: 'isbusy'},
+  afk : {message: 'AFK', classname: 'isafk'},
+  toilet : {message: 'Toilet!', classname: 'istoilet'},
+};
+
 io.sockets.on('connection', function(socket) {
 
   // init connection //
@@ -137,7 +145,8 @@ io.sockets.on('connection', function(socket) {
     }
     socket.name = token; // change with db call for username
     socket.token = token;
-    socket.status = 'online';
+    socket.status = status.online;
+    socket.istyping = false;
 
     socket.emit('initchat');
 
@@ -154,6 +163,24 @@ io.sockets.on('connection', function(socket) {
       rooms[room].history.push(msgobj);
 
       rooms[room].history = rooms[room].history.slice(-100);
+    });
+
+    socket.on('change_status', function(value) {
+      var newstatus = status[value];
+      if (!newstatus) return Jsonerror(socket, 'stderror', 'Error: unknown status: ' + value);
+      socket.status = newstatus;
+
+      var roomname = getsocketroom(socket);
+      
+      io.sockets.in(roomname).emit('refresh_user', {name: socket.name, status: newstatus});
+    });
+
+    socket.on('typingstatus', function(value) {
+      var roomname = getsocketroom(socket);
+      if (!roomname) return;
+      socket.istyping = !!value;
+      rooms[roomname].users[socket.name].istyping = socket.istyping;
+      io.sockets.in(roomname).emit('user_typing', {name: socket.name, istyping: socket.istyping});
     });
 
     socket.on('search rooms', function(roomquery) {
@@ -305,8 +332,7 @@ io.sockets.on('connection', function(socket) {
     });
   }
   function joinroom(socket, roomname, callback) {
-
-    var userdata = { name: socket.name, status: socket.status };
+    var userdata = { name: socket.name, status: socket.status, istyping: socket.istyping };
     rooms[roomname].users[socket.name] = userdata;
     io.sockets.in(roomname).emit('refresh_user', userdata);
 

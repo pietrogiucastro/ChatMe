@@ -20,7 +20,9 @@ wheel.id    = 'cm-wheel';
 wheel.src   = 'https://media.tenor.com/images/85d269dc9595a7bcf87fd0fa4039dd9f/tenor.gif';
 wheel.style = 'width:40px;';
 
+var prevtyping = false;
 var input;
+var not1 = new Audio('/sounds/not1.mp3');
 
 var tabs = $('<div id="chat-me-tabs"><div class="opts-chat-btn"><i class="fa fa-caret-down"></i></div><div class="chat-tab global-tab sel" data-name="global" data-type="global">Global</div><div class="chat-tab site-tab" data-type="site">Site</div></div>');
 var roomresultModel = $('<div class="chat-row"><span class="chat-name"></span> <span class="chat-online"><i class="fa fa-user" style="margin-right:4px;"></i><span class="online-num"></span></span></div>')[0];
@@ -96,7 +98,10 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
         }
     }
     function appendUser(user) {
-        $('#cm-online-list').append('<li class=cm-message-name id="user-'+user.name+'"><div>'+user.name+'</div><div class="cm-message-status">'+user.status+'</div></li>');
+        var status = user.status;
+        var typingclass = user.istyping ? ' typing' : '';
+        status.classname += typingclass;
+        $('#cm-online-list').append('<li class=cm-message-name id="user-'+user.name+'"><div>'+user.name+'</div><div class="cm-message-status '+status.classname+'">'+status.message+'</div></li>');
     }
     function refreshUser(user) {
         $('#user-'+user.name).remove();
@@ -104,6 +109,11 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     }
     function removeUser(username) {
         $('#user-'+username).remove();
+    }
+    function changeTyping(data) {
+        var status = $('#user-'+data.name).find('.cm-message-status');
+        if (data.istyping) status.addClass('typing');
+        else status.removeClass('typing');
     }
     function postMessage() {
         var msg = input.val();
@@ -115,6 +125,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
 
         socket.emit('send message', msg);
         input.val('').attr('disabled', 'disabled');
+        checkTyping();
 
         /*
         var button = $('#cm-send');
@@ -247,6 +258,8 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
             // otherwise damaged.
             input.removeAttr('disabled');
             input.focus();
+            not1.currentTime=0;
+            not1.play();
             setMessage(message.msg);
         });
         socket.on('history_users', function(data) {
@@ -258,6 +271,9 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
         });
         socket.on('remove_user', function(username) {
             removeUser(username);
+        });
+        socket.on('user_typing', function(data) {
+            changeTyping(data);
         });
         socket.on('set room', function(room) {
             hideOpts();
@@ -325,9 +341,15 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
 
 
         $('#chat-me-cont').html('');
-        $('#chat-me-cont').append('<div id=cm-online class="cm-scroll"> <ul id=cm-online-list></ul> </div>');
-        $('#chat-me-cont').append('<div id=cm-chat class="cm-scroll"> <ul id=cm-chat-list></ul> </div>');
-        $('#chat-me-cont').append('<div style="position:absolute; bottom:6px;"><input style="margin:0px; width:282px; padding:8px 10px; height:9px;" type=text id=cm-message-input class=cm-input placeholder=Message></input><button style="margin-left:11px; height:25px; border-radius:2px" id=cm-send class=cm-button>Send</button></div>');
+        $('#chat-me-cont').append('<div id="chat-me-label"></div>');
+        $('#chat-me-label').append('<div id="cm-inline-btns"></div>')
+            .append('<div id="cm-display-panel"></div>')
+            .find('#cm-display-panel').append('<div id=cm-online class="cm-scroll"> <ul id=cm-online-list></ul> </div>')
+                .append('<div id=cm-chat class="cm-scroll"> <ul id=cm-chat-list></ul> </div>');
+        $('#chat-me-label').append('<div id="cm-message-panel"></div>')
+        .find('#cm-message-panel').append('<div class="message-input-cont"></div>')
+        .find('.message-input-cont').append('<input style="margin:0px; width:100%; height:100%;" type=text id=cm-message-input class=cm-input placeholder=Message>');
+        $('#cm-message-panel').append('<button style="position:absolute; top:0; right:0;" id=cm-send class=cm-button>Send</button>');
 
         $('#cm-chat-list').html(bigwheel);
 
@@ -342,7 +364,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     }
 
     !function main() {
-        /*css*/ $('head').append('<style type=text/css>body {margin: 0;} #chat-me {position:relative; overflow:hidden; height:100vh;} #chat-me-cont {box-sizing:border-box; padding:11px; padding-top:35px; width:100%; height:100%; background-color:rgba(50,80,100,1.0); border:1px solid rgb(100,130,100); border-radius:3px; font-family:tahoma !important;} .cm-label {display:inline-block; color:rgb(230,230,230); font-weight:bold; margin:10px; width: 25%;} .cm-button {position:absolute; width:65px; font-size:10px; background-color:rgb(10,200,50); border:0px; box-shadow:none !important; cursor:pointer; padding: 6px 0; border-radius: 2px;} .cm-input {background-color:rgb(240,240,240)!important; border:0px; font-size:12px!important; width:230px; border:0px; border-radius:2px;} #cm-error-cont {color:rgb(220,0,0); font-size:12px; margin-left:8px; margin-top:10px; max-width:200px} #cm-chat {width:81%; height:80%; background-color:rgb(240,240,240); border-radius:2px; float:right;} #cm-chat-list {margin:0; padding:5px; font-size:11px;} .cm-message-name {font-weight:bold; margin-right:10px; color:rgb(0,130,0); font-size:9px;} .cm-message-status {color:grey; font-size: 8px;} .cm-message-text {display:block; margin-right:10px; max-width:310px; word-wrap:break-word; color:rgb(30,30,30)} .cm-message-date {float:right; color:grey;} #cm-online {width:60px; height:80%; float:left; margin-left:1px; background-color:rgb(240,240,240); border-radius:2px;} #cm-online-list {margin:0; padding:5px 0; font-size:11px;}</style>');
+        /*css*/ $('head').append('<style type=text/css>body {margin: 0;} #chat-me {position:relative; overflow:hidden; height:100vh;} #chat-me-cont {box-sizing:border-box; padding:5px; padding-top:28px; width:100%; height:100%; background-color:rgba(50,80,100,1.0); border:1px solid rgb(100,130,100); border-radius:3px; font-family:tahoma !important;} #cm-inline-btns {position:absolute; box-sizing:border-box; width:100%; height:15px; margin-bottom:6px;} #cm-message-panel {position: absolute; bottom:0; height:25px; width:100%;} .cm-label {display:inline-block; color:rgb(230,230,230); font-weight:bold; margin:10px; width: 25%;} .cm-button {position:absolute; width:65px; font-size:10px; background-color:rgb(10,200,50); border:0px; box-shadow:none !important; cursor:pointer; height:100%; border-radius: 2px;} .message-input-cont {box-sizing:border-box; width: 100%; height:100%; padding-right:70px;} .cm-input {box-sizing:border-box; background-color:rgb(240,240,240)!important; border:0px; font-size:12px!important; width:230px; border:0px; border-radius:2px;} #cm-error-cont {color:rgb(220,0,0); font-size:12px; margin-left:8px; margin-top:10px; max-width:200px} #cm-chat {width:100%; margin-left:5px; height:100%; background-color:rgb(240,240,240); border-radius:2px;} #cm-chat-list {margin:0; padding:5px; font-size:11px;} .cm-message-name {font-family:\'Montserrat\', sans-serif; font-weight:bold; color:rgb(0,80,0); font-size:9px;} .cm-message-status {font-family:\'Montserrat\', sans-serif; color:grey; font-size: 8px;} .cm-message-text {display:block; margin-right:10px; max-width:310px; word-wrap:break-word; color:rgb(30,30,30)} .cm-message-date {float:right; color:grey;} #cm-display-panel {display:flex; box-sizing:border-box; padding-top:20px; padding-bottom:30px; height: 100%; } #cm-online {width:80px; height:100%; background-color:rgb(240,240,240); border-radius:2px;} #cm-online-list {margin:0; padding:5px 0; font-size:11px;}</style>');
         if (!$('#chat-me-cont').length) return;
 
 /*        sess_user = "speep90";
@@ -358,6 +380,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
 })();
 
 var options = $('#chat-me-options');
+
 var spinner = $('<center id="opts-spinner-cont" style="display:none;"><div class="opts-spinner"></div></center>');
 
 options.prepend(spinner);
@@ -401,6 +424,47 @@ var chatOptions = {
     }
 }
 
+var inlinebtns = {
+    container: $('#cm-inline-btns'),
+    btns: {
+        minbtn: $('<span class="btn min-btn">_</span>'),
+        statusbtn: $('<span class="btn status-btn-container modal-toggle"><div class="modal status-modal"><div class="modal-body"></div></div></span>')
+    },
+    data : {
+        statusmodal : [
+            {name: 'Online', value: 'online'},
+            {name: 'Offline', value: 'offline'},
+            {name: 'Busy', value: 'busy'},
+            {name: 'Away from keyboard', value: 'afk'},
+            {name: 'At the toilet', value: 'toilet'}
+        ]
+    },
+    initbtns: function() {
+        var buttons = inlinebtns.btns;
+        
+        /* status btn */
+        buttons.statusbtn.click(function(e) {
+            $(this).find('.status-modal').toggle();
+        });
+        inlinebtns.data.statusmodal.forEach(function(status) {
+            var statusrow = $('<div class="status-row" data-val="'+status.value+'">'+status.name+'</div>');
+            statusrow.click(function() { socket.emit('change_status', $(this).data('val')); });
+            buttons.statusbtn.find('.modal-body').append(statusrow);
+        });
+        /* ========= */
+        /* minbtn */
+        buttons.minbtn.click(function() {
+            postParentMessage('minify');
+        });
+
+        for (var btnname in buttons) {
+            inlinebtns.container.append(buttons[btnname]);
+        }
+    }
+};
+
+inlinebtns.initbtns();
+
 function switchchat(tab) {
     tab = $(tab);
     roomtype = tab.data('type');
@@ -435,6 +499,17 @@ function leaveChat(tab, callback) {
     tab.remove();
     switchchat(prevTab);
 }
+function checkTyping() {
+    var typing = !!$('#cm-message-input').val();
+    if (prevtyping != typing) {
+        prevtyping = typing;
+        socket.emit('typingstatus', typing);
+    }
+}
+
+$('#chat-me').click(function(e) {
+    if ($(e.target).is(':not(.modal,.modal-toggle)')) $('.modal').hide();
+});
 
 $(document).on('click', '.chat-tab', function(e) {
     if ($(e.target).is('.remove-tab')) removeTab(e.target);
@@ -524,6 +599,8 @@ $(document).on('click', '.chat-row', function() {
 $(document).on('change', '#select-size', function() {
     postParentMessage('windowsize', $(this).val());
 });
+
+$(document).on('keyup', '#cm-message-input', checkTyping);
 
 window.addEventListener('message', function(event) { 
     console.log(event.data);
