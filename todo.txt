@@ -2,7 +2,7 @@
 - custom settings
 - remove rooms if not used anymore
 - overflow-x scroll in tabs
-- substitute tab data-name and data-pass with just id and the password will be stored in the cookies as a token
+- substitute tab data-name and data-pass with just id and the password will be stored in 	the cookies as a token
 - user and rooms in db
 - sort rooms result by relevance
 - prevent global room to appear in search
@@ -16,3 +16,5 @@
 - fix resizable
 - auto select chat size and theme from cookies
 - check username must be without spaces
+- cookie switch chat on last used chat on logged display
+- fix time display also with days

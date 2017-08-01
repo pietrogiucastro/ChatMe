@@ -8,6 +8,14 @@
   <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
   <link href="https://fonts.googleapis.com/css?family=Montserrat" rel="stylesheet">
   <style type="text/css">
+    #chat-me.init #cm-inline-btns {
+      padding: 5px;
+      height: 25px;
+    }
+    #chat-me.register #cm-inline-btns {
+      padding: 5px;
+      height: 25px;
+    }
     #chat-me-label {
       position: relative;
       height: 100%;
@@ -332,6 +340,11 @@
       font-size: 11px;
     }
     .btn.min-btn {
+      padding: 0 6px;
+    }
+    .btn.opts-btn:before {
+      font-family: fontawesome;
+      content: "\f013";
       padding: 0 6px;
     }
     .cm-message-status.isonline {

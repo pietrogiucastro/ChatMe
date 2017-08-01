@@ -289,38 +289,30 @@ io.sockets.on('connection', function(socket) {
   }
 
   function switchroom(socket, roomname, sentpass, forcecreate, callback) {
-    function checkandset() {
 
-      if (!roomexists(roomname)) {
+    if (!roomexists(roomname)) {
 
-        if (!forcecreate) {
-          console.log('error! room  %s does not exist', roomname);
-          Jsonerror(socket, 'stderror', 'room does not exist!');
-          return;
-        } else {
-          initroom(roomname, sentpass);
-        }
-
+      if (!forcecreate) {
+        console.log('error! room  %s does not exist', roomname);
+        Jsonerror(socket, 'stderror', 'room does not exist!');
+        return;
       } else {
-
-        var roompass = getroom(roomname).password;
-        if (roompass && sentpass != roompass) {
-          Jsonerror(socket, 'wrongpassword', 'Wrong password!', {name : roomname});
-          return;
-        }
-
+        initroom(roomname, sentpass);
       }
-      joinroom(socket, roomname, function() {
-        console.log('joined room ' + roomname);
-        if (callback) callback();
-      });
+
+    } else {
+
+      var roompass = getroom(roomname).password;
+      if (roompass && sentpass != roompass) {
+        Jsonerror(socket, 'wrongpassword', 'Wrong password!', {name : roomname});
+        return;
+      }
 
     }
-
-    var currentroom = getsocketroom(socket);
-    if (currentroom) leaveroom(socket, currentroom, checkandset);
-    else checkandset();
-
+    joinroom(socket, roomname, function() {
+      console.log('joined room ' + roomname);
+      if (callback) callback();
+    });
 
   }
 
@@ -332,17 +324,24 @@ io.sockets.on('connection', function(socket) {
     });
   }
   function joinroom(socket, roomname, callback) {
-    var userdata = { name: socket.name, status: socket.status, istyping: socket.istyping };
-    rooms[roomname].users[socket.name] = userdata;
-    io.sockets.in(roomname).emit('refresh_user', userdata);
+    function nowjoin() {
 
-    console.log(rooms[roomname].users);
+        socket.join(roomname, function() {
+        var userdata = { name: socket.name, status: socket.status, istyping: socket.istyping };
+        io.sockets.in(roomname).emit('refresh_user', userdata);
 
-    socket.join(roomname, function() {
-      socket.emit('history_users', {history: rooms[roomname].history, users: rooms[roomname].users});
-      socket.lastroom = roomname;
-      if (callback) callback();
-    });
+        rooms[roomname].users[socket.name] = userdata;
+        socket.emit('history_users', {history: rooms[roomname].history, users: rooms[roomname].users});
+        socket.lastroom = roomname;
+        if (callback) callback();
+      });
+
+    }
+
+    var currentroom = getsocketroom(socket);
+    if (currentroom) leaveroom(socket, currentroom, nowjoin);
+    else nowjoin();
+
   }
   function leaveroom(socket, roomname, callback) {
     socket.leave(roomname, function() {

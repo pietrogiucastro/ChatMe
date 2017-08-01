@@ -11,6 +11,7 @@ function url_domain(data) {
 
 site = 'site://' + url_domain(site);
 
+var displaytype;
 var socket;
 var currentchat = 'global';
 var sess_token = $.cookie('sess_token');
@@ -24,7 +25,7 @@ var prevtyping = false;
 var input;
 var not1 = new Audio('/sounds/not1.mp3');
 
-var tabs = $('<div id="chat-me-tabs"><div class="opts-chat-btn"><i class="fa fa-caret-down"></i></div><div class="chat-tab global-tab sel" data-name="global" data-type="global">Global</div><div class="chat-tab site-tab" data-type="site">Site</div></div>');
+var tabs = $('<div id="chat-me-tabs"><div class="chat-tab global-tab sel" data-name="global" data-type="global">Global</div><div class="chat-tab site-tab" data-type="site">Site</div></div>');
 var roomresultModel = $('<div class="chat-row"><span class="chat-name"></span> <span class="chat-online"><i class="fa fa-user" style="margin-right:4px;"></i><span class="online-num"></span></span></div>')[0];
 // if user is running mozilla then use it's built-in WebSocket
 window.WebSocket = window.WebSocket || window.MozWebSocket;
@@ -43,18 +44,22 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
         return;
     }
 
+    function setDisplayStyle(type) {
+        displaytype = type;
+        $('#chat-me').removeClass().addClass(type);
+    }
 
     function setMessage(msg) {
         var rescroll = false;
         var RANGE = 30; //px
         if ($('#cm-chat')[0].scrollTop >= $('#cm-chat')[0].scrollHeight - $('#cm-chat').height() - RANGE) rescroll = true;
 
-        var message   = document.createElement('li');
-        message.class = 'cm-message';
+        var message   = document.createElement('div');
+        message.className = 'cm-message';
         var user_message = sess_user == msg.author? 'You' : msg.author;
         var time = new Date(msg.time).toLocaleString().split(', ')[1].slice(0, -3);
         $(message).html('<span class=cm-message-name>'+user_message+'</span><span class=cm-message-date>'+time+'</span><span class=cm-message-text>'+msg.text+'</span>');
-        $('#cm-chat-list').append('<hr style=margin:0px 3px 0px 3px>');
+        //$('#cm-chat-list').append('<hr style=margin:0px 3px 0px 3px>');
         $('#cm-chat-list').append(message);
 
         if(rescroll) $('#cm-chat')[0].scrollTop = $('#cm-chat')[0].scrollHeight - $('#cm-chat').height();
@@ -70,12 +75,12 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
         $('#cm-chat-list').html('');
 
         msgs.forEach(function(msg) {
-            var message   = document.createElement('li');
-            message.class = 'cm-message';
+            var message   = document.createElement('div');
+            message.className = 'cm-message';
             var user_message = sess_user == msg.author? 'You' : msg.author;
             var time = new Date(msg.time).toLocaleString().split(', ')[1].slice(0, -3);
             $(message).html('<span class=cm-message-name>'+user_message+'</span><span class=cm-message-date>'+time+'</span><span class=cm-message-text>'+msg.text+'</span>');
-            $('#cm-chat-list').append('<hr style=margin:0px 3px 0px 3px>');
+            //$('#cm-chat-list').append('<hr style=margin:0px 3px 0px 3px>');
             $('#cm-chat-list').append(message);
         });
 
@@ -118,8 +123,10 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     function postMessage() {
         var msg = input.val();
         if (!msg) return;
-        if (msg == '/quit') {
-            InitDisplay();
+        if (msg.startsWith('/')) {
+            msg = msg.slice(1);
+            ActionMessage(msg);
+            input.val('');
             return;
         }
 
@@ -147,17 +154,28 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
         });
         */
     }
+    function ActionMessage(msg) {
+        switch (msg) {
+            case 'quit':
+                InitDisplay();
+                break;
+            default:
+                console.log('unhandled action');
+        }
+    }
     function InitDisplay() {
+        setDisplayStyle('init');
         if (socket) socket.disconnect();
         sess_token = ''; sess_user = '';
         $.removeCookie('sess_token');
         $.removeCookie('sess_user');
         $('#chat-me').find(tabs).remove();
+        $('#chat-me').prepend(inlinebtns.container);
         $('#chat-me-cont').html('');
         $('#chat-me-cont').append('<label for=cm-user class=cm-label>Username:</label><input type=text id=cm-user class=cm-input placeholder=Username></input><br>');
         $('#chat-me-cont').append('<label for=cm-pass class=cm-label>Password:</label><input type=password id=cm-pass class=cm-input placeholder=Password></input><br>');
         $('#chat-me-cont').append('<div id=cm-error-cont></div>');
-        $('#chat-me-cont').append('<div style="position:absolute; bottom:28%; right:6%; width:140px;"><button style=left:0%; id=cm-login class=cm-button>Login</button><button style=right:0% id=cm-register class=cm-button>Register</button></div>');
+        $('#chat-me-cont').append('<div style="position:absolute; bottom:28%; right:6%; width:140px;"><button style="left:0%; height:20px;" id=cm-login class=cm-button>Login</button><button style="right:0%; height:20px; background:transparent; color:white; text-decoration:none;" id=cm-register class=cm-button>Sign up</button></div>');
 
         $('#cm-login').click(function() {
             $('#cm-error-cont').html(wheel);
@@ -187,14 +205,17 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
             RegisterDisplay(user, pass);
         });
 
+        inlinebtns.appendbtns(displaytype);
+
     }
     function RegisterDisplay(user, pass) {
+        setDisplayStyle('register');
         $('#chat-me').find(tabs).remove();
         $('#chat-me-cont').html('<div style="font-weight:bold; color:white; margin-bottom:-8px; margin-top:-36px;">Register</div><br>');
         $('#chat-me-cont').append('<div class=reg-up width:100%;"><label for=cm-user class=cm-label>Username:</label><input style="width:20%;" type=text id=cm-user class=cm-input placeholder=Username></input>  <label style="width:50px;" for=cm-email class=cm-label>E-mail:</label><input style="width:25%;" type=text id=cm-email class=cm-input placeholder=E-mail></input></div>');
         $('#chat-me-cont').append('<div class=reg-down width:100%;"><label for=cm-pass class=cm-label>Password:</label><input style="width:20%;" type=password id=cm-pass class=cm-input placeholder=Password></input>  <label style="width:50px;" for=cm-confirm class=cm-label>Confirm:</label><input style="width:25%;" type=password id=cm-confirm class=cm-input placeholder=Confirm></input></div>');
         $('#chat-me-cont').append('<div id=cm-error-cont></div>');
-        $('#chat-me-cont').append('<div style="position:absolute; bottom:28%; right:6%; width:140px;"><button style=left:0%; id=cm-back class=cm-button>Back</button><button style=right:0% id=cm-register class=cm-button>Register</button></div>');
+        $('#chat-me-cont').append('<div style="position:absolute; bottom:28%; right:6%; width:140px;"><button style="left:0%; height:20px;" id=cm-back class=cm-button>Back</button><button style="right:0%; height:20px;" id=cm-register class=cm-button>Sign up!</button></div>');
 
         //        $('#chat-me-cont').append('<label for=cm-pass class=cm-label>Password:</label><input type=password id=cm-pass class=cm-input placeholder=Password></input><br>');
 
@@ -229,18 +250,11 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
                 else $('#cm-error-cont').html(e.error);
             });
         });
-        /*     $.get('https://script.google.com/macros/s/AKfycbzTaPP2QXWeGOmdUadGk-nCYtvxXi3ZfY0uPRHqlokFaqUO9-Y/exec', {
-            action : 'register',
-            user  : user,
-            pass  : pass
-        }, function(e) {
-            $('#cm-error-cont').html('');
-            console.log(e);
-            if (e.result == 'success') LoggedDisplay(e.user, e.token);
-            else $('#cm-error-cont').html(e.error);
-        });    */
+
+        inlinebtns.appendbtns(displaytype);
     }
     function LoggedDisplay() {
+        setDisplayStyle('logged');
 
         socket = io();
 
@@ -252,10 +266,6 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
         });
 
         socket.on('new message', function (message) {
-            // try to parse JSON message. Because we know that the server
-            // always returns JSON this should work without any problem but
-            // we should make sure that the message is not chunked or
-            // otherwise damaged.
             input.removeAttr('disabled');
             input.focus();
             not1.currentTime=0;
@@ -342,10 +352,10 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
 
         $('#chat-me-cont').html('');
         $('#chat-me-cont').append('<div id="chat-me-label"></div>');
-        $('#chat-me-label').append('<div id="cm-inline-btns"></div>')
+        $('#chat-me-label').append(inlinebtns.container)
             .append('<div id="cm-display-panel"></div>')
             .find('#cm-display-panel').append('<div id=cm-online class="cm-scroll"> <ul id=cm-online-list></ul> </div>')
-                .append('<div id=cm-chat class="cm-scroll"> <ul id=cm-chat-list></ul> </div>');
+                .append('<div id=cm-chat class="cm-scroll"> <div id=cm-chat-list></div> </div>');
         $('#chat-me-label').append('<div id="cm-message-panel"></div>')
         .find('#cm-message-panel').append('<div class="message-input-cont"></div>')
         .find('.message-input-cont').append('<input style="margin:0px; width:100%; height:100%;" type=text id=cm-message-input class=cm-input placeholder=Message>');
@@ -361,10 +371,12 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
         });
 
         $('#cm-send').click(postMessage);
+
+        inlinebtns.appendbtns(displaytype);
     }
 
-    !function main() {
-        /*css*/ $('head').append('<style type=text/css>body {margin: 0;} #chat-me {position:relative; overflow:hidden; height:100vh;} #chat-me-cont {box-sizing:border-box; padding:5px; padding-top:28px; width:100%; height:100%; background-color:rgba(50,80,100,1.0); border:1px solid rgb(100,130,100); border-radius:3px; font-family:tahoma !important;} #cm-inline-btns {position:absolute; box-sizing:border-box; width:100%; height:15px; margin-bottom:6px;} #cm-message-panel {position: absolute; bottom:0; height:25px; width:100%;} .cm-label {display:inline-block; color:rgb(230,230,230); font-weight:bold; margin:10px; width: 25%;} .cm-button {position:absolute; width:65px; font-size:10px; background-color:rgb(10,200,50); border:0px; box-shadow:none !important; cursor:pointer; height:100%; border-radius: 2px;} .message-input-cont {box-sizing:border-box; width: 100%; height:100%; padding-right:70px;} .cm-input {box-sizing:border-box; background-color:rgb(240,240,240)!important; border:0px; font-size:12px!important; width:230px; border:0px; border-radius:2px;} #cm-error-cont {color:rgb(220,0,0); font-size:12px; margin-left:8px; margin-top:10px; max-width:200px} #cm-chat {width:100%; margin-left:5px; height:100%; background-color:rgb(240,240,240); border-radius:2px;} #cm-chat-list {margin:0; padding:5px; font-size:11px;} .cm-message-name {font-family:\'Montserrat\', sans-serif; font-weight:bold; color:rgb(0,80,0); font-size:9px;} .cm-message-status {font-family:\'Montserrat\', sans-serif; color:grey; font-size: 8px;} .cm-message-text {display:block; margin-right:10px; max-width:310px; word-wrap:break-word; color:rgb(30,30,30)} .cm-message-date {float:right; color:grey;} #cm-display-panel {display:flex; box-sizing:border-box; padding-top:20px; padding-bottom:30px; height: 100%; } #cm-online {width:80px; height:100%; background-color:rgb(240,240,240); border-radius:2px;} #cm-online-list {margin:0; padding:5px 0; font-size:11px;}</style>');
+    $(function main() {
+        /*css*/ $('head').append('<style type=text/css>body {margin: 0;} #chat-me {position:relative; overflow:hidden; height:100vh;} #chat-me-cont {box-sizing:border-box; padding:5px; padding-top:28px; width:100%; height:100%; background-color:rgba(50,80,100,1.0); border:1px solid rgb(100,130,100); border-radius:3px; font-family:tahoma !important;} #cm-inline-btns {position:absolute; box-sizing:border-box; width:100%; height:15px; margin-bottom:6px;} #cm-message-panel {position: absolute; bottom:0; height:25px; width:100%;} .cm-label {display:inline-block; color:rgb(230,230,230); font-weight:bold; margin:10px; width: 25%;} .cm-button {position:absolute; width:65px; font-size:10px; background-color:rgb(10,200,50); border:0px; box-shadow:none !important; cursor:pointer; height:100%; border-radius: 2px;} .message-input-cont {box-sizing:border-box; width: 100%; height:100%; padding-right:70px;} .cm-input {box-sizing:border-box; background-color:rgb(240,240,240)!important; border:0px; font-size:12px!important; width:230px; border:0px; border-radius:2px;} #cm-error-cont {color:rgb(220,0,0); font-size:12px; margin-left:8px; margin-top:10px; max-width:200px} #cm-chat {width:100%; margin-left:5px; height:100%; background-color:rgb(240,240,240); border-radius:2px;} #cm-chat-list {margin:0; padding:3px 5px; font-size:11px;} .cm-message:first-child {margin-top:0 !important} .cm-message {margin-top: 3px;} .cm-message-name {font-family:\'Montserrat\', sans-serif; font-weight:bold; color:rgb(0,80,0); font-size:9px;} .cm-message-status {font-family:\'Montserrat\', sans-serif; color:grey; font-size: 8px;} .cm-message-text {display:block; margin-left: 3px; margin-right:10px; max-width:310px; word-wrap:break-word; color:rgb(30,30,30)} .cm-message-date {float:right; color:grey;} #cm-display-panel {display:flex; box-sizing:border-box; padding-top:20px; padding-bottom:30px; height: 100%; } #cm-online {width:80px; height:100%; padding-left:4px; background-color:rgb(240,240,240); border-radius:2px;} #cm-online-list {margin:0; padding:5px 0; font-size:11px;}</style>');
         if (!$('#chat-me-cont').length) return;
 
 /*        sess_user = "speep90";
@@ -375,7 +387,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
 
         if (!sess_token || !sess_user) InitDisplay();
         else LoggedDisplay();
-    }();
+    });
 
 })();
 
@@ -425,10 +437,11 @@ var chatOptions = {
 }
 
 var inlinebtns = {
-    container: $('#cm-inline-btns'),
+    container: $('<div id="cm-inline-btns"></div>'),
     btns: {
-        minbtn: $('<span class="btn min-btn">_</span>'),
-        statusbtn: $('<span class="btn status-btn-container modal-toggle"><div class="modal status-modal"><div class="modal-body"></div></div></span>')
+        minbtn: {init: $('<span class="btn min-btn">_</span>'), element: undefined, display: 'init,logged,register'},
+        optsbtn: {init: $('<span class="btn opts-btn"></span>'), element: undefined, display: 'logged'},
+        statusbtn: {init: $('<span class="btn status-btn-container modal-toggle"><div class="modal status-modal"><div class="modal-body"></div></div></span>'), element: undefined, display: 'logged'}
     },
     data : {
         statusmodal : [
@@ -440,30 +453,46 @@ var inlinebtns = {
         ]
     },
     initbtns: function() {
-        var buttons = inlinebtns.btns;
-        
+
+        var buttons = this.btns;
+
+        /* optsbtn */
+        buttons.optsbtn.element = $(buttons.optsbtn.init[0].cloneNode(true));
+        buttons.optsbtn.element.click(function() {
+            options.show();
+            chatOptions.initOptions();
+        });
+        /* minbtn */
+        buttons.minbtn.element = $(buttons.minbtn.init[0].cloneNode(true));
+        buttons.minbtn.element.click(function() {
+            postParentMessage('minify');
+        });
         /* status btn */
-        buttons.statusbtn.click(function(e) {
+        buttons.statusbtn.element = $(buttons.statusbtn.init[0].cloneNode(true));
+        buttons.statusbtn.element.click(function(e) {
             $(this).find('.status-modal').toggle();
         });
         inlinebtns.data.statusmodal.forEach(function(status) {
             var statusrow = $('<div class="status-row" data-val="'+status.value+'">'+status.name+'</div>');
             statusrow.click(function() { socket.emit('change_status', $(this).data('val')); });
-            buttons.statusbtn.find('.modal-body').append(statusrow);
+            buttons.statusbtn.element.find('.modal-body').append(statusrow);
         });
         /* ========= */
-        /* minbtn */
-        buttons.minbtn.click(function() {
-            postParentMessage('minify');
-        });
+
+    },
+    appendbtns: function(type) {
+        this.initbtns();
+        var buttons = this.btns;
+        inlinebtns.container.empty();
 
         for (var btnname in buttons) {
-            inlinebtns.container.append(buttons[btnname]);
+            var button = buttons[btnname];
+            if (!button.display.match(type))
+                continue;
+            inlinebtns.container.append(button.element);
         }
     }
 };
-
-inlinebtns.initbtns();
 
 function switchchat(tab) {
     tab = $(tab);
@@ -519,10 +548,7 @@ $(document).on('click', '.chat-tab', function(e) {
 function hideOpts() {
   options.hide();
 }
-$(document).on('click', '.opts-chat-btn', function() {
-  options.show();
-  chatOptions.initOptions();
-});
+
 $(document).on('mouseenter', '.option', function() {
   $(this).css({
     'background-color': 'rgb(157,162,164)',
