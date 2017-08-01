@@ -10,7 +10,8 @@
   <style type="text/css">
     #chat-me.init #cm-inline-btns {
       padding: 5px;
-      height: 25px;
+      height: 26px;
+      border-bottom: 1px solid white;
     }
     #chat-me.register #cm-inline-btns {
       padding: 5px;
@@ -31,8 +32,9 @@
     }
     #chat-me-tabs .chat-tab {
       position: relative;
-      border-right: 1px solid #aaa;
       display: inline-block;
+      overflow: hidden;
+      border-right: 1px solid #aaa;
       cursor: pointer;
       font-weight: bold;
       font-size: 13px;
@@ -43,11 +45,28 @@
       vertical-align: middle;
       padding-left: 17px !important;
     }
+    .chat-tab .volume-icon {
+      position: absolute;
+      left: 2px;
+      top: 100%;
+      padding: 1px;
+      padding-top: 4px;
+    }
+    .volume-icon.vol-true:before {
+      font-family: fontawesome;
+      content: "\f028";
+    }
+    .volume-icon.vol-false:before {
+      font-family: fontawesome;
+      content: "\f026";
+    }
     .chat-tab:before {
       position: absolute;
       font-family: fontawesome;
       font-size: 11px;
-      left: 5px; top: 7px;
+      left: 5px;
+      padding-top: 6px;
+      top: 0%;
     }
     .chat-tab.global-tab:before {
       content: "\f0ac";
@@ -436,6 +455,56 @@
         border-radius: 5px;
         background-color: #609f46;
       }
+  </style>
+  <style type="text/css">
+    .chat-tab:hover .volume-icon {
+      animation: volin 0.13s forwards;
+    }
+    .chat-tab:hover:before {
+      animation: icoout 0.13s forwards;
+    }
+    .chat-tab .volume-icon {
+      animation: volout 0.13s forwards;
+    }
+    .chat-tab:before {
+      animation: icoin 0.13s forwards;
+    }
+
+    @keyframes volin {
+      from {
+        top: 100%;
+      }
+      to {
+        top: 0%;
+      }
+    }
+
+    @keyframes volout {
+      from {
+        top: 0%;
+      }
+      to {
+        top: 100%;
+      }
+    }
+
+    @keyframes icoin {
+      from {
+        top: -100%;
+      }
+      to {
+        top: 0%;
+      }
+    }
+
+    @keyframes icoout {
+      from {
+        top: 0%;
+      }
+      to {
+        top: -100%;
+      }
+    }
   </style>
 </head>
 <body>
