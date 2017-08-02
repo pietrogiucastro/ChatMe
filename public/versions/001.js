@@ -28,7 +28,7 @@ var mute = false;
 var chats = {global: {volume: true}, site: {volume: true}};
 var currentchat;
 
-var tabs = $('<div id="chat-me-tabs"><div class="chat-tab global-tab sel" data-name="global" data-type="global"><span class="volume-icon vol-true"></span>Global</div><div class="chat-tab site-tab" data-name="site" data-type="site"><span class="volume-icon vol-true"></span>Site</div></div>');
+var tabs = $('<div id="chat-me-tabs" class="cm-scroll scroll-x"><div class="chat-tab global-tab sel" data-name="global" data-type="global"><span class="volume-icon vol-true"></span>Global</div><div class="chat-tab site-tab" data-name="site" data-type="site"><span class="volume-icon vol-true"></span>Site</div></div>');
 var roomresultModel = $('<div class="chat-row"><span class="chat-name"></span> <span class="chat-online"><i class="fa fa-user" style="margin-right:4px;"></i><span class="online-num"></span></span></div>')[0];
 // if user is running mozilla then use it's built-in WebSocket
 window.WebSocket = window.WebSocket || window.MozWebSocket;
@@ -395,7 +395,6 @@ function postMessage() {
             default:
             console.log('unhandled event');
         }
-        console.log(event.data);
     });
 
     function TriggerConnection(status) {

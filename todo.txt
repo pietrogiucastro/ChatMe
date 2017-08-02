@@ -24,3 +24,4 @@
 - resize animation on hover option
 - right spinner everywere
 - pm users
+- empty chat placeholder

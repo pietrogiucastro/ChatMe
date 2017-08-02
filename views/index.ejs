@@ -25,6 +25,7 @@
       height: 100%;
     }
     #chat-me-tabs {
+      height: 24px;
       font-size: 0;
       position: absolute;
       top:0%;
@@ -488,7 +489,11 @@
         margin-bottom: 25px;
       }
     .cm-scroll {
-      overflow-y: scroll;
+      overflow-y: auto;
+    }
+    .cm-scroll.scroll-x {
+      overflow-y: hidden;
+      overflow-x: auto;
     }
     .cm-scroll::-webkit-scrollbar-track
       {

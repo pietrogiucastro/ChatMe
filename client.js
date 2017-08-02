@@ -31,18 +31,22 @@ var input;
 
 if (document.domain == "www.youtube.com") return;
 
+console.log(window.location.href);
+
+if (window.location.href != window.parent.location.href) return; //if it's in iframe, return
+if (document.domain == "web.whatsapp.com") return;
+
 (function() {
     'use strict';
 
     if (document.domain == settings_page) return document.write('chat me settings. Under construction..');
     if (document.domain == server) return;
-    if (window.location.href != window.parent.location.href) return; //if it's in iframe, return
 
     $('head').append('<style type=text/css>#chat-me-cover { position:absolute; width:100%; height:100%; background-color:rgb(50,80,100); top:0; opacity:0.0; display:none; cursor:pointer; } #chat-me-container {position: fixed; z-index:99999999999999999999; bottom:20px; right:20px;} #chat-me-frame {border:0; width:100%; height:100%; overflow:hidden;} </style>');
 
-    $('head').append('<style type=text/css>.xs {width: 404px; height: 174px;} .sm {width: 504px; height: 220px} .lg {width: 600px; height: 400px;}</style>');
+    $('head').append('<style type=text/css>.xs {width: 420px; height: 194px;} .sm {width: 430px; height: 280px} .lg {width: 440px; height: 360px;}</style>');
 
-    $('body').append('<div id="chat-me-container" class="xs"></div>');
+    $('body').append('<div id="chat-me-container" class="lg"></div>');
     $('#chat-me-container').append('<iframe id="chat-me-frame" src="https://'+server+':60000/"></iframe><div id="chat-me-cover"></div>');
 
     $('#chat-me-cover').click(showChatMe);
@@ -195,4 +199,57 @@ if (document.domain == "www.youtube.com") return;
         }
     });
 
+})();
+
+function postChildMessage(key, value) {
+    var cmframe = document.getElementById('chat-me-frame');
+    if (!cmframe) return;
+    cmframe.contentWindow.postMessage({key: key, value: value, type: 'cm-event'}, '*');
+}
+
+(function() {
+    var hidden = "hidden";
+
+    // Standards:
+    if (hidden in document)
+        document.addEventListener("visibilitychange", onchange);
+    else if ((hidden = "mozHidden") in document)
+        document.addEventListener("mozvisibilitychange", onchange);
+    else if ((hidden = "webkitHidden") in document)
+        document.addEventListener("webkitvisibilitychange", onchange);
+    else if ((hidden = "msHidden") in document)
+        document.addEventListener("msvisibilitychange", onchange);
+    // IE 9 and lower:
+    else if ("onfocusin" in document)
+        document.onfocusin = document.onfocusout = onchange;
+    // All others:
+    else
+        window.onpageshow = window.onpagehide = window.onfocus = window.onblur = onchange;
+
+    function onchange (evt) {
+        var v = "cm-focus", h = "cm-blur",
+            action,
+            evtMap = {
+                focus:v, focusin:v, pageshow:v, blur:h, focusout:h, pagehide:h
+            };
+
+        evt = evt || window.event;
+        if (evt.type in evtMap) {
+            action = evtMap[evt.type];
+            if (document.body.cmstate == action) return;
+            document.body.cmstate = action;
+            //console.log(action);
+            postChildMessage('page-state', action);
+        } else {
+            action = this[hidden] ? h : v;
+            if (document.body.cmstate == action) return;
+            document.body.cmstate = action;
+            //console.log(action);
+            postChildMessage('page-state', action);
+        }
+    }
+
+    // set the initial state (but only if browser supports the Page Visibility API)
+    if( document[hidden] !== undefined )
+        onchange({type: document[hidden] ? "blur" : "focus"});
 })();
