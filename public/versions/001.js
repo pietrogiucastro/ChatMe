@@ -24,6 +24,7 @@ var prevtyping = false;
 var input;
 var not1 = new Audio('/sounds/not1.mp3');
 
+var mute = false;
 var chats = {global: {volume: true}, site: {volume: true}};
 var currentchat;
 
@@ -105,41 +106,41 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     function setUsers(users) {
         $('#cm-online-list').empty();
         for (var username in users) {
-             var user = users[username];
-             appendUser(user);
-        }
+         var user = users[username];
+         appendUser(user);
+     }
+ }
+ function appendUser(user) {
+    var status = user.status;
+    var typingclass = user.istyping ? ' typing' : '';
+    status.classname += typingclass;
+    $('#cm-online-list').append('<li class=cm-message-name id="user-'+user.name+'"><div>'+user.name+'</div><div class="cm-message-status '+status.classname+'">'+status.message+'</div></li>');
+}
+function refreshUser(user) {
+    $('#user-'+user.name).remove();
+    appendUser(user);
+}
+function removeUser(username) {
+    $('#user-'+username).remove();
+}
+function changeTyping(data) {
+    var status = $('#user-'+data.name).find('.cm-message-status');
+    if (data.istyping) status.addClass('typing');
+    else status.removeClass('typing');
+}
+function postMessage() {
+    var msg = input.val();
+    if (!msg) return;
+    if (msg.startsWith('/')) {
+        msg = msg.slice(1);
+        ActionMessage(msg);
+        input.val('');
+        return;
     }
-    function appendUser(user) {
-        var status = user.status;
-        var typingclass = user.istyping ? ' typing' : '';
-        status.classname += typingclass;
-        $('#cm-online-list').append('<li class=cm-message-name id="user-'+user.name+'"><div>'+user.name+'</div><div class="cm-message-status '+status.classname+'">'+status.message+'</div></li>');
-    }
-    function refreshUser(user) {
-        $('#user-'+user.name).remove();
-        appendUser(user);
-    }
-    function removeUser(username) {
-        $('#user-'+username).remove();
-    }
-    function changeTyping(data) {
-        var status = $('#user-'+data.name).find('.cm-message-status');
-        if (data.istyping) status.addClass('typing');
-        else status.removeClass('typing');
-    }
-    function postMessage() {
-        var msg = input.val();
-        if (!msg) return;
-        if (msg.startsWith('/')) {
-            msg = msg.slice(1);
-            ActionMessage(msg);
-            input.val('');
-            return;
-        }
 
-        socket.emit('send message', msg);
-        input.val('').attr('disabled', 'disabled');
-        checkTyping();
+    socket.emit('send message', msg);
+    input.val('').attr('disabled', 'disabled');
+    checkTyping();
 
         /*
         var button = $('#cm-send');
@@ -164,10 +165,10 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     function ActionMessage(msg) {
         switch (msg) {
             case 'quit':
-                InitDisplay();
-                break;
+            InitDisplay();
+            break;
             default:
-                console.log('unhandled action');
+            console.log('unhandled action');
         }
     }
     function InitDisplay() {
@@ -267,7 +268,6 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
 
         socket.emit('define user', sess_user);
 
-
         socket.on('initchat', function() {
             switchchat($('.global-tab')); //change with cookie last chat
         });
@@ -276,7 +276,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
             input.removeAttr('disabled');
             input.focus();
             var chatvolume = chats[message.roomname].volume;
-            if (chatvolume) notifsound();
+            if (chatvolume && !mute) notifsound();
             setMessage(message.msg);
         });
         socket.on('history_users', function(data) {
@@ -327,30 +327,30 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
         socket.on('jsonerror', function(error) {
             switch (error.type) {
                 case 'stderror':
-                    console.log(error.message);
-                    break;
+                console.log(error.message);
+                break;
                 case 'wrongpassword':
                 hideOptsWait();
-                    var tab = $('.chat-tab[data-name=' + error.data.name + ']');
-                    leaveChat(tab);
-                    $('#type-password-message').html(error.message);
-                    break;
+                var tab = $('.chat-tab[data-name=' + error.data.name + ']');
+                leaveChat(tab);
+                $('#type-password-message').html(error.message);
+                break;
                 default:
-                    console.log('unhandled error type');
+                console.log('unhandled error type');
             }
         });
         socket.on('jsonwarning', function(warning) {
             switch (warning.type) {
                 case 'stdwarn':
-                    console.log(warning.message);
-                    break;
+                console.log(warning.message);
+                break;
                 case 'invalidroomname':
-                    hideOptsWait();
-                    console.log('invalid room name');
-                    chatOptions.container.find('#addchat-message').html(warning.message);
-                    break;
+                hideOptsWait();
+                console.log('invalid room name');
+                chatOptions.container.find('#addchat-message').html(warning.message);
+                break;
                 default:
-                    console.log('unhandled warning type');
+                console.log('unhandled warning type');
             }
         });
 
@@ -363,9 +363,9 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
         $('#chat-me-cont').html('');
         $('#chat-me-cont').append('<div id="chat-me-label"></div>');
         $('#chat-me-label').append(inlinebtns.container)
-            .append('<div id="cm-display-panel"></div>')
-            .find('#cm-display-panel').append('<div id=cm-online class="cm-scroll"> <ul id=cm-online-list></ul> </div>')
-                .append('<div id=cm-chat class="cm-scroll"> <div id=cm-chat-list></div> </div>');
+        .append('<div id="cm-display-panel"></div>')
+        .find('#cm-display-panel').append('<div id=cm-online class="cm-scroll"> <ul id=cm-online-list></ul> </div>')
+        .append('<div id=cm-chat class="cm-scroll"> <div id=cm-chat-list></div> </div>');
         $('#chat-me-label').append('<div id="cm-message-panel"></div>')
         .find('#cm-message-panel').append('<div class="message-input-cont"></div>')
         .find('.message-input-cont').append('<input style="margin:0px; width:100%; height:100%;" type=text id=cm-message-input class=cm-input placeholder=Message>');
@@ -385,15 +385,30 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
         inlinebtns.appendbtns(displaytype);
     }
 
+    window.addEventListener('message', function(event) { 
+        if (event.data.type != 'cm-event') return;
+        switch (event.data.key) {
+            case 'page-state':
+            console.log('page state event!: ' + event.data.value);
+            TriggerConnection(event.data.value);
+            break;
+            default:
+            console.log('unhandled event');
+        }
+        console.log(event.data);
+    });
+
+    function TriggerConnection(status) {
+        if (status == 'cm-blur') {
+            if (socket) socket.disconnect();
+        } else if (status == 'cm-focus') {
+            if (sess_user && sess_token) LoggedDisplay();
+        }
+    }
+
     $(function main() {
-        /*css*/ $('head').append('<style type=text/css>body {margin: 0;} #chat-me {position:relative; overflow:hidden; height:100vh;} #chat-me-cont {box-sizing:border-box; padding:5px; padding-top:28px; width:100%; height:100%; background-color:rgba(50,80,100,1.0); border:1px solid rgb(100,130,100); border-radius:3px; font-family:tahoma !important;} #cm-inline-btns {position:absolute; box-sizing:border-box; width:100%; height:15px; margin-bottom:6px;} #cm-message-panel {position: absolute; bottom:0; height:25px; width:100%;} .cm-label {display:inline-block; color:rgb(230,230,230); font-weight:bold; margin:10px; width: 25%;} .cm-button {position:absolute; width:65px; font-size:10px; background-color:rgb(10,200,50); border:0px; box-shadow:none !important; cursor:pointer; height:100%; border-radius: 2px;} .message-input-cont {box-sizing:border-box; width: 100%; height:100%; padding-right:70px;} .cm-input {box-sizing:border-box; background-color:rgb(240,240,240)!important; border:0px; font-size:12px!important; width:230px; border:0px; border-radius:2px;} #cm-error-cont {color:rgb(220,0,0); font-size:12px; margin-left:8px; margin-top:10px; max-width:200px} #cm-chat {width:100%; margin-left:5px; height:100%; background-color:rgb(240,240,240); border-radius:2px;} #cm-chat-list {margin:0; padding:3px 5px; font-size:11px;} .cm-message:first-child {margin-top:0 !important} .cm-message {margin-top:3px; border-bottom:1px solid #ddd; padding-bottom:2px;} .cm-message-name {font-family:\'Montserrat\', sans-serif; font-weight:bold; color:rgb(0,80,0); font-size:9px;} .cm-message-status {font-family:\'Montserrat\', sans-serif; color:grey; font-size: 8px;} .cm-message-text {display:block; margin-left: 3px; margin-right:10px; max-width:310px; word-wrap:break-word; color:rgb(30,30,30)} .cm-message-date {float:right; color:grey;} #cm-display-panel {display:flex; box-sizing:border-box; padding-top:20px; padding-bottom:30px; height: 100%; } #cm-online {width:80px; height:100%; padding-left:4px; background-color:rgb(240,240,240); border-radius:2px;} #cm-online-list {margin:0; padding:5px 0; font-size:11px;}</style>');
+        /*css*/ $('head').append('<style type=text/css>body {margin: 0;} #chat-me {position:relative; overflow:hidden; height:100vh;} #chat-me-cont {box-sizing:border-box; padding:5px; padding-top:28px; width:100%; height:100%; background-color:rgba(50,80,100,1.0); border-radius:3px; font-family:tahoma !important;} #cm-inline-btns {position:absolute; box-sizing:border-box; width:100%; height:15px; margin-bottom:6px;} #cm-message-panel {position: absolute; bottom:0; height:25px; width:100%;} .cm-label {display:inline-block; color:rgb(230,230,230); font-weight:bold; margin:10px; width: 25%;} .cm-button {position:absolute; color:white; width:60px; font-size:10px; background-color:rgb(10,200,50); border:0px; box-shadow:none !important; cursor:pointer; height:100%; border-radius: 2px;} .message-input-cont {box-sizing:border-box; width: 100%; height:100%; padding-right:65px;} .cm-input {box-sizing:border-box; background-color:rgb(240,240,240)!important; border:0px; font-size:12px!important; font-family:\'Montserrat\', sans-serif; width:230px; border:0px; border-radius:2px;} #cm-error-cont {color:rgb(220,0,0); font-size:12px; margin-left:8px; margin-top:10px; max-width:200px} #cm-chat {font-family:\'Montserrat\', sans-serif; width:100%; margin-left:5px; height:100%; background-color:rgb(240,240,240); border-radius:2px;} #cm-chat-list {margin:0; padding:3px 5px; font-size:11px;} .cm-message:first-child {margin-top:0 !important}.cm-message:last-child {border:0;} .cm-message {margin-top:3px; border-bottom:1px solid #ddd; padding-bottom:2px;} .cm-message-name {font-family:\'Montserrat\', sans-serif; font-weight:bold; color:rgb(0,80,0); font-size:9px;} .cm-message .cm-message-name:after {content:":"} .cm-message-status {font-family:\'Montserrat\', sans-serif; color:grey; font-size: 8px;} .cm-message-text {display:block; margin-left: 3px; margin-right:10px; max-width:310px; word-wrap:break-word; color:rgb(30,30,30)} .cm-message-date {float:right; color:grey; font-size:9px;} #cm-display-panel {display:flex; box-sizing:border-box; padding-top:20px; padding-bottom:30px; height: 100%; } #cm-online {width:80px; height:100%; padding-left:4px; background-color:rgb(240,240,240); border-radius:2px;} #cm-online-list {margin:0; padding:5px 0; font-size:11px;}</style>');
         if (!$('#chat-me-cont').length) return;
-
-/*        sess_user = "speep90";
-        LoggedDisplay();
-
-        return;
-*/
 
         if (!sess_token || !sess_user) InitDisplay();
         else LoggedDisplay();
@@ -409,14 +424,14 @@ options.prepend(spinner);
 
 var chatOptions = {
     display : {
-        options : '<div class="options-center"><div class="options-block"><div class="option" onclick="chatOptions.searchChatDis()">SEARCH CHAT</div><div class="option" onclick="chatOptions.addchatDis()">ADD CHAT</div><div class="option" onclick="chatOptions.settingsDis()">SETTINGS</div></div></div>',
+        options : '<div class="options-center"><div class="options-block"><div class="option" onclick="chatOptions.searchChatDis()">SEARCH CHAT</div><div class="option" onclick="chatOptions.addChatDis()">ADD CHAT</div><div class="option" onclick="chatOptions.settingsDis()">SETTINGS</div></div></div>',
 
         settings : '<div id="settings"><div class="settings-row"><span class="settings-text">Window size:</span><select id="select-size" class="settings-select">'
-              + '<option class="settings-option" value="xs">small</option><option class="settings-option" value="sm">medium</option><option class="settings-option" value="lg">large</option><option class="settings-option" value="res">custom (resizable)</option></select></div>'
-              + '<div class="settings-row"><span class="settings-text">Theme:</span><select id="select-theme" class="settings-select">'
-              + '<option class="settings-option">default</option><option class="settings-option">dark</option><option class="settings-option">holo</option></select></div></div>',
+        + '<option class="settings-option" value="xs">small</option><option class="settings-option" value="sm">medium</option><option class="settings-option" value="lg">large</option><option class="settings-option" value="res">custom (resizable)</option></select></div>'
+        + '<div class="settings-row"><span class="settings-text">Theme:</span><select id="select-theme" class="settings-select">'
+        + '<option class="settings-option">default</option><option class="settings-option">dark</option><option class="settings-option">holo</option></select></div></div>',
 
-        searchchat: '<div class="search-chat"><div id="type-password-mod" style="display:none"><i class="fa fa-remove hidetypepass" onclick="hideTypePass()"></i><div class="type-password-cont"><div id="type-password-text">password for room <div id="type-password-name"></div></div><input id="type-password" type="password" placeholder="password" autofocus="true"><div id="type-password-message"></div></div></div><center class="search-chat-cont"><input class="search-chat-input" placeholder="Search chat" autofocus="true"><span class="search-chat-icon"></span></center><hr class="search-div"><div class="search-body"></div></div>',
+        searchchat: '<div class="search-chat cm-scroll"><div id="type-password-mod" style="display:none"><i class="fa fa-remove hidetypepass" onclick="hideTypePass()"></i><div class="type-password-cont"><div id="type-password-text">password for room <div id="type-password-name"></div></div><input id="type-password" type="password" placeholder="password" autofocus="true"><div id="type-password-message"></div></div></div><center class="search-chat-cont"><input class="search-chat-input" placeholder="Search chat" autofocus="true"><span class="search-chat-icon"></span></center><hr class="search-div"><div class="search-body"></div></div>',
 
         addchat : '<div class="add-chat"> <center> <label>Chat name: <input id="addchat-name" type="text" maxlength="30"></label> <label>Chat password (empty for no password): <input id="addchat-pass" type="password" maxlength="15"></label> <button class="addchat-btn" onclick="chatOptions.submitChat()">ADD CHAT</button> <div id="addchat-message"></div> </center> </div>',
     },
@@ -424,17 +439,20 @@ var chatOptions = {
     container : $('#options-content'),
     spinner: null,
 
-    initOptions : function() {
-        chatOptions.container.html(chatOptions.display.options);
+    initDis: function() {
         spinner.hide();
+        chatOptions.container.html(chatOptions.display.options);
     },
     settingsDis: function() {
+        spinner.hide();
         chatOptions.container.html(chatOptions.display.settings);
     },
     searchChatDis: function() {
+        spinner.hide();
         chatOptions.container.html(chatOptions.display.searchchat);
     },
-    addchatDis : function() {
+    addChatDis : function() {
+        spinner.hide();
         chatOptions.container.html(chatOptions.display.addchat);
     },
     submitChat : function() {
@@ -449,43 +467,64 @@ var chatOptions = {
 var inlinebtns = {
     container: $('<div id="cm-inline-btns"></div>'),
     btns: {
-        minbtn: {init: $('<span class="btn min-btn">_</span>'), element: undefined, display: 'init,logged,register'},
-        optsbtn: {init: $('<span class="btn opts-btn"></span>'), element: undefined, display: 'logged'},
-        statusbtn: {init: $('<span class="btn status-btn-container modal-toggle"><div class="modal status-modal"><div class="modal-body"></div></div></span>'), element: undefined, display: 'logged'}
+        minbtn: {element: $('<span class="btn min-btn">_</span>'), display: 'init,logged,register'},
+        optsbtn: {element: $('<span class="btn opts-btn"></span>'), display: 'logged'},
+        statusbtn: {element: $('<span class="btn status-btn modal-toggle"><div class="modal status-modal"><div class="modal-body"></div></div></span>'), display: 'logged'},
+        searchbtn: {element: $('<span class="btn search-btn"></span>'), display: 'logged'},
+        addbtn: {element: $('<span class="btn add-btn"></span>'), display: 'logged'},
+        mutebtn: {element: $('<span class="btn mute-btn mute-false"></span>'), display: 'logged'},
     },
     data : {
         statusmodal : [
-            {name: 'Online', value: 'online'},
-            {name: 'Offline', value: 'offline'},
-            {name: 'Busy', value: 'busy'},
-            {name: 'Away from keyboard', value: 'afk'},
-            {name: 'At the toilet', value: 'toilet'}
+        {name: 'Online', value: 'online'},
+        {name: 'Offline', value: 'offline'},
+        {name: 'Busy', value: 'busy'},
+        {name: 'Away from keyboard', value: 'afk'},
+        {name: 'At the toilet', value: 'toilet'}
         ]
     },
     initbtns: function() {
 
         var buttons = this.btns;
 
-        /* optsbtn */
-        buttons.optsbtn.element = $(buttons.optsbtn.init[0].cloneNode(true));
-        buttons.optsbtn.element.click(function() {
+        /* mutebtn */
+        buttons.mutebtn.object = $(buttons.mutebtn.element[0].cloneNode(true));
+        buttons.mutebtn.object.click(function() {
+            mute = !mute;
+            buttons.mutebtn.object.removeClass('mute-'+!mute).addClass('mute-'+mute);
+        });
+        /* searchbtn */
+        buttons.searchbtn.object = $(buttons.searchbtn.element[0].cloneNode(true));
+        buttons.searchbtn.object.click(function() {
             options.show();
-            chatOptions.initOptions();
+            chatOptions.searchChatDis();
+        });
+        /* addchbtn */
+        buttons.addbtn.object = $(buttons.addbtn.element[0].cloneNode(true));
+        buttons.addbtn.object.click(function() {
+            options.show();
+            chatOptions.addChatDis();
+        });
+        /* optsbtn */
+        buttons.optsbtn.object = $(buttons.optsbtn.element[0].cloneNode(true));
+        buttons.optsbtn.object.click(function() {
+            options.show();
+            chatOptions.initDis();
         });
         /* minbtn */
-        buttons.minbtn.element = $(buttons.minbtn.init[0].cloneNode(true));
-        buttons.minbtn.element.click(function() {
+        buttons.minbtn.object = $(buttons.minbtn.element[0].cloneNode(true));
+        buttons.minbtn.object.click(function() {
             postParentMessage('minify');
         });
         /* status btn */
-        buttons.statusbtn.element = $(buttons.statusbtn.init[0].cloneNode(true));
-        buttons.statusbtn.element.click(function(e) {
+        buttons.statusbtn.object = $(buttons.statusbtn.element[0].cloneNode(true));
+        buttons.statusbtn.object.click(function(e) {
             $(this).find('.status-modal').toggle();
         });
         inlinebtns.data.statusmodal.forEach(function(status) {
             var statusrow = $('<div class="status-row" data-val="'+status.value+'">'+status.name+'</div>');
             statusrow.click(function() { socket.emit('change_status', $(this).data('val')); });
-            buttons.statusbtn.element.find('.modal-body').append(statusrow);
+            buttons.statusbtn.object.find('.modal-body').append(statusrow);
         });
         /* ========= */
 
@@ -499,7 +538,7 @@ var inlinebtns = {
             var button = buttons[btnname];
             if (!button.display.match(type))
                 continue;
-            inlinebtns.container.append(button.element);
+            inlinebtns.container.append(button.object);
         }
     }
 };
@@ -567,13 +606,13 @@ function hideOpts() {
 }
 
 $(document).on('mouseenter', '.option', function() {
-  $(this).css({
-    'background-color': 'rgb(157,162,164)',
-    'color'           : 'navajowhite'
-});
-  $(this).animate({
-    'font-size': '13px'
-}, {queue: false, duration: 50});
+    $(this).css({
+        'background-color': 'rgb(150, 165, 171)',
+        'color'           : 'navajowhite'
+    });
+    $(this).animate({
+        'font-size': '13px'
+    }, {queue: false, duration: 50});
 }).on('mouseleave', '.option', function() {
   $(this).css({
     'background-color': '',
@@ -594,7 +633,7 @@ $(document).on('keyup', '.search-chat-input', function() {
     }
 });
 function showOptsWait(typeclass='full') { //typeclass can be 'full' or 'light'
-    spinner.removeClass('full light').addClass(typeclass).show();
+spinner.removeClass('full light').addClass(typeclass).show();
 }
 
 function hideOptsWait() {
@@ -645,6 +684,8 @@ $(document).on('change', '#select-size', function() {
 
 $(document).on('keyup', '#cm-message-input', checkTyping);
 
-window.addEventListener('message', function(event) { 
-    console.log(event.data);
+$( document ).on( 'keydown', function ( e ) {
+    if ( e.keyCode === 27 ) {
+        hideOpts();
+    }
 });

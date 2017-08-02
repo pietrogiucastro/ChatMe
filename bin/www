@@ -9,6 +9,7 @@
  var fs = require('fs');
  var http = require('http');
  var https = require('https');
+ var anchorme = require('anchorme').default;
 
 /**
  * Get port from environment and store in Express.
@@ -113,6 +114,17 @@ var status = {
   toilet : {message: 'Toilet!', classname: 'istoilet'},
 };
 
+function elabMessage(msg) {
+  msg = msg.replace(/</g, '&lt').replace(/>/g, '&gt');
+  msg = anchorme(msg, {
+    attributes:[{
+      name:"target",
+      value:"_blank"
+    }]
+  });
+  return msg;
+}
+
 io.sockets.on('connection', function(socket) {
 
   // init connection //
@@ -157,6 +169,7 @@ io.sockets.on('connection', function(socket) {
         Jsonerror(socket, 'stderror', 'room does not exist!');
         return;
       }
+      msg = elabMessage(msg);
       console.log('sending message on room ' + JSON.stringify(room));
       var msgobj = {type: 'message', text: msg, time: new Date(), author: socket.name};
       var roomname = room.startsWith('site://') ? 'site' : room;
@@ -180,7 +193,8 @@ io.sockets.on('connection', function(socket) {
       var roomname = getsocketroom(socket);
       if (!roomname) return;
       socket.istyping = !!value;
-      rooms[roomname].users[socket.name].istyping = socket.istyping;
+      try {rooms[roomname].users[socket.name].istyping = socket.istyping;}
+      catch(e) { console.log('error for user ' + socket.name); console.log(e); }
       io.sockets.in(roomname).emit('user_typing', {name: socket.name, istyping: socket.istyping});
     });
 
@@ -218,20 +232,20 @@ io.sockets.on('connection', function(socket) {
       switch(room.type) {
 
         case 'global':
-          switchroom(socket, 'global');
-          break;
+        switchroom(socket, 'global');
+        break;
 
         case 'site':
-          switchsiteroom(socket, room.name);
-          break;
+        switchsiteroom(socket, room.name);
+        break;
 
         case 'custom': //custom room
-          switchroom(socket, room.name, room.pass);
-          break;
+        switchroom(socket, room.name, room.pass);
+        break;
 
         default:
-          Jsonerror(socket);
-          return;
+        Jsonerror(socket);
+        return;
       }
 
     });
@@ -282,74 +296,74 @@ io.sockets.on('connection', function(socket) {
 
   });
 
-  function switchsiteroom(socket, roomname) {
-    if (!roomexists(roomname)) initsiteroom(roomname);
-    joinroom(socket, roomname, function() {
-      console.log('joined site room ' + roomname);
-    });
-  }
+function switchsiteroom(socket, roomname) {
+  if (!roomexists(roomname)) initsiteroom(roomname);
+  joinroom(socket, roomname, function() {
+    console.log('joined site room ' + roomname);
+  });
+}
 
-  function switchroom(socket, roomname, sentpass, forcecreate, callback) {
+function switchroom(socket, roomname, sentpass, forcecreate, callback) {
 
-    if (!roomexists(roomname)) {
+  if (!roomexists(roomname)) {
 
-      if (!forcecreate) {
-        console.log('error! room  %s does not exist', roomname);
-        Jsonerror(socket, 'stderror', 'room does not exist!');
-        return;
-      } else {
-        initroom(roomname, sentpass);
-      }
-
+    if (!forcecreate) {
+      console.log('error! room  %s does not exist', roomname);
+      Jsonerror(socket, 'stderror', 'room does not exist!');
+      return;
     } else {
-
-      var roompass = getroom(roomname).password;
-      if (roompass && sentpass != roompass) {
-        Jsonerror(socket, 'wrongpassword', 'Wrong password!', {name : roomname});
-        return;
-      }
-
+      initroom(roomname, sentpass);
     }
-    joinroom(socket, roomname, function() {
-      console.log('joined room ' + roomname);
+
+  } else {
+
+    var roompass = getroom(roomname).password;
+    if (roompass && sentpass != roompass) {
+      Jsonerror(socket, 'wrongpassword', 'Wrong password!', {name : roomname});
+      return;
+    }
+
+  }
+  joinroom(socket, roomname, function() {
+    console.log('joined room ' + roomname);
+    if (callback) callback();
+  });
+
+}
+
+function createroom(socket, roomname, roompass) {
+  initroom(roomname, roompass);
+  switchroom(socket, roomname, roompass, false, function() {
+    console.log('new room created: ' + roomname + ' password: ' + !!roompass);
+    socket.emit('set room', {name: roomname, pass: roompass});
+  });
+}
+function joinroom(socket, roomname, callback) {
+  function nowjoin() {
+
+    socket.join(roomname, function() {
+      var userdata = { name: socket.name, status: socket.status, istyping: socket.istyping };
+      io.sockets.in(roomname).emit('refresh_user', userdata);
+
+      rooms[roomname].users[socket.name] = userdata;
+      socket.emit('history_users', {history: rooms[roomname].history, users: rooms[roomname].users});
+      socket.lastroom = roomname;
       if (callback) callback();
     });
 
   }
 
-  function createroom(socket, roomname, roompass) {
-    initroom(roomname, roompass);
-    switchroom(socket, roomname, roompass, false, function() {
-      console.log('new room created: ' + roomname + ' password: ' + !!roompass);
-      socket.emit('set room', {name: roomname, pass: roompass});
-    });
-  }
-  function joinroom(socket, roomname, callback) {
-    function nowjoin() {
+  var currentroom = getsocketroom(socket);
+  if (currentroom) leaveroom(socket, currentroom, nowjoin);
+  else nowjoin();
 
-        socket.join(roomname, function() {
-        var userdata = { name: socket.name, status: socket.status, istyping: socket.istyping };
-        io.sockets.in(roomname).emit('refresh_user', userdata);
-
-        rooms[roomname].users[socket.name] = userdata;
-        socket.emit('history_users', {history: rooms[roomname].history, users: rooms[roomname].users});
-        socket.lastroom = roomname;
-        if (callback) callback();
-      });
-
-    }
-
-    var currentroom = getsocketroom(socket);
-    if (currentroom) leaveroom(socket, currentroom, nowjoin);
-    else nowjoin();
-
-  }
-  function leaveroom(socket, roomname, callback) {
-    socket.leave(roomname, function() {
-      io.sockets.in(roomname).emit('remove_user', socket.name);
-      delete rooms[roomname].users[socket.name];
-      console.log('left room ' + roomname);
-      if (callback) callback();
+}
+function leaveroom(socket, roomname, callback) {
+  socket.leave(roomname, function() {
+    io.sockets.in(roomname).emit('remove_user', socket.name);
+    delete rooms[roomname].users[socket.name];
+    console.log('left room ' + roomname);
+    if (callback) callback();
 
       // delete user joined rooms in db
 
@@ -359,38 +373,38 @@ io.sockets.on('connection', function(socket) {
       /*var index = customrooms.indexOf(5);
       if (index + 1) customrooms.splice(index, 1);*/
     });
-  }
-  function getroom(roomname) {
-    return rooms[roomname];
-  }
+}
+function getroom(roomname) {
+  return rooms[roomname];
+}
 
-  function getrooms(callback) {
-    callback(rooms);
-  }
-  function initroom(roomname, roompass, callback) {
-    rooms[roomname] = { history: [], password: roompass, users: {} };
-    customrooms.push(roomname);
-    if (callback) callback();
-  }
+function getrooms(callback) {
+  callback(rooms);
+}
+function initroom(roomname, roompass, callback) {
+  rooms[roomname] = { history: [], password: roompass, users: {} };
+  customrooms.push(roomname);
+  if (callback) callback();
+}
 
-  function initsiteroom(roomname) {
-    rooms[roomname] = { history: [], users: {} };
-  }
-  function getsocketroom(socket) {
-    return Object.keys(socket.rooms)[1];
-  }
+function initsiteroom(roomname) {
+  rooms[roomname] = { history: [], users: {} };
+}
+function getsocketroom(socket) {
+  return Object.keys(socket.rooms)[1];
+}
 
-  function roomexists(roomname) {
-    return !!rooms[roomname];
-  }
+function roomexists(roomname) {
+  return !!rooms[roomname];
+}
 
-  function Jsonerror(socket, type='stderror', message='Internal error. Retry later.', data = {}) {
-    socket.emit('jsonerror', {type: type, message: message, data: data});
-  }
+function Jsonerror(socket, type='stderror', message='Internal error. Retry later.', data = {}) {
+  socket.emit('jsonerror', {type: type, message: message, data: data});
+}
 
-  function Jsonwarn(socket, type='stdwarn', message='Internal error. Retry later.') {
-    socket.emit('jsonwarning', {type: type, message: message});
-  }
+function Jsonwarn(socket, type='stdwarn', message='Internal error. Retry later.') {
+  socket.emit('jsonwarning', {type: type, message: message});
+}
 
 
 });

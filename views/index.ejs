@@ -17,6 +17,9 @@
       padding: 5px;
       height: 25px;
     }
+    #chat-me.logged #cm-inline-btns {
+      padding-right: 1px;
+    }
     #chat-me-label {
       position: relative;
       height: 100%;
@@ -43,7 +46,7 @@
       color: #333;
       max-width: 20%;
       vertical-align: middle;
-      padding-left: 17px !important;
+      padding-left: 19px !important;
     }
     .chat-tab .volume-icon {
       position: absolute;
@@ -51,6 +54,12 @@
       top: 100%;
       padding: 1px;
       padding-top: 4px;
+    }
+    .vol-true {
+      color: green;
+    }
+    .vol-false {
+      color: darkred;
     }
     .volume-icon.vol-true:before {
       font-family: fontawesome;
@@ -124,7 +133,7 @@
       text-align: center;
       padding: 5px;
       cursor: pointer;
-      border-bottom: 1px solid grey;
+      border-bottom: 1px solid #ddd;
       font-size: 11px;
       font-weight: bold;
       height: 20px;
@@ -165,12 +174,17 @@
     }
     .add-chat {
       width: 70%;
+      height: 100%;
       margin: auto;
-      margin-top: -13px;
+      display: flex;
+      align-content: center;
+    }
+    .add-chat center {
+      margin: auto;
     }
     .add-chat label {
       display: block;
-      margin-top: 15px;
+      margin-top: 12px;
       font-weight: bold;
     }
     .add-chat input {
@@ -203,7 +217,7 @@
       margin: auto;
       display: flex;
       align-items: center;
-      width: 100vh;
+      width: 60%;
       padding: 2px 8px;
       border-radius: 4px;
       background-color: white;
@@ -348,6 +362,8 @@
       padding: 2px 0;
       font-weight: bold;
     }
+
+
     #cm-inline-btns .btn {
       position: relative;
       height: 100%;
@@ -358,7 +374,42 @@
       cursor: pointer;
       font-size: 11px;
     }
+    #cm-inline-btns .btn:hover {
+      color: dodgerblue;
+      background: #eee;
+    }
+    .btn.mute-btn {
+      padding-left: 6px;
+      width: 17px;
+      float: left !important;
+      margin-left: 0 !important;
+    }
+    .mute-btn.mute-true {
+      color: grey !important;
+    }
+    .mute-true:before {
+      font-family: fontawesome;
+      content: "\f026";
+    }
+    .mute-btn.mute-false {
+      color: lightseagreen !important;
+      content: "\f024";
+    }
+    .mute-false:before {
+      font-family: fontawesome;
+      content: "\f028"; 
+    }
     .btn.min-btn {
+      padding: 0 6px;
+    }
+    .btn.add-btn:before {
+      font-family: fontawesome;
+      content: "\f067";
+      padding: 0 6px;
+    }
+    .btn.search-btn:before {
+      font-family: fontawesome;
+      content: "\f002";
       padding: 0 6px;
     }
     .btn.opts-btn:before {
@@ -366,6 +417,11 @@
       content: "\f013";
       padding: 0 6px;
     }
+    .btn.status-btn {
+      margin-right: 5px;
+    }
+
+
     .cm-message-status.isonline {
       color: green;
     }
@@ -387,15 +443,12 @@
       font-style: italic;
       margin-left: 3px;
     }
-    .status-btn-container {
-      
-    }
-    .status-btn-container:before {
+    .status-btn:before {
       font-family: fontawesome;
       content: "\f2cd";
       padding: 0 5px;
     }
-    .status-btn-container .status-modal {
+    .status-btn .status-modal {
       position: absolute;
       top: 100%;
       left: -78px;
@@ -465,7 +518,9 @@
     }
     .chat-tab .volume-icon {
       animation: volout 0.13s forwards;
+      width: 13px;
     }
+
     .chat-tab:before {
       animation: icoin 0.13s forwards;
     }

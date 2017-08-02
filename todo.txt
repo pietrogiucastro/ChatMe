@@ -18,3 +18,9 @@
 - check username must be without spaces
 - cookie switch chat on last used chat on logged display
 - fix time display also with days
+- remove selection possibility on buttons
+- remove youtube match return
+- true HTTPSSSS!
+- resize animation on hover option
+- right spinner everywere
+- pm users
