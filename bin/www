@@ -7,6 +7,7 @@
  var app = require('../app');
  var debug = require('debug')('chatme:server');
  var fs = require('fs');
+ var path = require('path');
  var http = require('http');
  var https = require('https');
  var anchorme = require('anchorme').default;
@@ -101,9 +102,10 @@ var server = https.createServer(options, app);
 var connections = [];
 var history = {};
 var io = require('socket.io').listen(server);
+var ss = require('socket.io-stream');
 var r_global = 'global';
 
-var rooms = { global: { history : [], users: {} } };
+var rooms = { global: { history : [], users: {}, userslist: [] } };
 var customrooms = [];
 
 var status = {
@@ -115,7 +117,7 @@ var status = {
 };
 
 function elabMessage(msg) {
-  msg = msg.replace(/</g, '&lt').replace(/>/g, '&gt');
+  msg = msg.replace(/</g, '&lt').replace(/>/g, '&gt').trim();
   msg = anchorme(msg, {
     attributes:[{
       name:"target",
@@ -163,6 +165,9 @@ io.sockets.on('connection', function(socket) {
     socket.emit('initchat');
 
     socket.on('send message', function(msg) {
+      if (typeof msg != "string") {
+        return Jsonerror(socket);
+      }
       var room = getsocketroom(socket);
       if (!roomexists(room)) {
         console.log('room %s does not exist!', room);
@@ -171,12 +176,24 @@ io.sockets.on('connection', function(socket) {
       }
       msg = elabMessage(msg);
       console.log('sending message on room ' + JSON.stringify(room));
-      var msgobj = {type: 'message', text: msg, time: new Date(), author: socket.name};
-      var roomname = room.startsWith('site://') ? 'site' : room;
-      io.sockets.in(room).emit('new message', {msg: msgobj, roomname: roomname});
+      var msgobj = {type: 'user_msg', text: msg, time: new Date(), author: socket.name};
+      sendMessage(socket, room, msgobj);
       rooms[room].history.push(msgobj);
-
       rooms[room].history = rooms[room].history.slice(-100);
+    });
+
+
+    ss(socket).on('file', function(stream) {
+      console.log(stream);
+      return;
+      var uploadpath = process.cwd()+'/uploads/ciao.jpg';
+      
+      // try {
+        stream.pipe(fs.createWriteStream(uploadpath));
+      /*} catch(e) {
+        console.log(e);
+        return Jsonerror(socket);
+      }*/
     });
 
     socket.on('change_status', function(value) {
@@ -296,6 +313,12 @@ io.sockets.on('connection', function(socket) {
 
   });
 
+function sendMessage(socket, room, msgobj) {
+
+  var roomname = room.startsWith('site://') ? 'site' : room;
+  io.sockets.in(room).emit('new message', {msg: msgobj, roomname: roomname});
+}
+
 function switchsiteroom(socket, roomname) {
   if (!roomexists(roomname)) initsiteroom(roomname);
   joinroom(socket, roomname, function() {
@@ -346,8 +369,14 @@ function joinroom(socket, roomname, callback) {
       io.sockets.in(roomname).emit('refresh_user', userdata);
 
       rooms[roomname].users[socket.name] = userdata;
+      rooms[roomname].userslist.push(socket.name);
       socket.emit('history_users', {history: rooms[roomname].history, users: rooms[roomname].users});
       socket.lastroom = roomname;
+
+      var msgtxt = socket.name + " connected";
+      var msgobj = {type: 'system_msg', text: msgtxt , time: new Date()};
+      sendMessage(socket, roomname, msgobj);
+
       if (callback) callback();
     });
 
@@ -360,8 +389,18 @@ function joinroom(socket, roomname, callback) {
 }
 function leaveroom(socket, roomname, callback) {
   socket.leave(roomname, function() {
-    io.sockets.in(roomname).emit('remove_user', socket.name);
-    delete rooms[roomname].users[socket.name];
+    var socketindex = rooms[roomname].userslist.indexOf(socket.name);
+    if (socketindex + 1)
+      rooms[roomname].userslist.splice(socketindex, 1);
+    var stillConnected = rooms[roomname].userslist.indexOf(socket.name) + 1;
+    if (!stillConnected) {
+      io.sockets.in(roomname).emit('remove_user', socket.name);
+      delete rooms[roomname].users[socket.name];
+
+      var msgtxt = socket.name + " disconnected";
+      var msgobj = {type: 'system_msg', text: msgtxt , time: new Date()};
+      sendMessage(socket, roomname, msgobj);
+    }
     console.log('left room ' + roomname);
     if (callback) callback();
 
@@ -382,13 +421,13 @@ function getrooms(callback) {
   callback(rooms);
 }
 function initroom(roomname, roompass, callback) {
-  rooms[roomname] = { history: [], password: roompass, users: {} };
+  rooms[roomname] = { history: [], password: roompass, users: {}, userslist: [] };
   customrooms.push(roomname);
   if (callback) callback();
 }
 
 function initsiteroom(roomname) {
-  rooms[roomname] = { history: [], users: {} };
+  rooms[roomname] = { history: [], users: {}, userslist: [] };
 }
 function getsocketroom(socket) {
   return Object.keys(socket.rooms)[1];

@@ -8,6 +8,10 @@
   <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
   <link href="https://fonts.googleapis.com/css?family=Montserrat" rel="stylesheet">
   <style type="text/css">
+    .hidden {
+      display: none;
+    }
+
     #chat-me.init #cm-inline-btns {
       padding: 5px;
       height: 26px;
@@ -25,6 +29,7 @@
       height: 100%;
     }
     #chat-me-tabs {
+      white-space: nowrap;
       height: 24px;
       font-size: 0;
       position: absolute;
@@ -475,6 +480,22 @@
       background-color: #ddd;
       color: rgb(50, 180, 50);
     }
+    .cm-system-msg {
+      display: flex;
+      align-items: center;  
+      padding: 15px 3%;
+    }
+    .cm-system-msg hr {
+      width: 100%;
+      border-top: 1px solid #999;
+      border-bottom: 0;
+    }
+    .cm-system-msg .system-text {
+      margin: 0 10px;
+      white-space: nowrap;
+      font-style: italic;
+      color: #555;
+    }
 
   </style>
   <style type="text/css">
@@ -512,6 +533,12 @@
       {
         border-radius: 5px;
         background-color: #609f46;
+      }
+  
+    .cm-tabs-scroll::-webkit-scrollbar-track
+      {
+        --webkit-box-shadow: none !important;
+        background-color: #37617c !important;
       }
   </style>
   <style type="text/css">
@@ -579,6 +606,8 @@
     <div id="chat-me-cont"></div>
   </div>
   <script src="/socket.io/socket.io.js"></script>
+  <script src="/javascripts/socket.io-stream.js"></script>
+  <script type="text/javascript" src="/javascripts/stream-client.js"></script>
   <script type="text/javascript" src="/versions/001.js"></script>
 </body>
 </html>

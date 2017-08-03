@@ -11,8 +11,8 @@ function url_domain(data) {
 
 site = 'site://' + url_domain(site);
 
-var displaytype;
 var socket;
+var displaytype;
 var sess_token = $.cookie('sess_token');
 var sess_user = $.cookie('sess_user');
 var wheel   = document.createElement('img');
@@ -21,14 +21,18 @@ wheel.src   = 'https://media.tenor.com/images/85d269dc9595a7bcf87fd0fa4039dd9f/t
 wheel.style = 'width:40px;';
 
 var prevtyping = false;
+
 var input;
+var uploadinput = $('<input class="hidden" type="file" id="cm-upload">');
+
 var not1 = new Audio('/sounds/not1.mp3');
 
 var mute = false;
 var chats = {global: {volume: true}, site: {volume: true}};
 var currentchat;
 
-var tabs = $('<div id="chat-me-tabs" class="cm-scroll scroll-x"><div class="chat-tab global-tab sel" data-name="global" data-type="global"><span class="volume-icon vol-true"></span>Global</div><div class="chat-tab site-tab" data-name="site" data-type="site"><span class="volume-icon vol-true"></span>Site</div></div>');
+var tabs = $('<div id="chat-me-tabs" class="cm-scroll scroll-x cm-tabs-scroll"><div class="chat-tab global-tab sel" data-name="global" data-type="global"><span class="volume-icon vol-true"></span>Global</div><div class="chat-tab site-tab" data-name="site" data-type="site"><span class="volume-icon vol-true"></span>Site</div></div>');
+
 var roomresultModel = $('<div class="chat-row"><span class="chat-name"></span> <span class="chat-online"><i class="fa fa-user" style="margin-right:4px;"></i><span class="online-num"></span></span></div>')[0];
 // if user is running mozilla then use it's built-in WebSocket
 window.WebSocket = window.WebSocket || window.MozWebSocket;
@@ -69,6 +73,20 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
 
     }
 
+    function setSystemMsg(msg) {
+        var rescroll = false;
+        var RANGE = 30; //px
+        if ($('#cm-chat')[0].scrollTop >= $('#cm-chat')[0].scrollHeight - $('#cm-chat').height() - RANGE) rescroll = true;
+
+        var systemmsg = $('<div class="cm-system-msg"><hr><div class="system-text">' + msg + '</div><hr></div>');
+        $('#cm-chat-list').append(systemmsg);
+
+        if(rescroll) $('#cm-chat')[0].scrollTop = $('#cm-chat')[0].scrollHeight - $('#cm-chat').height();
+        
+    }
+
+    //setTimeout(function(){setSystemMsg("speep90 connected");}, 300);
+
     function setHistory(msgs) {
         $('#chat-me-cont #spinner').remove();
 
@@ -106,11 +124,11 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     function setUsers(users) {
         $('#cm-online-list').empty();
         for (var username in users) {
-         var user = users[username];
-         appendUser(user);
-     }
- }
- function appendUser(user) {
+           var user = users[username];
+           appendUser(user);
+       }
+   }
+   function appendUser(user) {
     var status = user.status;
     var typingclass = user.istyping ? ' typing' : '';
     status.classname += typingclass;
@@ -141,89 +159,69 @@ function postMessage() {
     socket.emit('send message', msg);
     input.val('').attr('disabled', 'disabled');
     checkTyping();
+}
+function ActionMessage(msg) {
+    switch (msg) {
+        case 'quit':
+        InitDisplay();
+        break;
+        default:
+        console.log('unhandled action');
+    }
+}
+function InitDisplay() {
+    setDisplayStyle('init');
+    if (socket) socket.disconnect();
+    sess_token = ''; sess_user = '';
+    $.removeCookie('sess_token');
+    $.removeCookie('sess_user');
+    $('#chat-me').find(tabs).remove();
+    $('#chat-me').prepend(inlinebtns.container);
+    $('#chat-me-cont').html('');
+    $('#chat-me-cont').append('<label for=cm-user class=cm-label>Username:</label><input type=text id=cm-user class=cm-input placeholder=Username></input><br>');
+    $('#chat-me-cont').append('<label for=cm-pass class=cm-label>Password:</label><input type=password id=cm-pass class=cm-input placeholder=Password></input><br>');
+    $('#chat-me-cont').append('<div id=cm-error-cont></div>');
+    $('#chat-me-cont').append('<div style="position:absolute; bottom:28%; right:6%; width:140px;"><button style="left:0%; height:20px;" id=cm-login class=cm-button>Login</button><button style="right:0%; height:20px; background:transparent; color:white; text-decoration:none;" id=cm-register class=cm-button>Sign up</button></div>');
 
-        /*
-        var button = $('#cm-send');
-        button.html(wheel);
-        var text = $('#cm-message-input').val();
-        $('#cm-message-input').val('');
-        if (text == 'quit') {
-            InitDisplay();
-            return;
-        }
+    $('#cm-login').click(function() {
+        $('#cm-error-cont').html(wheel);
+        var user = $('#cm-user').val();
+        var pass = $('#cm-pass').val();
         $.get('https://script.google.com/macros/s/AKfycbzTaPP2QXWeGOmdUadGk-nCYtvxXi3ZfY0uPRHqlokFaqUO9-Y/exec', {
-            action : 'post',
-            token  : sess_token,
-            text   : text
+            action : 'login',
+            user  : user,
+            pass  : pass
         }, function(e) {
-            button.html('Send');
-            $('#cm-chat')[0].scrollTop = $('#cm-chat')[0].scrollHeight - $('#cm-chat').height();
+            $('#cm-error-cont').html('');
             console.log(e);
+            if (e.result == 'success') {
+                sess_user = e.user;
+                sess_token = e.token;
+                $.cookie('sess_token', sess_token);
+                $.cookie('sess_user', sess_user);
+                LoggedDisplay();
+            }
+            else $('#cm-error-cont').html(e.error);
         });
-        */
-    }
-    function ActionMessage(msg) {
-        switch (msg) {
-            case 'quit':
-            InitDisplay();
-            break;
-            default:
-            console.log('unhandled action');
-        }
-    }
-    function InitDisplay() {
-        setDisplayStyle('init');
-        if (socket) socket.disconnect();
-        sess_token = ''; sess_user = '';
-        $.removeCookie('sess_token');
-        $.removeCookie('sess_user');
-        $('#chat-me').find(tabs).remove();
-        $('#chat-me').prepend(inlinebtns.container);
-        $('#chat-me-cont').html('');
-        $('#chat-me-cont').append('<label for=cm-user class=cm-label>Username:</label><input type=text id=cm-user class=cm-input placeholder=Username></input><br>');
-        $('#chat-me-cont').append('<label for=cm-pass class=cm-label>Password:</label><input type=password id=cm-pass class=cm-input placeholder=Password></input><br>');
-        $('#chat-me-cont').append('<div id=cm-error-cont></div>');
-        $('#chat-me-cont').append('<div style="position:absolute; bottom:28%; right:6%; width:140px;"><button style="left:0%; height:20px;" id=cm-login class=cm-button>Login</button><button style="right:0%; height:20px; background:transparent; color:white; text-decoration:none;" id=cm-register class=cm-button>Sign up</button></div>');
+    });
 
-        $('#cm-login').click(function() {
-            $('#cm-error-cont').html(wheel);
-            var user = $('#cm-user').val();
-            var pass = $('#cm-pass').val();
-            $.get('https://script.google.com/macros/s/AKfycbzTaPP2QXWeGOmdUadGk-nCYtvxXi3ZfY0uPRHqlokFaqUO9-Y/exec', {
-                action : 'login',
-                user  : user,
-                pass  : pass
-            }, function(e) {
-                $('#cm-error-cont').html('');
-                console.log(e);
-                if (e.result == 'success') {
-                    sess_user = e.user;
-                    sess_token = e.token;
-                    $.cookie('sess_token', sess_token);
-                    $.cookie('sess_user', sess_user);
-                    LoggedDisplay();
-                }
-                else $('#cm-error-cont').html(e.error);
-            });
-        });
+    $('#cm-register').click(function(){
+        var user = $('#cm-user').val();
+        var pass = $('#cm-pass').val();
+        RegisterDisplay(user, pass);
+    });
 
-        $('#cm-register').click(function(){
-            var user = $('#cm-user').val();
-            var pass = $('#cm-pass').val();
-            RegisterDisplay(user, pass);
-        });
+    inlinebtns.appendbtns(displaytype);
 
-        inlinebtns.appendbtns(displaytype);
-
-    }
-    function RegisterDisplay(user, pass) {
-        setDisplayStyle('register');
-        $('#chat-me').find(tabs).remove();
-        $('#chat-me-cont').html('<div style="font-weight:bold; color:white; margin-bottom:-8px; margin-top:-36px;">Register</div><br>');
-        $('#chat-me-cont').append('<div class=reg-up width:100%;"><label for=cm-user class=cm-label>Username:</label><input style="width:20%;" type=text id=cm-user class=cm-input placeholder=Username></input>  <label style="width:50px;" for=cm-email class=cm-label>E-mail:</label><input style="width:25%;" type=text id=cm-email class=cm-input placeholder=E-mail></input></div>');
-        $('#chat-me-cont').append('<div class=reg-down width:100%;"><label for=cm-pass class=cm-label>Password:</label><input style="width:20%;" type=password id=cm-pass class=cm-input placeholder=Password></input>  <label style="width:50px;" for=cm-confirm class=cm-label>Confirm:</label><input style="width:25%;" type=password id=cm-confirm class=cm-input placeholder=Confirm></input></div>');
-        $('#chat-me-cont').append('<div id=cm-error-cont></div>');
-        $('#chat-me-cont').append('<div style="position:absolute; bottom:28%; right:6%; width:140px;"><button style="left:0%; height:20px;" id=cm-back class=cm-button>Back</button><button style="right:0%; height:20px;" id=cm-register class=cm-button>Sign up!</button></div>');
+}
+function RegisterDisplay(user, pass) {
+    setDisplayStyle('register');
+    $('#chat-me').find(tabs).remove();
+    $('#chat-me-cont').html('<div style="font-weight:bold; color:white; margin-bottom:-8px; margin-top:-36px;">Register</div><br>');
+    $('#chat-me-cont').append('<div class=reg-up width:100%;"><label for=cm-user class=cm-label>Username:</label><input style="width:20%;" type=text id=cm-user class=cm-input placeholder=Username></input>  <label style="width:50px;" for=cm-email class=cm-label>E-mail:</label><input style="width:25%;" type=text id=cm-email class=cm-input placeholder=E-mail></input></div>');
+    $('#chat-me-cont').append('<div class=reg-down width:100%;"><label for=cm-pass class=cm-label>Password:</label><input style="width:20%;" type=password id=cm-pass class=cm-input placeholder=Password></input>  <label style="width:50px;" for=cm-confirm class=cm-label>Confirm:</label><input style="width:25%;" type=password id=cm-confirm class=cm-input placeholder=Confirm></input></div>');
+    $('#chat-me-cont').append('<div id=cm-error-cont></div>');
+    $('#chat-me-cont').append('<div style="position:absolute; bottom:28%; right:6%; width:140px;"><button style="left:0%; height:20px;" id=cm-back class=cm-button>Back</button><button style="right:0%; height:20px;" id=cm-register class=cm-button>Sign up!</button></div>');
 
         //        $('#chat-me-cont').append('<label for=cm-pass class=cm-label>Password:</label><input type=password id=cm-pass class=cm-input placeholder=Password></input><br>');
 
@@ -275,9 +273,17 @@ function postMessage() {
         socket.on('new message', function (message) {
             input.removeAttr('disabled');
             input.focus();
-            var chatvolume = chats[message.roomname].volume;
-            if (chatvolume && !mute) notifsound();
-            setMessage(message.msg);
+            console.log(message);
+            switch(message.msg.type) {
+                case 'user_msg':
+                    var chatvolume = chats[message.roomname].volume;
+                    if (chatvolume && !mute) notifsound();
+                    setMessage(message.msg);
+                    break;
+                case 'system_msg':
+                    setSystemMsg(message.msg.text);
+                    break;
+            }
         });
         socket.on('history_users', function(data) {
             setHistory(data.history);
@@ -369,7 +375,9 @@ function postMessage() {
         $('#chat-me-label').append('<div id="cm-message-panel"></div>')
         .find('#cm-message-panel').append('<div class="message-input-cont"></div>')
         .find('.message-input-cont').append('<input style="margin:0px; width:100%; height:100%;" type=text id=cm-message-input class=cm-input placeholder=Message>');
-        $('#cm-message-panel').append('<button style="position:absolute; top:0; right:0;" id=cm-send class=cm-button>Send</button>');
+        $('#cm-message-panel').append('<label id="submit-label" for="cm-upload"><span style="position:absolute; top:0; right:0;" id=cm-send class=cm-button><i class="fa fa-paperclip" style="font-size:165%"></i></span></label>')
+        .find('#submit-label').append(uploadinput);
+
 
         $('#cm-chat-list').html(bigwheel);
 
@@ -380,12 +388,10 @@ function postMessage() {
             if (e.keyCode == 13) postMessage();
         });
 
-        $('#cm-send').click(postMessage);
-
         inlinebtns.appendbtns(displaytype);
     }
 
-    window.addEventListener('message', function(event) { 
+    window.addEventListener('message', function(event) {
         if (event.data.type != 'cm-event') return;
         switch (event.data.key) {
             case 'page-state':
@@ -406,7 +412,7 @@ function postMessage() {
     }
 
     $(function main() {
-        /*css*/ $('head').append('<style type=text/css>body {margin: 0;} #chat-me {position:relative; overflow:hidden; height:100vh;} #chat-me-cont {box-sizing:border-box; padding:5px; padding-top:28px; width:100%; height:100%; background-color:rgba(50,80,100,1.0); border-radius:3px; font-family:tahoma !important;} #cm-inline-btns {position:absolute; box-sizing:border-box; width:100%; height:15px; margin-bottom:6px;} #cm-message-panel {position: absolute; bottom:0; height:25px; width:100%;} .cm-label {display:inline-block; color:rgb(230,230,230); font-weight:bold; margin:10px; width: 25%;} .cm-button {position:absolute; color:white; width:60px; font-size:10px; background-color:rgb(10,200,50); border:0px; box-shadow:none !important; cursor:pointer; height:100%; border-radius: 2px;} .message-input-cont {box-sizing:border-box; width: 100%; height:100%; padding-right:65px;} .cm-input {box-sizing:border-box; background-color:rgb(240,240,240)!important; border:0px; font-size:12px!important; font-family:\'Montserrat\', sans-serif; width:230px; border:0px; border-radius:2px;} #cm-error-cont {color:rgb(220,0,0); font-size:12px; margin-left:8px; margin-top:10px; max-width:200px} #cm-chat {font-family:\'Montserrat\', sans-serif; width:100%; margin-left:5px; height:100%; background-color:rgb(240,240,240); border-radius:2px;} #cm-chat-list {margin:0; padding:3px 5px; font-size:11px;} .cm-message:first-child {margin-top:0 !important}.cm-message:last-child {border:0;} .cm-message {margin-top:3px; border-bottom:1px solid #ddd; padding-bottom:2px;} .cm-message-name {font-family:\'Montserrat\', sans-serif; font-weight:bold; color:rgb(0,80,0); font-size:9px;} .cm-message .cm-message-name:after {content:":"} .cm-message-status {font-family:\'Montserrat\', sans-serif; color:grey; font-size: 8px;} .cm-message-text {display:block; margin-left: 3px; margin-right:10px; max-width:310px; word-wrap:break-word; color:rgb(30,30,30)} .cm-message-date {float:right; color:grey; font-size:9px;} #cm-display-panel {display:flex; box-sizing:border-box; padding-top:20px; padding-bottom:30px; height: 100%; } #cm-online {width:80px; height:100%; padding-left:4px; background-color:rgb(240,240,240); border-radius:2px;} #cm-online-list {margin:0; padding:5px 0; font-size:11px;}</style>');
+        /*css*/ $('head').append('<style type=text/css>body {margin: 0;} #chat-me {position:relative; overflow:hidden; height:100vh;} #chat-me-cont {box-sizing:border-box; padding:5px; padding-top:28px; width:100%; height:100%; background-color:rgba(50,80,100,1.0); border-radius:3px; font-family:tahoma !important;} #cm-inline-btns {position:absolute; box-sizing:border-box; width:100%; height:15px; margin-bottom:6px;} #cm-message-panel {position: absolute; bottom:0; height:25px; width:100%;} .cm-label {display:inline-block; color:rgb(230,230,230); font-weight:bold; margin:10px; width: 25%;} #cm-send {display:flex; align-items:center;} #cm-send * {margin:auto;} .cm-button {position:absolute; color:white; text-align:center; width:60px; font-size:10px; background-color:rgb(10,200,50); border:0px; box-shadow:none !important; cursor:pointer; height:100%; border-radius: 2px;} .message-input-cont {box-sizing:border-box; width: 100%; height:100%; padding-right:65px;} .cm-input {box-sizing:border-box; background-color:rgb(240,240,240)!important; border:0px; font-size:12px!important; font-family:\'Montserrat\', sans-serif; width:230px; border:0px; border-radius:2px;} #cm-error-cont {color:rgb(220,0,0); font-size:12px; margin-left:8px; margin-top:10px; max-width:200px} #cm-chat {font-family:\'Montserrat\', sans-serif; width:100%; margin-left:5px; height:100%; background-color:rgb(240,240,240); border-radius:2px;} #cm-chat-list {margin:0; padding:3px 5px; font-size:11px;} .cm-message:first-child {margin-top:0 !important}.cm-message:last-child {border:0;} .cm-message {margin-top:3px; border-bottom:1px solid #ddd; padding-bottom:2px;} .cm-message-name {font-family:\'Montserrat\', sans-serif; font-weight:bold; color:rgb(0,80,0); font-size:9px;} .cm-message .cm-message-name:after {content:":"} .cm-message-status {font-family:\'Montserrat\', sans-serif; color:grey; font-size: 8px;} .cm-message-text {display:block; margin-left: 3px; margin-right:10px; max-width:310px; word-wrap:break-word; color:rgb(30,30,30)} .cm-message-date {float:right; color:grey; font-size:9px;} #cm-display-panel {display:flex; box-sizing:border-box; padding-top:20px; padding-bottom:30px; height: 100%; } #cm-online {width:80px; height:100%; padding-left:4px; background-color:rgb(240,240,240); border-radius:2px;} #cm-online-list {margin:0; padding:5px 0; font-size:11px;}</style>');
         if (!$('#chat-me-cont').length) return;
 
         if (!sess_token || !sess_user) InitDisplay();
@@ -554,6 +560,7 @@ function switchchat(tab) {
         pass: roompass
     }
     selectchat(tab);
+    console.log('message!');
     socket.emit('switch room', room);
 }
 
@@ -581,6 +588,21 @@ function checkTyping() {
     if (prevtyping != typing) {
         prevtyping = typing;
         socket.emit('typingstatus', typing);
+        if (typing) {
+            $('.message-input-cont').animate({
+                'padding-right': '0px'
+            }, 'fast');
+            $('#cm-send').animate({
+                'right': '-65px'
+            }, 'fast');
+        } else {
+            $('.message-input-cont').animate({
+                'padding-right': '65px'
+            },  'fast');
+            $('#cm-send').animate({
+                'right': '0'
+            }, 'fast');
+        }
     }
 }
 function switchvolume(tab) {
