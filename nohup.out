@@ -1,0 +1,280 @@
+
+> chatme@1.1.0 start /srv/ChatMe
+> node ./bin/www
+
+
+/srv/ChatMe/environment.js:44
+            throw 'can\'t find NODE_ENV variable. Set it before proceeding:'
+            ^
+can't find NODE_ENV variable. Set it before proceeding:
+ Unix: "export NODE_ENV=development/production" 
+ Windows: "SET NODE_ENV=development/production" 
+npm ERR! code ELIFECYCLE
+npm ERR! errno 1
+npm ERR! chatme@1.1.0 start: `node ./bin/www`
+npm ERR! Exit status 1
+npm ERR! 
+npm ERR! Failed at the chatme@1.1.0 start script.
+npm ERR! This is probably not a problem with npm. There is likely additional logging output above.
+
+npm ERR! A complete log of this run can be found in:
+npm ERR!     /root/.npm/_logs/2017-08-02T15_14_05_109Z-debug.log
+
+> chatme@1.1.0 start /srv/ChatMe
+> node ./bin/www
+
+module.js:487
+    throw err;
+    ^
+
+Error: Cannot find module 'anchorme'
+    at Function.Module._resolveFilename (module.js:485:15)
+    at Function.Module._load (module.js:437:25)
+    at Module.require (module.js:513:17)
+    at require (internal/module.js:11:18)
+    at Object.<anonymous> (/srv/ChatMe/bin/www:12:17)
+    at Module._compile (module.js:569:30)
+    at Object.Module._extensions..js (module.js:580:10)
+    at Module.load (module.js:503:32)
+    at tryModuleLoad (module.js:466:12)
+    at Function.Module._load (module.js:458:3)
+npm ERR! code ELIFECYCLE
+npm ERR! errno 1
+npm ERR! chatme@1.1.0 start: `node ./bin/www`
+npm ERR! Exit status 1
+npm ERR! 
+npm ERR! Failed at the chatme@1.1.0 start script.
+npm ERR! This is probably not a problem with npm. There is likely additional logging output above.
+
+npm ERR! A complete log of this run can be found in:
+npm ERR!     /root/.npm/_logs/2017-08-02T15_14_58_991Z-debug.log
+
+> chatme@1.1.0 start /srv/ChatMe
+> node ./bin/www
+
+Wed Aug 02 2017 11:15:25 GMT-0400 (EDT) Server is listening on port 1337
+Listening on port 60000 mode: production
+[0mGET / [32m200 [0m17.016 ms - 12604[0m
+[0mGET /versions/001.js [32m200 [0m4.741 ms - 29682[0m
+[0mGET /sounds/not1.mp3 [32m206 [0m5.271 ms - 25004[0m
+[0mGET / [32m200 [0m1.261 ms - 12604[0m
+[0mGET /versions/001.js [32m200 [0m0.612 ms - 29682[0m
+[0mGET /sounds/not1.mp3 [32m206 [0m0.675 ms - 25004[0m
+a user connected. Online users: 1
+joined room global
+sending message on room "global"
+sending message on room "global"
+user disconnected. Online users: 0
+left room global
+[0mGET / [32m200 [0m0.509 ms - 12604[0m
+[0mGET /versions/001.js [32m200 [0m0.682 ms - 29682[0m
+a user connected. Online users: 1
+[0mGET /sounds/not1.mp3 [32m206 [0m0.645 ms - 25004[0m
+joined room global
+user disconnected. Online users: 0
+left room global
+a user connected. Online users: 1
+joined room global
+user disconnected. Online users: 0
+left room global
+a user connected. Online users: 1
+joined room global
+user disconnected. Online users: 0
+left room global
+[0mGET / [32m200 [0m0.825 ms - 12604[0m
+[0mGET /versions/001.js [36m304 [0m2.375 ms - -[0m
+a user connected. Online users: 1
+[0mGET /sounds/not1.mp3 [32m206 [0m0.562 ms - 25004[0m
+joined room global
+user disconnected. Online users: 0
+left room global
+a user connected. Online users: 1
+joined room global
+user disconnected. Online users: 0
+left room global
+a user connected. Online users: 1
+joined room global
+user disconnected. Online users: 0
+left room global
+a user connected. Online users: 1
+joined room global
+user disconnected. Online users: 0
+left room global
+a user connected. Online users: 1
+joined room global
+user disconnected. Online users: 0
+left room global
+[0mGET / [32m200 [0m1.339 ms - 12604[0m
+[0mGET /versions/001.js [32m200 [0m0.482 ms - 29682[0m
+a user connected. Online users: 1
+[0mGET /sounds/not1.mp3 [32m206 [0m0.520 ms - 25004[0m
+joined room global
+user disconnected. Online users: 0
+left room global
+[0mGET / [32m200 [0m0.685 ms - 12604[0m
+[0mGET / [32m200 [0m1.321 ms - 12604[0m
+[0mGET /versions/001.js [32m200 [0m0.627 ms - 29682[0m
+a user connected. Online users: 1
+[0mGET /sounds/not1.mp3 [32m206 [0m0.601 ms - 25004[0m
+joined room global
+[0mGET /versions/001.js [36m304 [0m0.339 ms - -[0m
+a user connected. Online users: 2
+joined room global
+left room global
+joined room ciaosonounachatdalnomemo
+new room created: ciaosonounachatdalnomemo password: false
+[0mGET /images/spinner1.gif [32m200 [0m0.788 ms - 36718[0m
+left room ciaosonounachatdalnomemo
+joined site room site://www.google.it
+left room site://www.google.it
+joined room global
+left room global
+joined site room site://www.google.it
+left room site://www.google.it
+joined room global
+left room global
+joined site room site://www.google.it
+user disconnected. Online users: 1
+left room site://www.google.it
+a user connected. Online users: 2
+joined room global
+user disconnected. Online users: 1
+left room global
+a user connected. Online users: 2
+joined room global
+user disconnected. Online users: 1
+left room global
+a user connected. Online users: 2
+joined room global
+user disconnected. Online users: 1
+left room global
+a user connected. Online users: 2
+joined room global
+user disconnected. Online users: 1
+left room global
+a user connected. Online users: 2
+joined room global
+user disconnected. Online users: 1
+left room global
+a user connected. Online users: 2
+joined room global
+user disconnected. Online users: 1
+left room global
+a user connected. Online users: 2
+joined room global
+
+> chatme@1.1.0 start /srv/ChatMe
+> node ./bin/www
+
+Wed Aug 02 2017 12:23:27 GMT-0400 (EDT) Server is listening on port 1337
+Listening on port 60000 mode: production
+[0mGET / [32m200 [0m13.836 ms - 12604[0m
+[0mGET /versions/001.js [32m200 [0m4.872 ms - 29682[0m
+[0mGET /sounds/not1.mp3 [32m206 [0m2.931 ms - 25004[0m
+404 error! /favicon.ico Not Found
+[0mGET /favicon.ico [33m404 [0m1.723 ms - 9[0m
+[0mGET / [32m200 [0m0.756 ms - 12604[0m
+[0mGET /versions/001.js [32m200 [0m0.486 ms - 29682[0m
+[0mGET /sounds/not1.mp3 [32m206 [0m0.949 ms - 25004[0m
+[0mGET / [32m200 [0m0.710 ms - 12604[0m
+[0mGET /versions/001.js [32m200 [0m0.639 ms - 29682[0m
+[0mGET /sounds/not1.mp3 [32m206 [0m0.619 ms - 25004[0m
+a user connected. Online users: 1
+joined room global
+[0mGET / [32m200 [0m0.757 ms - 12604[0m
+[0mGET /versions/001.js [36m304 [0m1.466 ms - -[0m
+a user connected. Online users: 2
+[0mGET /sounds/not1.mp3 [32m206 [0m4.155 ms - 25004[0m
+joined room global
+sending message on room "global"
+sending message on room "global"
+sending message on room "global"
+[0mGET / [32m200 [0m0.503 ms - 12604[0m
+[0mGET /versions/001.js [32m200 [0m0.740 ms - 29682[0m
+a user connected. Online users: 3
+[0mGET /sounds/not1.mp3 [32m206 [0m0.457 ms - 25004[0m
+joined room global
+user disconnected. Online users: 2
+left room global
+[0mGET / [32m200 [0m0.594 ms - 12604[0m
+user disconnected. Online users: 1
+left room global
+[0mGET /versions/001.js [36m304 [0m0.289 ms - -[0m
+a user connected. Online users: 2
+joined room global
+left room global
+joined site room site://www.google.it
+left room site://www.google.it
+joined room global
+left room global
+joined site room site://www.google.it
+left room site://www.google.it
+joined room global
+sending message on room "global"
+sending message on room "global"
+sending message on room "global"
+sending message on room "global"
+sending message on room "global"
+sending message on room "global"
+sending message on room "global"
+sending message on room "global"
+sending message on room "global"
+sending message on room "global"
+sending message on room "global"
+sending message on room "global"
+sending message on room "global"
+sending message on room "global"
+sending message on room "global"
+sending message on room "global"
+sending message on room "global"
+sending message on room "global"
+sending message on room "global"
+sending message on room "global"
+sending message on room "global"
+sending message on room "global"
+sending message on room "global"
+sending message on room "global"
+sending message on room "global"
+user disconnected. Online users: 1
+left room global
+user disconnected. Online users: 0
+left room global
+[0mGET / [32m200 [0m1.059 ms - 12604[0m
+[0mGET /versions/001.js [32m200 [0m1.553 ms - 29682[0m
+a user connected. Online users: 1
+[0mGET /sounds/not1.mp3 [32m206 [0m0.465 ms - 25004[0m
+user disconnected. Online users: 0
+[0mGET / [32m200 [0m2.421 ms - 12604[0m
+[0mGET /versions/001.js [32m200 [0m4.212 ms - 29682[0m
+a user connected. Online users: 1
+[0mGET /sounds/not1.mp3 [32m206 [0m3.015 ms - 25004[0m
+joined room global
+user disconnected. Online users: 0
+left room global
+[0mGET / [32m200 [0m14.350 ms - 12604[0m
+[0mGET / [32m200 [0m8.473 ms - 12604[0m
+[0mGET /versions/001.js [32m200 [0m2.926 ms - 29682[0m
+[0mGET /versions/001.js [32m200 [0m2.109 ms - 29682[0m
+[0mGET /sounds/not1.mp3 [36m304 [0m0.658 ms - -[0m
+[0mGET / [36m304 [0m0.874 ms - -[0m
+[0mGET /versions/001.js [36m304 [0m0.529 ms - -[0m
+[0mGET / [36m304 [0m0.524 ms - -[0m
+[0mGET /versions/001.js [36m304 [0m0.432 ms - -[0m
+[0mGET / [36m304 [0m0.694 ms - -[0m
+[0mGET /versions/001.js [36m304 [0m2.241 ms - -[0m
+[0mGET / [32m200 [0m13.481 ms - 12604[0m
+[0mGET /versions/001.js [32m200 [0m7.241 ms - 29682[0m
+a user connected. Online users: 1
+joined room global
+[0mGET / [32m200 [0m0.521 ms - 12604[0m
+[0mGET /versions/001.js [32m200 [0m0.690 ms - 29682[0m
+a user connected. Online users: 2
+[0mGET /sounds/not1.mp3 [32m206 [0m5.633 ms - 25004[0m
+404 error! /favicon.ico Not Found
+[0mGET /favicon.ico [33m404 [0m1.205 ms - 9[0m
+joined room global
+sending message on room "global"
+sending message on room "global"
+sending message on room "global"
+sending message on room "global"
+sending message on room "global"
