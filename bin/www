@@ -364,18 +364,22 @@ function createroom(socket, roomname, roompass) {
 function joinroom(socket, roomname, callback) {
   function nowjoin() {
 
+    if (rooms[roomname].userslist.indexOf(socket.name) == -1) { // if is not still connected to the room, send connection msg
+      var msgtxt = socket.name + " connected";
+      var msgobj = {type: 'system_msg', text: msgtxt , time: new Date()};
+      sendMessage(socket, roomname, msgobj);
+    }
+
+
     socket.join(roomname, function() {
       var userdata = { name: socket.name, status: socket.status, istyping: socket.istyping };
       io.sockets.in(roomname).emit('refresh_user', userdata);
 
       rooms[roomname].users[socket.name] = userdata;
       rooms[roomname].userslist.push(socket.name);
-      socket.emit('history_users', {history: rooms[roomname].history, users: rooms[roomname].users});
+      var room = roomname.startsWith('site://') ? 'site' : roomname;
+      socket.emit('history_users', {history: rooms[roomname].history, users: rooms[roomname].users, roomname: room});
       socket.lastroom = roomname;
-
-      var msgtxt = socket.name + " connected";
-      var msgobj = {type: 'system_msg', text: msgtxt , time: new Date()};
-      sendMessage(socket, roomname, msgobj);
 
       if (callback) callback();
     });

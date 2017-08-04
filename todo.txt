@@ -25,3 +25,5 @@
 - right spinner everywere
 - pm users
 - empty chat placeholder
+- Settings: add user color
+- fix resize bug when minified

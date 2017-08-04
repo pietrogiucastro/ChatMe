@@ -384,6 +384,21 @@
       color: dodgerblue;
       background: #eee;
     }
+    .btn.show-users-btn {
+      float: left !important;
+      padding: 0 6px;
+    }
+    .show-users-btn.users-true {
+      color: lightseagreen !important;
+    }
+    .show-users-btn.users-false {
+      color: grey !important;
+    }
+
+    .btn.show-users-btn:before {
+      font-family: fontawesome;
+      content: "\f0c0";
+    }
     .btn.mute-btn {
       padding-left: 6px;
       width: 17px;
@@ -483,32 +498,59 @@
     .cm-system-msg {
       display: flex;
       align-items: center;  
-      padding: 15px 3%;
+      padding: 7px 5%;
     }
     .cm-system-msg hr {
       width: 100%;
-      border-top: 1px solid #999;
+      border-top: 1px solid #ccc;
       border-bottom: 0;
     }
     .cm-system-msg .system-text {
-      margin: 0 10px;
       white-space: nowrap;
+      margin: 0 10px;
       font-style: italic;
+      font-size: 9px;
       color: #555;
     }
 
+    #cm-chat-panel {
+      position: relative;
+      width: 100%;
+    }
+
+    #cm-chat-not {
+      position: absolute;
+      display: flex;
+      width: 90%;
+      left: 5%;
+      top: 35px;
+    }
+    #cm-not {
+      margin: auto;
+      padding: 4px 17px;
+      text-align: center;
+      color: white;
+      font-size: 12px;
+      background: rgba(9,154,70,0.8);
+      border-radius: 9px;
+    }
+    #unseen-icon {
+      width: 30px;
+      line-height: 30px;
+      position: absolute;
+      right: 20px;
+      bottom: 20px;
+      border-radius: 50%;
+      background-color: rgba(20, 200, 40, 0.7);
+      border: 1px solid rgba(20, 195, 40, 0.7);
+      color: white;
+      text-align: center;
+      font-size: 12px;
+      font-family: Arial;
+      cursor: pointer;
+    }
   </style>
   <style type="text/css">
-    .cm-scrolltemp
-      {
-        margin-left: 30px;
-        float: left;
-        height: 300px;
-        width: 65px;
-        background: #F5F5F5;
-        overflow-y: scroll;
-        margin-bottom: 25px;
-      }
     .cm-scroll {
       overflow-y: auto;
     }

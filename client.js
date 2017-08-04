@@ -44,7 +44,7 @@ if (document.domain == "web.whatsapp.com") return;
 
     $('head').append('<style type=text/css>#chat-me-cover { position:absolute; width:100%; height:100%; background-color:rgb(50,80,100); top:0; opacity:0.0; display:none; cursor:pointer; } #chat-me-container {position: fixed; z-index:99999999999999999999; bottom:20px; right:20px;} #chat-me-frame {border:0; width:100%; height:100%; overflow:hidden;} </style>');
 
-    $('head').append('<style type=text/css>.xs {width: 420px; height: 194px;} .sm {width: 430px; height: 280px} .lg {width: 440px; height: 360px;}</style>');
+    $('head').append('<style type=text/css>.xs {width: 380px; height: 194px;} .sm {width: 400px; height: 280px} .lg {width: 380px; height: 460px;}</style>');
 
     $('body').append('<div id="chat-me-container" class="lg"></div>');
     $('#chat-me-container').append('<iframe id="chat-me-frame" src="https://'+server+':60000/"></iframe><div id="chat-me-cover"></div>');
