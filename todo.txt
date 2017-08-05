@@ -27,3 +27,4 @@
 - empty chat placeholder
 - Settings: add user color
 - fix resize bug when minified
+- my messages history with arrows up and down

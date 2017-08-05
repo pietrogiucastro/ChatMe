@@ -655,7 +655,7 @@ function toggleUsers(show) {
 }
 
 function slidebottom() {
-    console.log('loverino');
+    $("#cm-chat").animate({ scrollTop: $("#cm-chat-list").height() }, "slow");
 }
 
 $('#chat-me').click(function(e) {
@@ -751,7 +751,7 @@ $(document).on('change', '#select-size', function() {
 
 $(document).on('keyup', '#cm-message-input', checkTyping);
 
-$( document ).on( 'keydown', function ( e ) {
+$(document).on( 'keydown', function ( e ) {
     if ( e.keyCode === 27 ) {
         hideOpts();
     }
