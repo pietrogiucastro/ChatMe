@@ -3,7 +3,7 @@
 - remove rooms if not used anymore
 - overflow-x scroll in tabs
 - substitute tab data-name and data-pass with just id and the password will be stored in 	the cookies as a token
-- user and rooms in db
+- users, rooms and messages in db
 - sort rooms result by relevance
 - prevent global room to appear in search
 - query rooms from db
@@ -28,3 +28,8 @@
 - Settings: add user color
 - fix resize bug when minified
 - my messages history with arrows up and down
+- from jquery to vanilla js on tampermonkey
+- get user colors from db
+- auto select colors from cookies
+- audio notes
+- change not sound

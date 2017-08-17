@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>WebSockets - Simple chat</title>
+  <title>chatme</title>
   <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
   <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
@@ -10,6 +10,27 @@
   <style type="text/css">
     .hidden {
       display: none;
+    }
+    .cm-right {
+      position: relative !important;
+      float: right;
+    }
+    .cm-secondary {
+      background-color: #ddd !important;
+      color: #333 !important;
+    }
+    .cm-secondary:hover {
+      background-color: #eee !important;
+      color: #000 !important;
+    }
+    .user-You {
+      float: right;
+    }
+    .floatleft {
+      float: left;
+    }
+    .textright {
+      text-align: right;
     }
 
     #chat-me.init #cm-inline-btns {
@@ -340,20 +361,20 @@
       z-index: 1;
       background-color: rgba(80, 80, 80, 0.4);
     }
-    #settings {
+    .settings {
       box-sizing: border-box;
       height: 100%;
       padding: 15px 40px;
     }
-    #settings .settings-row {
+    .settings .settings-row {
       padding: 10px 0;
       display: flex;
       align-items: center;
     }
-    #settings .settings-row * {
+    .settings .settings-row * {
       box-sizing: border-box;
     }
-    #settings .settings-text {
+    .settings .settings-text {
       float: left;
       width: 40%;
       padding-right: 30px;
@@ -361,12 +382,23 @@
       text-align: right;
       color: #444;
     }
-    #settings .settings-select {
+    .settings .settings-select {
       float: left;
       width: 60%;
       border-radius: 3px;
       padding: 2px 0;
       font-weight: bold;
+    }
+    .settings .settings-bottom {
+      position: absolute;
+      box-sizing: border-box;
+      bottom: 0; left: 0;
+      width: 100%;
+      height: 35px;
+      padding: 5px 8px;
+    }
+    .settings-bottom button {
+      margin-left: 10px;
     }
 
 
@@ -514,6 +546,7 @@
     }
 
     #cm-chat-panel {
+      overflow: hidden;
       position: relative;
       width: 100%;
     }
@@ -548,6 +581,12 @@
       font-size: 12px;
       font-family: Arial;
       cursor: pointer;
+    }
+    .cm-unseen {
+      background-color: #cce2cc;
+    }
+    .cm-message-body.user-You {
+      background: #cfecd1;
     }
   </style>
   <style type="text/css">
@@ -599,6 +638,10 @@
       animation: icoin 0.13s forwards;
     }
 
+    .cm-seen {
+      animation: seen 1.20s forwards;
+    }
+
     @keyframes volin {
       from {
         top: 100%;
@@ -632,6 +675,15 @@
       }
       to {
         top: -100%;
+      }
+    }
+
+    @keyframes seen {
+      from {
+        background-color: #cce2cc;
+      }
+      to {
+        background-color: transparent;
       }
     }
   </style>

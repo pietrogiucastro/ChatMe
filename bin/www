@@ -116,6 +116,16 @@ var status = {
   toilet : {message: 'Toilet!', classname: 'istoilet'},
 };
 
+var color = {
+  red : 'red',
+  green: 'green',
+  blue: 'blue',
+  black: 'black',
+  yellow: 'yellow',
+  orange: 'orange',
+  skyblue: 'skyblue'
+};
+
 function elabMessage(msg) {
   msg = msg.replace(/</g, '&lt').replace(/>/g, '&gt').trim();
   msg = anchorme(msg, {
@@ -159,6 +169,7 @@ io.sockets.on('connection', function(socket) {
     }
     socket.name = token; // change with db call for username
     socket.token = token;
+    socket.color = color.green;
     socket.status = status.online;
     socket.istyping = false;
 
@@ -175,8 +186,7 @@ io.sockets.on('connection', function(socket) {
         return;
       }
       msg = elabMessage(msg);
-      console.log('sending message on room ' + JSON.stringify(room));
-      var msgobj = {type: 'user_msg', text: msg, time: new Date(), author: socket.name};
+      var msgobj = {type: 'user_msg', text: msg, time: new Date(), author: socket.name, ownercolor: socket.color};
       sendMessage(socket, room, msgobj);
       rooms[room].history.push(msgobj);
       rooms[room].history = rooms[room].history.slice(-100);
@@ -204,6 +214,41 @@ io.sockets.on('connection', function(socket) {
       var roomname = getsocketroom(socket);
       
       io.sockets.in(roomname).emit('refresh_user', {name: socket.name, status: newstatus});
+    });
+
+    socket.on('change_userset', function(settings) {
+      try {
+        var newcolor = color[settings.color];
+        if (!newcolor) {
+          console.log('unknown color!');
+          return Jsonerror(socket);
+        }
+
+        socket.color = newcolor;
+
+        var roomname = getsocketroom(socket);
+        if (roomname) {
+
+          rooms[roomname].history.forEach(function(msg) {
+            if (msg.author == socket.name) msg.ownercolor = newcolor;
+          });
+          rooms[roomname].users[socket.name].color = newcolor;
+          io.sockets.in(roomname).emit('user_color', {name: socket.name, color: newcolor});
+
+        } else {
+
+          socket.emit('user_color', {name: socket.name, color: newcolor});
+
+        }
+
+        socket.emit('settings_saved');
+
+      }
+
+      catch(e) {
+        console.log(e);
+        return Jsonerror(socket);
+      }
     });
 
     socket.on('typingstatus', function(value) {
@@ -372,7 +417,7 @@ function joinroom(socket, roomname, callback) {
 
 
     socket.join(roomname, function() {
-      var userdata = { name: socket.name, status: socket.status, istyping: socket.istyping };
+      var userdata = { name: socket.name, status: socket.status, istyping: socket.istyping, color:socket.color };
       io.sockets.in(roomname).emit('refresh_user', userdata);
 
       rooms[roomname].users[socket.name] = userdata;
