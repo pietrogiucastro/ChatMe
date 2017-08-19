@@ -33,3 +33,4 @@
 - auto select colors from cookies
 - audio notes
 - change not sound
+- show('slide') for both full message and text?

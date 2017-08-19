@@ -90,11 +90,11 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
         var lastmessage = $('#cm-chat-list').find('.cm-message:last');
 
         if (lastmessage.data('owner') == 'user-'+msg.author) {
-            var textline = $('<span class="cm-message-text">'+msg.text+'</span>');
+            var textline = $('<span class="cm-message-text" style="display:none;">'+msg.text+'</span>');
             lastmessage.find('.cm-message-body').append(textline);
             message = textline;
         } else {
-            var newmessage = $('<div class="cm-message cm-clearafter" data-owner="user-'+msg.author+'"></div>');
+            var newmessage = $('<div class="cm-message cm-clearafter" data-owner="user-'+msg.author+'" style="display:none;"></div>');
             newmessage.html('<div class="cm-message-body"><div class="cm-message-head cm-clearafter"><span class="cm-message-name user-'+user_message+' floatleft" style="color: '+usercolor+';">'+user_message+'</span><span class=cm-message-date>'+time+'</span></div><span class=cm-message-text>'+msg.text+'</span></div>');
             if (user_message == 'You') newmessage.find('.cm-message-body').addClass('user-You textright');
             $('#cm-chat-list').append(newmessage);
@@ -108,13 +108,16 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
             }
         }
 
-        if (noslide) {
-            // do stuff
+        if (noslide) { //no animation
+            message.show();
         }
         else if (history) {
             fadein(message);
         }
-        else {
+        else { // send single message
+            if (message.is('.cm-message-text')) message.slideDown('fast');
+            else message.show('slide');
+
             if(rescroll) slidebottom(checkscroll);
             else checkscroll();
         }
