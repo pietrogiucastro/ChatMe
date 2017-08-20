@@ -34,3 +34,6 @@
 - audio notes
 - change not sound
 - show('slide') for both full message and text?
+- remove server = localhost line when everything done
+- bug fix, append last message to last container only if no system msgs between
+- bug fix, color change doesn't work properly

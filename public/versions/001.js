@@ -87,9 +87,9 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
 
         var message;
 
-        var lastmessage = $('#cm-chat-list').find('.cm-message:last');
+        var lastmessage = $('#cm-chat-list').children(':last');
 
-        if (lastmessage.data('owner') == 'user-'+msg.author) {
+        if (lastmessage.is('.cm-message') && lastmessage.data('owner') == 'user-'+msg.author) {
             var textline = $('<span class="cm-message-text" style="display:none;">'+msg.text+'</span>');
             lastmessage.find('.cm-message-body').append(textline);
             message = textline;
