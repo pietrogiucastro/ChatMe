@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css?family=Montserrat" rel="stylesheet">
   <style type="text/css">
     .hidden {
-      display: none;
+      display: none !important;
     }
     .cm-right {
       position: relative !important;
@@ -458,6 +458,18 @@
     .btn.min-btn {
       padding: 0 6px;
     }
+    .btn.attach-btn:before {
+      font-family: fontawesome;
+      content: "\f0c6";
+      padding: 0 6px;
+    }
+    .attach-btn #attach-label {
+      cursor: pointer;
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      left: 0;
+    }
     .btn.add-btn:before {
       font-family: fontawesome;
       content: "\f067";
@@ -590,6 +602,25 @@
     .cm-message-body.user-You {
       background: #cfecd1;
     }
+    .cm-message-name.user-offline {
+      color: #777 !important;
+      margin-right: 8px;
+    }
+    .cm-message-name.user-offline:after {
+      float: right;
+      margin-left: 5px;
+      font-family: fontawesome;
+      content: "\f235";
+    }
+    #cm-record .record-timer {
+      padding: 0 5px;
+      width: 35px;
+      margin-top: -1px;
+    }
+    .mic-btns {
+      position: absolute;
+      top: 100%;
+    }
   </style>
   <style type="text/css">
     .cm-scroll {
@@ -626,25 +657,29 @@
   </style>
   <style type="text/css">
     .chat-tab:hover .volume-icon {
-      animation: volin 0.13s forwards;
+      animation: upin 0.13s forwards;
     }
     .chat-tab:hover:before {
-      animation: icoout 0.13s forwards;
+      animation: upout 0.13s forwards;
     }
     .chat-tab .volume-icon {
-      animation: volout 0.13s forwards;
+      animation: downout 0.13s forwards;
       width: 13px;
     }
 
     .chat-tab:before {
-      animation: icoin 0.13s forwards;
+      animation: downin 0.13s forwards;
     }
 
     .cm-seen {
       animation: seen 1.20s forwards;
     }
 
-    @keyframes volin {
+    #cm-record.recording .micico {
+      animation: upout 0.7s forwards;
+    }
+
+    @keyframes upin {
       from {
         top: 100%;
       }
@@ -653,7 +688,7 @@
       }
     }
 
-    @keyframes volout {
+    @keyframes downout {
       from {
         top: 0%;
       }
@@ -662,7 +697,7 @@
       }
     }
 
-    @keyframes icoin {
+    @keyframes downin {
       from {
         top: -100%;
       }
@@ -671,7 +706,7 @@
       }
     }
 
-    @keyframes icoout {
+    @keyframes upout {
       from {
         top: 0%;
       }
@@ -705,5 +740,6 @@
   <script src="/javascripts/socket.io-stream.js"></script>
   <script type="text/javascript" src="/javascripts/stream-client.js"></script>
   <script type="text/javascript" src="/versions/001.js"></script>
+  <script type="text/javascript" src="/javascripts/media-recorder.js"></script>
 </body>
 </html>

@@ -19,7 +19,8 @@ var sess_user = $.cookie('sess_user');
 var prevtyping = false;
 
 var input;
-var uploadinput = $('<input class="hidden" type="file" id="cm-upload">');
+var attachinput = $('<input class="hidden" type="file" id="cm-attach">');
+var micbtn = $('<span style="position:absolute; top:0; right:0;" id=cm-record class=cm-button><span class="record-timer" style="display:none;">00:00</span><i class="fa fa-microphone micico"></i> <span class="mic-btns"></span></span>');
 
 var not1 = new Audio('/sounds/not1.mp3');
 
@@ -61,6 +62,11 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
             $('#unseen-icon').fadeOut();
     }
 
+    function isToRescroll() {
+        var RANGE = 30 //px;
+        return $('#cm-chat')[0].scrollTop >= $('#cm-chat')[0].scrollHeight - $('#cm-chat').height() - RANGE;
+    }
+
     function isScrolledIntoView(elem) {
         var docViewTop = $(window).scrollTop();
         var docViewBottom = docViewTop + $(window).height();
@@ -77,10 +83,6 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     }
 
     function setMessage(msg, history, fadein, noslide) {
-        var rescroll = false;
-        var RANGE = 30; //px
-        if ($('#cm-chat')[0].scrollTop >= $('#cm-chat')[0].scrollHeight - $('#cm-chat').height() - RANGE) rescroll = true;
-
         var user_message = sess_user == msg.author? 'You' : msg.author;
         var time = new Date(msg.time).toLocaleString().split(', ')[1].slice(0, -3);
         var usercolor = msg.ownercolor;
@@ -101,11 +103,9 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
             message = newmessage;
         }
 
-        function checkscroll() {
-            if (!isScrolledIntoView(message)) {
-                $(message).addClass('cm-unseen');
-                refreshUnseenIcon();
-            }
+        function unseenmsg() {
+            $(message).addClass('cm-unseen');
+            refreshUnseenIcon();
         }
 
         if (noslide) { //no animation
@@ -118,20 +118,17 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
             if (message.is('.cm-message-text')) message.slideDown('fast');
             else message.show('slide');
 
-            if(rescroll) slidebottom(checkscroll);
-            else checkscroll();
+            if(isScrolledIntoView(message)) slidebottom();
+            else unseenmsg();
         }
     }
 
-    function setSystemMsg(msg) {
-        var rescroll = false;
-        var RANGE = 30; //px
-        if ($('#cm-chat')[0].scrollTop >= $('#cm-chat')[0].scrollHeight - $('#cm-chat').height() - RANGE) rescroll = true;
-
+    function setSystemMsg(msg, msgclass) {
         var systemmsg = $('<div class="cm-system-msg"><hr><div class="system-text">' + msg + '</div><hr></div>');
+        if (msgclass) systemmsg.addClass(msgclass);
         $('#cm-chat-list').append(systemmsg);
 
-        if(rescroll) scrollBottom();
+        if(isScrolledIntoView(systemmsg)) scrollBottom();
         
     }
     function setHistory(msgs, noslide) {
@@ -139,7 +136,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
 
         $('#cm-chat-list').empty();
 
-        if (!msgs.length) return setSystemMsg(emptychatmsg);
+        if (!msgs.length) return setSystemMsg(emptychatmsg, 'empty-chat-msg');
 
         var totalfadetime = 500;
 
@@ -193,6 +190,14 @@ function refreshUser(user) {
 }
 function removeUser(username) {
     $('#user-'+username).remove();
+}
+function UserMsgOnOff(username, isOnline) {
+    console.log($('#cm-chat').find('.cm-message[data-owner=user-'+username+']'));
+    $('#cm-chat').find('.cm-message[data-owner=user-'+username+']').each(function() {
+        var userdom = $(this).find('.cm-message-name');
+        if (isOnline) userdom.removeClass('user-offline');
+        else userdom.addClass('user-offline');
+    });
 }
 function changeTyping(data) {
     var status = $('#user-'+data.name).find('.cm-message-status');
@@ -334,9 +339,13 @@ function RegisterDisplay(user, pass) {
         socket.on('new message', function (message) {
             input.removeAttr('disabled');
             input.focus();
-            console.log(message);
             switch(message.msg.type) {
                 case 'user_msg':
+                    if ($('.empty-chat-msg').length) {
+                        $('.empty-chat-msg').slideUp(function() {
+                            $(this).remove();
+                        });
+                    }
                     var chatvolume = chats[message.roomname].volume;
                     if (chatvolume && !mute) notifsound();
                     setMessage(message.msg);
@@ -355,8 +364,13 @@ function RegisterDisplay(user, pass) {
         socket.on('refresh_user', function(user) {
             refreshUser(user);
         });
+        socket.on('add_user', function(user) {
+            refreshUser(user);
+            UserMsgOnOff(user.name, true);
+        });
         socket.on('remove_user', function(username) {
             removeUser(username);
+            UserMsgOnOff(username, false);
         });
         socket.on('user_typing', function(data) {
             changeTyping(data);
@@ -438,13 +452,13 @@ function RegisterDisplay(user, pass) {
         $('#chat-me-label').append(inlinebtns.container)
         .append('<div id="cm-display-panel"></div>')
         .find('#cm-display-panel')
-        .append('<div id="cm-online-panel"><div id=cm-online class="cm-scroll"> <ul id=cm-online-list></ul> </div></div>')
+        .append('<div id="cm-online-panel" class="cm-scroll scroll-x"><div id=cm-online> <ul id=cm-online-list></ul> </div></div>')
         .append('<div id="cm-chat-panel"><div id="cm-chat-not"><span id="cm-not" style="display:none;"></span></div><div id=cm-chat class="cm-scroll"> <div id=cm-chat-list></div> </div> <div id="unseen-icon" onclick="slidebottom()" style="display:none;"></div> </div>');
         $('#chat-me-label').append('<div id="cm-message-panel"></div>')
         .find('#cm-message-panel').append('<div class="message-input-cont"></div>')
         .find('.message-input-cont').append('<input style="margin:0px; width:100%; height:100%;" type=text id=cm-message-input class=cm-input placeholder=Message>');
-        $('#cm-message-panel').append('<label id="submit-label" for="cm-upload"><span style="position:absolute; top:0; right:0;" id=cm-send class=cm-button><i class="fa fa-paperclip" style="font-size:165%"></i></span></label>')
-        .find('#submit-label').append(uploadinput);
+        $('#cm-message-panel').append(micbtn);
+
 
         input = $('#cm-message-input');
 
@@ -458,6 +472,21 @@ function RegisterDisplay(user, pass) {
                 if (isScrolledIntoView(message)) $(message).removeClass('cm-unseen').addClass('cm-seen');
             });
             refreshUnseenIcon();
+        });
+
+        $(micbtn).click(function() {
+            micbtn.addClass('recording')
+            .animate({
+                width: '90px'
+            })
+            .find('.micico').animate({
+                right: '20px'
+            });
+            micbtn.find('.record-timer').stop().animate({width: 'show'});
+/*            input.stop().animate({
+                width: 'hide'
+            });*/
+            input.hide();
         });
 
         inlinebtns.appendbtns(displaytype);
@@ -486,7 +515,7 @@ function RegisterDisplay(user, pass) {
     $(function main() {
         postParentMessage('successload');
 
-        /*css*/ $('head').append('<style type=text/css>body {margin: 0;} #chat-me {position:relative; overflow:hidden; height:100vh;} #chat-me-cont {box-sizing:border-box; padding:5px; padding-top:28px; width:100%; height:100%; background-color:rgba(50,80,100,1.0); border-radius:3px; font-family:tahoma !important;} #cm-inline-btns {position:absolute; box-sizing:border-box; width:100%; height:15px; margin-bottom:6px;} #cm-message-panel {position: absolute; bottom:0; height:25px; width:100%;} .cm-label {display:inline-block; color:rgb(230,230,230); font-weight:bold; margin:10px; width: 25%;} #cm-send {display:flex; align-items:center;} #cm-send * {margin:auto;} .cm-button {position:absolute; color:white; text-align:center; width:60px; font-size:10px; background-color:rgb(10,200,50); border:0px; box-shadow:none !important; cursor:pointer; height:100%; border-radius: 2px;} .cm-button:hover {background-color:rgb(20,220,60);} .message-input-cont {box-sizing:border-box; width: 100%; height:100%; padding-right:65px;} .cm-input {box-sizing:border-box; background-color:rgb(240,240,240)!important; border:0px; font-size:12px!important; font-family:\'Montserrat\', sans-serif; width:230px; border:0px; border-radius:2px; padding-left:5px;} #cm-error-cont {color:rgb(220,0,0); font-size:12px; margin-left:8px; margin-top:10px; max-width:200px} #cm-chat {font-family:\'Montserrat\', sans-serif; width:100%; height:100%; background-color:rgb(240,240,240); border-radius:2px;} #cm-chat-list {margin:0; padding:3px 0; font-size:11px;} .cm-message:first-child {margin-top:0 !important}.cm-message:last-child {border:0;} .cm-message {padding: 3px 5px; padding-top:2px;} .cm-message-head {margin-bottom:4px;} .cm-message-body {display: inline-block; max-width:85%; margin: 3px; margin-bottom: 0; border-radius: 5px; background: #d3e4f1; padding: 5px 6px;} .cm-clearafter:after {content:\'\'; display:block; clear: both;} .cm-message:hover,.cm-message-name:hover {background-color: #e5e9ec;} .cm-message-name {font-family:\'Montserrat\', sans-serif; font-weight:bold; color:rgb(0,80,0); font-size:9px; cursor: pointer;} .cm-online-name {padding-left:4px;} .cm-message-status {font-family:\'Montserrat\', sans-serif; color:grey; font-size: 8px;} .cm-message-text {display:block; margin-left: 3px; margin-right:10px; max-width:310px; word-wrap:break-word; color:#07324e;} .cm-message-date {float:right; color:grey; font-size:9px; margin-left: 23px;} #cm-display-panel {display:flex; box-sizing:border-box; padding-top:20px; padding-bottom:30px; height: 100%; } #cm-online-panel {margin-right:5px; width:90px;} #cm-online {height:100%; background-color:rgb(240,240,240); border-radius:2px;} #cm-online-list {margin:0; padding:5px 0; font-size:11px;}</style>');
+        /*css*/ $('head').append('<style type=text/css>body {margin: 0;} #chat-me {position:relative; overflow:hidden; height:100vh;} #chat-me-cont {box-sizing:border-box; padding:5px; padding-top:28px; width:100%; height:100%; background-color:rgba(50,80,100,1.0); border-radius:3px; font-family:tahoma !important;} #cm-inline-btns {position:absolute; box-sizing:border-box; width:100%; height:15px; margin-bottom:6px;} #cm-message-panel {position: absolute; bottom:0; height:25px; width:100%;} .cm-label {display:inline-block; color:rgb(230,230,230); font-weight:bold; margin:10px; width: 25%;} .cm-button {position:absolute; overflow:hidden; color:white; text-align:center; width:60px; font-size:10px; background-color:rgb(10,200,50); border:0px; box-shadow:none !important; cursor:pointer; height:100%; border-radius: 2px;} .cm-button:hover {background-color:rgb(20,220,60);} .message-input-cont {box-sizing:border-box; width: 100%; height:100%; padding-right:65px;} .cm-input {box-sizing:border-box; background-color:rgb(240,240,240)!important; border:0px; font-size:12px!important; font-family:\'Montserrat\', sans-serif; width:230px; border:0px; border-radius:2px; padding-left:5px;} #cm-error-cont {color:rgb(220,0,0); font-size:12px; margin-left:8px; margin-top:10px; max-width:200px} #cm-chat {font-family:\'Montserrat\', sans-serif; width:100%; height:100%; background-color:rgb(240,240,240); border-radius:2px;} #cm-chat-list {margin:0; padding:3px 0; font-size:11px;} .cm-message:first-child {margin-top:0 !important}.cm-message:last-child {border:0;} .cm-message {padding: 3px 5px; padding-top:2px;} .cm-message-head {margin-bottom:4px;} .cm-message-body {display: inline-block; max-width:85%; margin: 3px; margin-bottom: 0; border-radius: 5px; background: #d3e4f1; padding: 5px 6px;} .cm-clearafter:after {content:\'\'; display:block; clear: both;} .cm-message:hover,.cm-message-name:hover {background-color: rgba(230,230,230,0.4);} .cm-message-name {font-family:\'Montserrat\', sans-serif; font-weight:bold; color:rgb(0,80,0); font-size:9px; cursor: pointer; margin-right: 23px;} .cm-online-name {padding-left:4px;} .cm-message-status {font-family:\'Montserrat\', sans-serif; color:grey; font-size: 8px;} .cm-message-text {display:block; margin-left: 3px; margin-right:10px; max-width:310px; word-wrap:break-word; color:#07324e;} .cm-message-date {float:right; color:grey; font-size:9px;} #cm-display-panel {display:flex; box-sizing:border-box; padding-top:20px; padding-bottom:30px; height: 100%; } #cm-online-panel {margin-right:5px; width:90px;} #cm-online {height:100%; background-color:rgb(240,240,240); border-radius:2px;} #cm-online-list {margin:0; padding:5px 0; font-size:11px;} #cm-record {box-sizing:border-box; display:flex; align-items:center;} .micico {position: absolute; font-size: 165%; top: 0%; right: 25px; padding-top: 5px;}</style>');
         if (!$('#chat-me-cont').length) return;
 
         if (!sess_token || !sess_user) InitDisplay();
@@ -575,6 +604,7 @@ var inlinebtns = {
         statusbtn: {element: $('<span class="btn status-btn modal-toggle"><div class="modal status-modal"><div class="modal-body"></div></div></span>'), display: 'logged'},
         searchbtn: {element: $('<span class="btn search-btn"></span>'), display: 'logged'},
         addbtn: {element: $('<span class="btn add-btn"></span>'), display: 'logged'},
+        attachbtn: {element: $('<span class="btn attach-btn"><label id="attach-label" for="cm-attach"></label></span>'), display: 'logged'},
         mutebtn: {element: $('<span class="btn mute-btn mute-false"></span>'), display: 'logged'},
         showusersbtn: {element: $('<span class="btn show-users-btn users-true"></span>'), display: 'logged'},
     },
@@ -610,6 +640,10 @@ var inlinebtns = {
             options.show();
             chatOptions.searchChatDis();
         });
+        /* addchbtn */
+        buttons.attachbtn.object = $(buttons.attachbtn.element[0].cloneNode(true));
+        buttons.attachbtn.object.find('#attach-label').append(attachinput);
+
         /* addchbtn */
         buttons.addbtn.object = $(buttons.addbtn.element[0].cloneNode(true));
         buttons.addbtn.object.click(function() {
@@ -697,14 +731,14 @@ function checkTyping() {
             $('.message-input-cont').stop().animate({
                 'padding-right': '0px'
             }, 'fast');
-            $('#cm-send').stop().animate({
+            $('#cm-record').stop().animate({
                 'right': '-65px'
             }, 'fast');
         } else {
             $('.message-input-cont').stop().animate({
                 'padding-right': '65px'
             },  'fast');
-            $('#cm-send').stop().animate({
+            $('#cm-record').stop().animate({
                 'right': '0'
             }, 'fast');
         }

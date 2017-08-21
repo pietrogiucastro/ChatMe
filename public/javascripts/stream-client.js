@@ -1,5 +1,5 @@
 $(function() { 
-  $(uploadinput).change(function(e) {
+  $(attachinput).change(function(e) {
     var file = e.target.files[0];
     var stream = ss.createStream();
 

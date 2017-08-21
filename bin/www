@@ -409,16 +409,16 @@ function createroom(socket, roomname, roompass) {
 function joinroom(socket, roomname, callback) {
   function nowjoin() {
 
-    if (rooms[roomname].userslist.indexOf(socket.name) == -1) { // if is not still connected to the room, send connection msg
-      var msgtxt = socket.name + " connected";
+    if (rooms[roomname].userslist.indexOf(socket.name) == -1) { // if user is not connected to the room yet, send connection msg
+/*      var msgtxt = socket.name + " connected";
       var msgobj = {type: 'system_msg', text: msgtxt , time: new Date()};
-      sendMessage(socket, roomname, msgobj);
+      sendMessage(socket, roomname, msgobj);*/
     }
 
 
     socket.join(roomname, function() {
       var userdata = { name: socket.name, status: socket.status, istyping: socket.istyping, color:socket.color };
-      io.sockets.in(roomname).emit('refresh_user', userdata);
+      io.sockets.in(roomname).emit('add_user', userdata);
 
       rooms[roomname].users[socket.name] = userdata;
       rooms[roomname].userslist.push(socket.name);
@@ -446,9 +446,9 @@ function leaveroom(socket, roomname, callback) {
       io.sockets.in(roomname).emit('remove_user', socket.name);
       delete rooms[roomname].users[socket.name];
 
-      var msgtxt = socket.name + " disconnected";
+/*      var msgtxt = socket.name + " disconnected";
       var msgobj = {type: 'system_msg', text: msgtxt , time: new Date()};
-      sendMessage(socket, roomname, msgobj);
+      sendMessage(socket, roomname, msgobj);*/
     }
     console.log('left room ' + roomname);
     if (callback) callback();

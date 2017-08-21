@@ -37,3 +37,6 @@
 - remove server = localhost line when everything done
 - bug fix, append last message to last container only if no system msgs between
 - bug fix, color change doesn't work properly
+- custom backrgound
+- mute for spam
+- length limit in global and site chats
