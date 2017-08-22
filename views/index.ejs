@@ -111,7 +111,7 @@
       content: "\f0ac";
     }
     .chat-tab.site-tab:before {
-      content: "\f042";
+      content: "\f0ac";
     }
     .chat-tab.pass:before {
       content: "\f023";
@@ -612,15 +612,90 @@
       font-family: fontawesome;
       content: "\f235";
     }
-    #cm-record .record-timer {
+
+
+    #cm-record .record-time {
       padding: 0 5px;
       width: 35px;
       margin-top: -1px;
     }
+
+    .recording .record-time:before {
+      font-family: fontawesome;
+      content: "\f111";
+      margin-right: 6px;
+      color: red;
+    }
+
+    .recording {
+      cursor: default !important;
+    }
+
     .mic-btns {
       position: absolute;
       top: 100%;
     }
+    .rec-btns {
+      display: flex;
+      align-items: center;
+      box-sizing: border-box;
+      padding: 0 2px;
+      height: 100%;
+      width: 60px;
+      position: absolute;
+      top: 100%;
+      right: 0;
+      padding-bottom: 1px;
+    }
+
+    .rec-btns .recbtn {
+      border-radius: 50%;
+      margin: auto;
+      cursor: pointer;
+    }
+
+    .recbtn.rec-accept {
+      padding: 3px 4px;
+      background-color: white;
+      color: blue;
+    }
+
+    .recbtn:before {
+      font-family: fontawesome;
+    }
+
+    .rec-accept:before {
+      content: "\f00c";
+    }
+
+    .rec-accept:hover {
+      background-color: green;
+      color: white;
+    }
+
+    .recbtn.rec-cancel {
+      padding: 3px 5px;
+      background-color: white;
+      color: red;
+    }
+
+    .rec-cancel:before {
+      content: "\f00d";
+    }
+
+    .rec-cancel:hover {
+      background-color: red;
+      color: white;
+    }
+
+    .username.user-recording:after {
+      font-family: fontawesome;
+      content: "\f111";
+      margin-left: 3px;
+      color: red;
+      font-size: 7px;
+    }
+
   </style>
   <style type="text/css">
     .cm-scroll {
@@ -675,8 +750,35 @@
       animation: seen 1.20s forwards;
     }
 
+    #cm-record.recording {
+      animation: btnrec 1.2s infinite;
+      animation-direction: alternate;
+    }
+
     #cm-record.recording .micico {
-      animation: upout 0.7s forwards;
+      animation: downout 0.4s forwards;
+    }
+
+    #cm-record.recording .rec-btns {
+      animation: upin 0.6s forwards;
+    }
+
+    #cm-record:not(.recording).stopped .micico {
+      animation: upin 0.3s forwards;
+    }
+
+    #cm-record:not(.recording).stopped .rec-btns {
+      animation: downout 0.3s forwards;
+    }
+
+    .username.user-recording:after {
+      animation: userrec 0.9s infinite;
+      animation-direction: alternate;
+    }
+
+    .recording .record-time:before {
+      animation: userrec 0.9s infinite;
+      animation-direction: alternate;
     }
 
     @keyframes upin {
@@ -721,6 +823,24 @@
       }
       to {
         background-color: transparent;
+      }
+    }
+
+    @keyframes btnrec {
+      from {
+        background-color: #c9813f;
+      }
+      to {
+        background-color: #a26a38;
+      }
+    }
+
+    @keyframes userrec {
+      from {
+        opacity: 0.0;
+      }
+      to {
+        opacity: 1.0;
       }
     }
   </style>

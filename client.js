@@ -214,7 +214,7 @@ function postChildMessage(key, value) {
 }
 
 function successLoad() {
-    console.log('load!!!!');
+    console.log('cmloaded');
     $('#chat-me-cover').removeClass('chat-me-notloaded').click(showChatMe);
 }
 

@@ -20,7 +20,8 @@ var prevtyping = false;
 
 var input;
 var attachinput = $('<input class="hidden" type="file" id="cm-attach">');
-var micbtn = $('<span style="position:absolute; top:0; right:0;" id=cm-record class=cm-button><span class="record-timer" style="display:none;">00:00</span><i class="fa fa-microphone micico"></i> <span class="mic-btns"></span></span>');
+var micbtn = $('<span style="position:absolute; top:0; right:0;" id=cm-record class=cm-button><i class="fa fa-microphone micico"></i> <span class="rec-btns"> <span class="recbtn rec-accept"></span><span class="recbtn rec-cancel"></span> </span></span>');
+var mictime = $('<span class="record-time" style="display:none;">00:00</span>');
 
 var not1 = new Audio('/sounds/not1.mp3');
 
@@ -89,18 +90,25 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
 
         var message;
 
-        var lastmessage = $('#cm-chat-list').children(':last');
+        if (msg.type == 'user_msg') { //message
+            var lastmessage = $('#cm-chat-list').children(':last');
 
-        if (lastmessage.is('.cm-message') && lastmessage.data('owner') == 'user-'+msg.author) {
-            var textline = $('<span class="cm-message-text" style="display:none;">'+msg.text+'</span>');
-            lastmessage.find('.cm-message-body').append(textline);
-            message = textline;
-        } else {
-            var newmessage = $('<div class="cm-message cm-clearafter" data-owner="user-'+msg.author+'" style="display:none;"></div>');
-            newmessage.html('<div class="cm-message-body"><div class="cm-message-head cm-clearafter"><span class="cm-message-name user-'+user_message+' floatleft" style="color: '+usercolor+';">'+user_message+'</span><span class=cm-message-date>'+time+'</span></div><span class=cm-message-text>'+msg.text+'</span></div>');
-            if (user_message == 'You') newmessage.find('.cm-message-body').addClass('user-You textright');
-            $('#cm-chat-list').append(newmessage);
-            message = newmessage;
+            if (lastmessage.is('.cm-message') && lastmessage.data('owner') == 'user-'+msg.author) {
+                var textline = $('<span class="cm-message-text" style="display:none;">'+msg.text+'</span>');
+                lastmessage.find('.cm-message-body').append(textline);
+                message = textline;
+            } else {
+                var newmessage = $('<div class="cm-message cm-clearafter" data-owner="user-'+msg.author+'" style="display:none;"></div>');
+                newmessage.html('<div class="cm-message-body"><div class="cm-message-head cm-clearafter"><span class="cm-message-name user-'+user_message+' floatleft" style="color: '+usercolor+';">'+user_message+'</span><span class=cm-message-date>'+time+'</span></div><span class=cm-message-text>'+msg.text+'</span></div>');
+                if (user_message == 'You') newmessage.find('.cm-message-body').addClass('user-You textright');
+                $('#cm-chat-list').append(newmessage);
+                message = newmessage;
+            }
+        } else if (msg.type == 'user_audio') { //audio
+            var blob = new Blob([arrayBuffer], { 'type' : 'audio/ogg; codecs=opus' });
+            var audio = document.createElement('audio');
+            audio.src = window.URL.createObjectURL(blob);
+            var audiomessage = $('<div class="cm-message cm-clearafter" data-owner="user-'+msg.author+'" style="display:none;"></div>');
         }
 
         function unseenmsg() {
@@ -158,6 +166,42 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
 
     }
 
+function startRec(e) {
+    if (e && $(e.target).is('.recbtn')) return;
+    if (micbtn.is('.recording')) return;
+    mictime.html('00:00');
+    micbtn.addClass('recording')
+    .stop().animate({
+        width: '115px'
+    }, 200)
+    .find('.record-time').stop().animate({width: 'show'}, 200);
+    input.parent().stop().animate({
+        'padding-right': '120px'
+    }, 200);
+    recorder.record();
+}
+
+function sendRec() {
+    stopRecording();
+    recorder.stopAndSendRecord();
+}
+
+function cancelRec() {
+    stopRecording();
+    recorder.cancelRecord();
+}
+
+function stopRecording() {
+    micbtn.removeClass('recording').addClass('stopped')
+    .stop().animate({
+        width: '40px'
+    }, 200)
+    .find('.record-time').stop().animate({width: 'hide'}, 200);
+    input.parent().stop().animate({
+        'padding-right': '45px'
+    }, 200);
+}
+
 function scrollBottom() {
     $('#cm-chat')[0].scrollTop = $('#cm-chat')[0].scrollHeight - $('#cm-chat').height();
 }
@@ -167,6 +211,7 @@ function notifsound() {
     not1.play();
 }
 function showChatNot(roomname) {
+    $('#cm-not').stop().hide();
     $('#cm-not').html('Joined room ' + roomname).fadeIn(200, function() {
         setTimeout(function() { $('#cm-not').fadeOut('slow'); }, 200);
     });
@@ -182,7 +227,7 @@ function appendUser(user) {
     var status = user.status;
     var typingclass = user.istyping ? ' typing' : '';
     status.classname += typingclass;
-    $('#cm-online-list').prepend('<li class="cm-message-name cm-online-name" id="user-'+user.name+'" style="color:'+user.color+';"><div>'+user.name+'</div><div class="cm-message-status '+status.classname+'">'+status.message+'</div></li>');
+    $('#cm-online-list').prepend('<li class="cm-message-name cm-online-name" id="user-'+user.name+'" style="color:'+user.color+';"><div class="username">'+user.name+'</div><div class="cm-message-status '+status.classname+'">'+status.message+'</div></li>');
 }
 function refreshUser(user) {
     $('#user-'+user.name).remove();
@@ -203,6 +248,11 @@ function changeTyping(data) {
     var status = $('#user-'+data.name).find('.cm-message-status');
     if (data.istyping) status.addClass('typing');
     else status.removeClass('typing');
+}
+function changeRecording(data) {
+    var username = $('#user-'+data.name).find('.username');
+    if (data.isrecording) username.addClass('user-recording');
+    else username.removeClass('user-recording');
 }
 function changeColor(data) {
     console.log('change color');
@@ -335,7 +385,6 @@ function RegisterDisplay(user, pass) {
         socket.on('initchat', function() {
             switchchat($('.global-tab')); //change with cookie last chat
         });
-
         socket.on('new message', function (message) {
             input.removeAttr('disabled');
             input.focus();
@@ -349,6 +398,9 @@ function RegisterDisplay(user, pass) {
                     var chatvolume = chats[message.roomname].volume;
                     if (chatvolume && !mute) notifsound();
                     setMessage(message.msg);
+                    break;
+                case 'user_audio':
+                    setAudio(message.buffer);
                     break;
                 case 'system_msg':
                     setSystemMsg(message.msg.text);
@@ -375,6 +427,9 @@ function RegisterDisplay(user, pass) {
         socket.on('user_typing', function(data) {
             changeTyping(data);
         });
+        socket.on('user_recording', function(data) {
+            changeRecording(data);
+        })
         socket.on('user_color', function(data) {
             changeColor(data);
         });
@@ -458,6 +513,7 @@ function RegisterDisplay(user, pass) {
         .find('#cm-message-panel').append('<div class="message-input-cont"></div>')
         .find('.message-input-cont').append('<input style="margin:0px; width:100%; height:100%;" type=text id=cm-message-input class=cm-input placeholder=Message>');
         $('#cm-message-panel').append(micbtn);
+        micbtn.prepend(mictime);
 
 
         input = $('#cm-message-input');
@@ -474,20 +530,9 @@ function RegisterDisplay(user, pass) {
             refreshUnseenIcon();
         });
 
-        $(micbtn).click(function() {
-            micbtn.addClass('recording')
-            .animate({
-                width: '90px'
-            })
-            .find('.micico').animate({
-                right: '20px'
-            });
-            micbtn.find('.record-timer').stop().animate({width: 'show'});
-/*            input.stop().animate({
-                width: 'hide'
-            });*/
-            input.hide();
-        });
+        micbtn.click(startRec);
+        micbtn.find('.recbtn.rec-accept').click(sendRec);
+        micbtn.find('.recbtn.rec-cancel').click(cancelRec);
 
         inlinebtns.appendbtns(displaytype);
     }
@@ -515,7 +560,7 @@ function RegisterDisplay(user, pass) {
     $(function main() {
         postParentMessage('successload');
 
-        /*css*/ $('head').append('<style type=text/css>body {margin: 0;} #chat-me {position:relative; overflow:hidden; height:100vh;} #chat-me-cont {box-sizing:border-box; padding:5px; padding-top:28px; width:100%; height:100%; background-color:rgba(50,80,100,1.0); border-radius:3px; font-family:tahoma !important;} #cm-inline-btns {position:absolute; box-sizing:border-box; width:100%; height:15px; margin-bottom:6px;} #cm-message-panel {position: absolute; bottom:0; height:25px; width:100%;} .cm-label {display:inline-block; color:rgb(230,230,230); font-weight:bold; margin:10px; width: 25%;} .cm-button {position:absolute; overflow:hidden; color:white; text-align:center; width:60px; font-size:10px; background-color:rgb(10,200,50); border:0px; box-shadow:none !important; cursor:pointer; height:100%; border-radius: 2px;} .cm-button:hover {background-color:rgb(20,220,60);} .message-input-cont {box-sizing:border-box; width: 100%; height:100%; padding-right:65px;} .cm-input {box-sizing:border-box; background-color:rgb(240,240,240)!important; border:0px; font-size:12px!important; font-family:\'Montserrat\', sans-serif; width:230px; border:0px; border-radius:2px; padding-left:5px;} #cm-error-cont {color:rgb(220,0,0); font-size:12px; margin-left:8px; margin-top:10px; max-width:200px} #cm-chat {font-family:\'Montserrat\', sans-serif; width:100%; height:100%; background-color:rgb(240,240,240); border-radius:2px;} #cm-chat-list {margin:0; padding:3px 0; font-size:11px;} .cm-message:first-child {margin-top:0 !important}.cm-message:last-child {border:0;} .cm-message {padding: 3px 5px; padding-top:2px;} .cm-message-head {margin-bottom:4px;} .cm-message-body {display: inline-block; max-width:85%; margin: 3px; margin-bottom: 0; border-radius: 5px; background: #d3e4f1; padding: 5px 6px;} .cm-clearafter:after {content:\'\'; display:block; clear: both;} .cm-message:hover,.cm-message-name:hover {background-color: rgba(230,230,230,0.4);} .cm-message-name {font-family:\'Montserrat\', sans-serif; font-weight:bold; color:rgb(0,80,0); font-size:9px; cursor: pointer; margin-right: 23px;} .cm-online-name {padding-left:4px;} .cm-message-status {font-family:\'Montserrat\', sans-serif; color:grey; font-size: 8px;} .cm-message-text {display:block; margin-left: 3px; margin-right:10px; max-width:310px; word-wrap:break-word; color:#07324e;} .cm-message-date {float:right; color:grey; font-size:9px;} #cm-display-panel {display:flex; box-sizing:border-box; padding-top:20px; padding-bottom:30px; height: 100%; } #cm-online-panel {margin-right:5px; width:90px;} #cm-online {height:100%; background-color:rgb(240,240,240); border-radius:2px;} #cm-online-list {margin:0; padding:5px 0; font-size:11px;} #cm-record {box-sizing:border-box; display:flex; align-items:center;} .micico {position: absolute; font-size: 165%; top: 0%; right: 25px; padding-top: 5px;}</style>');
+        /*css*/ $('head').append('<style type=text/css>body {margin: 0;} #chat-me {position:relative; overflow:hidden; height:100vh;} #chat-me-cont {box-sizing:border-box; padding:5px; padding-top:28px; width:100%; height:100%; background-color:rgba(50,80,100,1.0); border-radius:3px; font-family:tahoma !important;} #cm-inline-btns {position:absolute; box-sizing:border-box; width:100%; height:15px; margin-bottom:6px;} #cm-message-panel {position: absolute; bottom:0; height:25px; width:100%;} .cm-label {display:inline-block; color:rgb(230,230,230); font-weight:bold; margin:10px; width: 25%;} .cm-button {position:absolute; overflow:hidden; color:white; text-align:center; width:60px; font-size:10px; background-color:rgb(10,200,50); border:0px; box-shadow:none !important; cursor:pointer; height:100%; border-radius: 2px;} .cm-button:not(.recording):hover {background-color:rgb(20,220,60);} .message-input-cont {box-sizing:border-box; width: 100%; height:100%; padding-right:45px;} .cm-input {box-sizing:border-box; background-color:rgb(240,240,240)!important; border:0px; font-size:12px!important; font-family:\'Montserrat\', sans-serif; width:230px; border:0px; border-radius:2px; padding-left:5px;} #cm-error-cont {color:rgb(220,0,0); font-size:12px; margin-left:8px; margin-top:10px; max-width:200px} #cm-chat {font-family:\'Montserrat\', sans-serif; width:100%; height:100%; background-color:rgb(240,240,240); border-radius:2px;} #cm-chat-list {margin:0; padding:3px 0; font-size:11px;} .cm-message:first-child {margin-top:0 !important}.cm-message:last-child {border:0;} .cm-message {padding: 3px 5px; padding-top:2px;} .cm-message-head {margin-bottom:4px;} .cm-message-body {display: inline-block; max-width:85%; margin: 3px; margin-bottom: 0; border-radius: 5px; background: #d3e4f1; padding: 5px 6px;} .cm-clearafter:after {content:\'\'; display:block; clear: both;} .cm-message:hover,.cm-message-name:hover {background-color: rgba(230,230,230,0.4);} .cm-message-name {font-family:\'Montserrat\', sans-serif; font-weight:bold; color:rgb(0,80,0); font-size:9px; cursor: pointer; margin-right: 23px;} .cm-online-name {padding-left:4px;} .cm-message-status {font-family:\'Montserrat\', sans-serif; color:grey; font-size: 8px;} .cm-message-text {display:block; margin-left: 3px; margin-right:10px; max-width:310px; word-wrap:break-word; color:#07324e;} .cm-message-date {float:right; color:grey; font-size:9px;} #cm-display-panel {display:flex; box-sizing:border-box; padding-top:20px; padding-bottom:30px; height: 100%; } #cm-online-panel {margin-right:5px; width:90px;} #cm-online {height:100%; background-color:rgb(240,240,240); border-radius:2px;} #cm-online-list {margin:0; padding:5px 0; font-size:11px;} #cm-record {box-sizing:border-box; display:flex; align-items:center; width: 40px;} .micico {position: absolute; font-size: 165%; top: 0%; right: 15px; padding-top: 5px;}</style>');
         if (!$('#chat-me-cont').length) return;
 
         if (!sess_token || !sess_user) InitDisplay();
@@ -727,21 +772,6 @@ function checkTyping() {
     if (prevtyping != typing) {
         prevtyping = typing;
         socket.emit('typingstatus', typing);
-        if (typing) {
-            $('.message-input-cont').stop().animate({
-                'padding-right': '0px'
-            }, 'fast');
-            $('#cm-record').stop().animate({
-                'right': '-65px'
-            }, 'fast');
-        } else {
-            $('.message-input-cont').stop().animate({
-                'padding-right': '65px'
-            },  'fast');
-            $('#cm-record').stop().animate({
-                'right': '0'
-            }, 'fast');
-        }
     }
 }
 function switchvolume(tab) {

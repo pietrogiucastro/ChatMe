@@ -172,6 +172,7 @@ io.sockets.on('connection', function(socket) {
     socket.color = color.green;
     socket.status = status.online;
     socket.istyping = false;
+    socket.isrecording = false;
 
     socket.emit('initchat');
 
@@ -192,6 +193,12 @@ io.sockets.on('connection', function(socket) {
       rooms[room].history = rooms[room].history.slice(-100);
     });
 
+    socket.on('send audio', function(blob) {
+        var roomname = getsocketroom(socket);
+        if (!roomname) return Jsonerror(socket);
+        var msgobj = {type: 'user_audio', buffer: blob, time: new Date(), author: socket.name, ownercolor: socket.color};
+        sendMessage(socket, roomname, msgobj);
+    });
 
     ss(socket).on('file', function(stream) {
       console.log(stream);
@@ -258,6 +265,15 @@ io.sockets.on('connection', function(socket) {
       try {rooms[roomname].users[socket.name].istyping = socket.istyping;}
       catch(e) { console.log('error for user ' + socket.name); console.log(e); }
       io.sockets.in(roomname).emit('user_typing', {name: socket.name, istyping: socket.istyping});
+    });
+
+    socket.on('recording', function(value) {
+      var roomname = getsocketroom(socket);
+      if (!roomname) return;
+      socket.isrecording = !!value;
+      try {rooms[roomname].users[socket.name].isrecording = socket.isrecording;}
+      catch(e) { console.log('error for user ' + socket.name); console.log(e); }
+      io.sockets.in(roomname).emit('user_recording', {name: socket.name, isrecording: socket.isrecording});
     });
 
     socket.on('search rooms', function(roomquery) {
