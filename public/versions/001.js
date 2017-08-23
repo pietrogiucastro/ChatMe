@@ -83,39 +83,29 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
         $('#chat-me').removeClass().addClass(type);
     }
 
+    function prepareMessage(roomname) {
+        if ($('.empty-chat-msg').length) {
+            $('.empty-chat-msg').slideUp(function() {
+                $(this).remove();
+            });
+        }
+        var chatvolume = chats[roomname].volume;
+        if (chatvolume && !mute) notifsound();
+    }
+
     function setMessage(msg, history, fadein, noslide) {
-        var user_message = sess_user == msg.author? 'You' : msg.author;
-        var time = new Date(msg.time).toLocaleString().split(', ')[1].slice(0, -3);
-        var usercolor = msg.ownercolor;
 
         var message;
-
         if (msg.type == 'user_msg') { //message
-            var lastmessage = $('#cm-chat-list').children(':last');
-
-            if (lastmessage.is('.cm-message') && lastmessage.data('owner') == 'user-'+msg.author) {
-                var textline = $('<span class="cm-message-text" style="display:none;">'+msg.text+'</span>');
-                lastmessage.find('.cm-message-body').append(textline);
-                message = textline;
-            } else {
-                var newmessage = $('<div class="cm-message cm-clearafter" data-owner="user-'+msg.author+'" style="display:none;"></div>');
-                newmessage.html('<div class="cm-message-body"><div class="cm-message-head cm-clearafter"><span class="cm-message-name user-'+user_message+' floatleft" style="color: '+usercolor+';">'+user_message+'</span><span class=cm-message-date>'+time+'</span></div><span class=cm-message-text>'+msg.text+'</span></div>');
-                if (user_message == 'You') newmessage.find('.cm-message-body').addClass('user-You textright');
-                $('#cm-chat-list').append(newmessage);
-                message = newmessage;
-            }
+            message = createTextMessage(msg);
         } else if (msg.type == 'user_audio') { //audio
-            var blob = new Blob([arrayBuffer], { 'type' : 'audio/ogg; codecs=opus' });
-            var audio = document.createElement('audio');
-            audio.src = window.URL.createObjectURL(blob);
-            var audiomessage = $('<div class="cm-message cm-clearafter" data-owner="user-'+msg.author+'" style="display:none;"></div>');
+            message = createAudioMessage(msg);
         }
 
         function unseenmsg() {
             $(message).addClass('cm-unseen');
             refreshUnseenIcon();
         }
-
         if (noslide) { //no animation
             message.show();
         }
@@ -129,6 +119,58 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
             if(isScrolledIntoView(message)) slidebottom();
             else unseenmsg();
         }
+    }
+
+    function createTextMessage(msg) {
+        var user_message = sess_user == msg.author? 'You' : msg.author;
+        var time = new Date(msg.time).toLocaleString().split(', ')[1].slice(0, -3);
+        var usercolor = msg.ownercolor;
+
+        var lastmessage = $('#cm-chat-list').children(':last');
+        if (lastmessage.is('.cm-textmessage') && lastmessage.data('owner') == 'user-'+msg.author) {
+            var textline = $('<span class="cm-message-text" style="display:none;">'+msg.text+'</span>');
+            lastmessage.find('.cm-message-body').append(textline);
+            return textline;
+        } else {
+            var newmessage = $('<div class="cm-message cm-textmessage cm-clearafter" data-owner="user-'+msg.author+'" style="display:none;"></div>');
+            newmessage.html('<div class="cm-message-body"><div class="cm-message-head cm-clearafter"><span class="cm-message-name user-'+user_message+' floatleft" style="color: '+usercolor+';">'+user_message+'</span><span class=cm-message-date>'+time+'</span></div><span class=cm-message-text>'+msg.text+'</span></div>');
+            if (user_message == 'You') newmessage.find('.cm-message-body').addClass('user-You textright');
+            $('#cm-chat-list').append(newmessage);
+            return newmessage;
+        }
+    }
+
+    function createAudioMessage(msg) {
+        var user_message = sess_user == msg.author? 'You' : msg.author;
+        var time = new Date(msg.time).toLocaleString().split(', ')[1].slice(0, -3);
+        var usercolor = msg.ownercolor;
+
+        var playbutton = $('<a class="play-button paused" href="#"><div class="left"></div><div class="right"></div><div class="triangle-1"></div><div class="triangle-2"></div></a>')
+            .click(toggleAudioByBtn);
+        var audiobar = $('<span class="audionav-body"><div class="audionav-bar"><div class="audionav-thumb"></div></div></span>');
+
+        var blob = new Blob([msg.buffer], { 'type' : 'audio/ogg; codecs=opus' });
+        var audio = document.createElement('audio');
+        audio.className = 'main-audio';
+        audio.src = window.URL.createObjectURL(blob);
+
+        audio.onloadedmetadata = function() {
+            var duration = audio.duration;
+            console.log(duration);
+            this.ontimeupdate = function() {
+                uploadAudioThumb($(this).parent(), this.currentTime, this.duration);
+            };
+        };
+
+
+        var newaudio = $('<div class="cm-message cm-audiomessage cm-clearafter" data-owner="user-'+msg.author+'" style="display:none;"></div>');
+        newaudio.html('<div class="cm-message-body cm-audio-body"><div class="cm-message-head cm-clearafter"><span class="cm-message-name user-'+user_message+' floatleft" style="color: '+usercolor+';">'+user_message+'</span><span class=cm-message-date>'+time+'</span></div><div class=cm-message-audio></div></div>')
+        .find('.cm-message-audio')
+        .append(playbutton)
+        .append(audiobar)
+        .append(audio);
+        $('#cm-chat-list').append(newaudio);
+        return newaudio;
     }
 
     function setSystemMsg(msg, msgclass) {
@@ -166,6 +208,47 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
 
     }
 
+    function toggleAudioByBtn() {
+        if ($(this).is('.paused')) {
+            playAudio($(this).parent());
+        } else {
+            pauseAudio($(this).parent());
+        }
+    }
+
+    function playAudio(messageaudio) {
+        stopAllAudios();
+        $(messageaudio).find('.play-button').removeClass('paused');
+        var audio = $(messageaudio).find('.main-audio')[0];
+        audio.play();
+    }
+
+    function pauseAudio(messageaudio) {
+        $(messageaudio).find('.play-button').addClass('paused');
+        var audio = $(messageaudio).find('.main-audio')[0];
+        audio.pause();
+    }
+    function stopAudio(messageaudio) {
+        $(messageaudio).find('.play-button').addClass('paused');
+        var audio = $(messageaudio).find('.main-audio')[0];
+        audio.pause();
+        audio.currentTime = 0;
+    }
+
+    function stopAllAudios() {
+        $('#cm-chat').find('.cm-message-audio').each(function() {
+            pauseAudio(this);
+        });
+    }
+
+    function uploadAudioThumb(messageaudio, currentTime, duration) {
+        var progress = (100 * (currentTime / duration)) + '%' ;
+        $(messageaudio).find('.audionav-thumb').css('left', progress);
+        if (currentTime == duration) {
+            stopAudio(messageaudio);
+        }
+    }
+
 function startRec(e) {
     if (e && $(e.target).is('.recbtn')) return;
     if (micbtn.is('.recording')) return;
@@ -174,10 +257,11 @@ function startRec(e) {
     .stop().animate({
         width: '115px'
     }, 200)
-    .find('.record-time').stop().animate({width: 'show'}, 200);
+    .find('.record-time').stop().animate({width: 'show'}, 180);
     input.parent().stop().animate({
         'padding-right': '120px'
     }, 200);
+
     recorder.record();
 }
 
@@ -390,17 +474,12 @@ function RegisterDisplay(user, pass) {
             input.focus();
             switch(message.msg.type) {
                 case 'user_msg':
-                    if ($('.empty-chat-msg').length) {
-                        $('.empty-chat-msg').slideUp(function() {
-                            $(this).remove();
-                        });
-                    }
-                    var chatvolume = chats[message.roomname].volume;
-                    if (chatvolume && !mute) notifsound();
+                    prepareMessage(message.roomname);
                     setMessage(message.msg);
                     break;
                 case 'user_audio':
-                    setAudio(message.buffer);
+                    prepareMessage(message.roomname);
+                    setMessage(message.msg);
                     break;
                 case 'system_msg':
                     setSystemMsg(message.msg.text);

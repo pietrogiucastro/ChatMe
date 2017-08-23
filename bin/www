@@ -194,10 +194,15 @@ io.sockets.on('connection', function(socket) {
     });
 
     socket.on('send audio', function(blob) {
+        if (typeof blob != "object") {
+          return Jsonerror(socket);
+        }
         var roomname = getsocketroom(socket);
         if (!roomname) return Jsonerror(socket);
         var msgobj = {type: 'user_audio', buffer: blob, time: new Date(), author: socket.name, ownercolor: socket.color};
         sendMessage(socket, roomname, msgobj);
+        rooms[roomname].history.push(msgobj);
+        rooms[roomname].history = rooms[roomname].history.slice(-100);
     });
 
     ss(socket).on('file', function(stream) {
