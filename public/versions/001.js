@@ -147,28 +147,47 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
 
         var playbutton = $('<a class="play-button paused" href="#"><div class="left"></div><div class="right"></div><div class="triangle-1"></div><div class="triangle-2"></div></a>')
             .click(toggleAudioByBtn);
-        var audiobar = $('<span class="audionav-body"><div class="audionav-bar"><div class="audionav-thumb"></div></div></span>');
+        var audiobar = $('<span class="audionav-body"><input type="range" min="0" max="100" class="audio-track" value="0"></span>');
+        //<div class="audionav-bar"><div class="audionav-thumb"></div></div>
+
+        var audioduration = $('<span class="audio-duration">..:..</span>');
 
         var blob = new Blob([msg.buffer], { 'type' : 'audio/ogg; codecs=opus' });
         var audio = document.createElement('audio');
         audio.className = 'main-audio';
+        audio.setAttribute('preload', 'auto');
         audio.src = window.URL.createObjectURL(blob);
 
         audio.onloadedmetadata = function() {
             var duration = audio.duration;
-            console.log(duration);
+            //audioduration.html(duration);
             this.ontimeupdate = function() {
+                audioduration.html(recorder.getTimeByMs(this.duration*1000));
                 uploadAudioThumb($(this).parent(), this.currentTime, this.duration);
             };
+            audiobar.find('.audio-track').mousedown(function() {
+                $(this).addClass('dragging');
+            }).mouseup(function() {
+                $(this).removeClass('dragging');
+                var process = this.value;
+                var newTime = process * audio.duration / (100 * audio.currentTime);
+                console.log('newTime');
+                console.log(newTime);
+                audio.currentTime = newTime;
+            });
         };
 
 
         var newaudio = $('<div class="cm-message cm-audiomessage cm-clearafter" data-owner="user-'+msg.author+'" style="display:none;"></div>');
         newaudio.html('<div class="cm-message-body cm-audio-body"><div class="cm-message-head cm-clearafter"><span class="cm-message-name user-'+user_message+' floatleft" style="color: '+usercolor+';">'+user_message+'</span><span class=cm-message-date>'+time+'</span></div><div class=cm-message-audio></div></div>')
-        .find('.cm-message-audio')
-        .append(playbutton)
-        .append(audiobar)
-        .append(audio);
+            .find('.cm-message-audio')
+            .append(playbutton)
+            .append(audiobar)
+            .append(audio)
+            .append(audioduration);
+
+        if (user_message == 'You') newaudio.find('.cm-message-body').addClass('user-You');
+
         $('#cm-chat-list').append(newaudio);
         return newaudio;
     }
@@ -242,8 +261,13 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     }
 
     function uploadAudioThumb(messageaudio, currentTime, duration) {
-        var progress = (100 * (currentTime / duration)) + '%' ;
-        $(messageaudio).find('.audionav-thumb').css('left', progress);
+        console.log(currentTime + "  " + duration);
+        var progress = (100 * (currentTime / duration));
+        console.log(progress);
+        console.log('=====================');
+        var audiotrack = $(messageaudio).find('.audio-track');
+        if (audiotrack.is('.dragging')) return;
+        audiotrack.val(progress);
         if (currentTime == duration) {
             stopAudio(messageaudio);
         }

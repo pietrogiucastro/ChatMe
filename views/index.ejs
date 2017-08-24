@@ -849,7 +849,7 @@
       display: flex;
       align-items: center;
       margin-left: 3px;
-      margin-right:10px;
+      margin-right:5px;
       max-width:310px;
       color:#07324e;
     }
@@ -862,37 +862,25 @@
       position: relative;
       width: 100%;
       height: 14px;
-      margin-left: 18px;
+      margin-left: 14px;
+      margin-right: 4px;
       display: flex;
       align-items: center;
       cursor: pointer;
     }
-    .audionav-bar {
-      width: 100%;
-      height: 2px;
-      border-radius: 3px;
-      background-color: #555;
-      opacity: 0.6;
-    }
-    .audionav-thumb {
-      position: absolute;
-      width: 14px;
-      height: 14px;
-      margin-left: -7px;
-      border-radius: 50%;
-      top: 0; left: 0;
-      background-color: rgb(70,130,210);
-      cursor: pointer;
+    .audio-duration {
+      font-size: 11px;
+      margin-left: 5px;
     }
   </style>
   <style type="text/css">
     .play-button {
       height: 18px;
-      width: 18px;
+      width: 24px;
       display: block;
       overflow: hidden;
       position: relative;
-      margin-left: 8px;
+      margin-left: 9px;
     }
     .left {
       height: 100%;
@@ -935,6 +923,9 @@
       transition: transform 0.2s ease;
       transition: transform 0.2s ease, -webkit-transform 0.2s ease;
     }
+    .user-You .triangle-1, .user-You .triangle-2 {
+      border-right: 18px solid #cfecd1;
+    }
     .paused .left {
       width: 50%;
     }
@@ -950,6 +941,113 @@
               transform: translate(0, 50%);
     }
 
+  </style>
+  <style type="text/css">
+    .audio-track {
+      -webkit-appearance: none; /* Hides the slider so that custom slider can be made */
+      width: 100%;
+      height: 100%;
+      background: transparent; /* Otherwise white in Chrome */
+    }
+
+    .audio-track::-webkit-slider-thumb {
+      -webkit-appearance: none;
+    }
+
+    .audio-track:focus {
+      outline: none;
+    }
+
+    .audio-track::-ms-track {
+      width: 100%;
+      cursor: pointer;
+
+      /* Hides the slider so custom styles can be added */
+      background: transparent; 
+      border-color: transparent;
+      color: transparent;
+    }
+
+
+
+    /* Special styling for WebKit/Blink */
+    .audio-track::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      height: 14px;
+      width: 14px;
+      border-radius: 50%;
+      background: rgb(70,130,210);
+      cursor: pointer;
+      margin-top: -6px; /* You need to specify a margin in Chrome, but in Firefox and IE it is automatic */
+    }
+
+    /* All the same stuff for Firefox */
+    .audio-track::-moz-range-thumb {
+      -webkit-appearance: none;
+      height: 14px;
+      width: 14px;
+      border-radius: 50%;
+      background: rgb(70,130,210);
+      cursor: pointer;
+    }
+
+    /* All the same stuff for IE */
+    .audio-track::-ms-thumb {
+      -webkit-appearance: none;
+      height: 14px;
+      width: 14px;
+      border-radius: 50%;
+      background: rgb(70,130,210);
+      cursor: pointer;
+    }
+
+    .user-You .audio-track::-webkit-slider-thumb,
+    .user-You .audio-track::-moz-range-thumb,
+    .user-You .audio-track::-ms-thumb {
+      background: rgb(70,210,90) !important;
+    }
+
+
+    .audio-track::-webkit-slider-runnable-track {
+      width: 100%;
+      height: 2px;
+      cursor: pointer;
+      background: #3071a9;
+      border-radius: 3px;
+      background-color: rgba(85,85,85,0.6);
+    }
+
+    .audio-track::-moz-range-track {
+      width: 100%;
+      height: 2px;
+      cursor: pointer;
+      box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
+      background: #3071a9;
+      border-radius: 1.3px;
+      border: 0.2px solid #010101;
+    }
+
+    .audio-track::-ms-track {
+      width: 100%;
+      height: 8.4px;
+      cursor: pointer;
+      background: transparent;
+      border-color: transparent;
+      border-width: 16px 0;
+      color: transparent;
+    }
+    .audio-track::-ms-fill-lower {
+      background: #2a6495;
+      border: 0.2px solid #010101;
+      border-radius: 2.6px;
+      box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
+    }
+    .audio-track::-ms-fill-upper {
+      background: #3071a9;
+      border: 0.2px solid #010101;
+      border-radius: 2.6px;
+      box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
+    }
   </style>
 </head>
 <body>
