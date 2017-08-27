@@ -978,7 +978,7 @@
       border-radius: 50%;
       background: rgb(70,130,210);
       cursor: pointer;
-      margin-top: -6px; /* You need to specify a margin in Chrome, but in Firefox and IE it is automatic */
+      margin-top: -6px;
     }
 
     /* All the same stuff for Firefox */
@@ -999,6 +999,12 @@
       border-radius: 50%;
       background: rgb(70,130,210);
       cursor: pointer;
+    }
+
+    .audio-track:active::-webkit-slider-thumb {
+      width: 18px;
+      height: 18px;
+      margin-top: -8px;
     }
 
     .user-You .audio-track::-webkit-slider-thumb,

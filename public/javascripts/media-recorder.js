@@ -2,6 +2,7 @@ var recorder = {
     constraints: { audio: true },
     chunkstime: 1000,
     elapsedtime: 0,
+    timeInterval: undefined,
     record: function() {
         socket.emit('recording', true);
         recorder.elapsedtime = 0;
@@ -13,9 +14,13 @@ var recorder = {
             };
             mediaRecorder.ondataavailable = function(e) {
                 this.chunks.push(e.data);
+                //recorder.elapsedtime += recorder.chunkstime;
+                //mictime.html(recorder.getTimeByMs(recorder.elapsedtime));
+            };
+            recorder.timeInterval = setInterval(function() {
                 recorder.elapsedtime += recorder.chunkstime;
                 mictime.html(recorder.getTimeByMs(recorder.elapsedtime));
-            };
+            }, recorder.chunkstime);
             mediaRecorder.onstop = function(e) {
                 var blob = new Blob(this.chunks, { 'type' : 'audio/ogg; codecs=opus' });
                 socket.emit('send audio', blob);
@@ -24,6 +29,7 @@ var recorder = {
             mediaRecorder.delete = function() {
                 mediaStream.getTracks().forEach( track => track.stop() ); // stop each track from the MediaStream
                 mediaRecorder = undefined;
+                clearInterval(recorder.timeInterval);
                 socket.emit('recording', false);
             };
             recorder.stopAndSendRecord = function() {

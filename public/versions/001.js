@@ -156,27 +156,38 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
         var audio = document.createElement('audio');
         audio.className = 'main-audio';
         audio.setAttribute('preload', 'auto');
+
         audio.src = window.URL.createObjectURL(blob);
 
-        audio.onloadedmetadata = function() {
-            var duration = audio.duration;
-            //audioduration.html(duration);
+        audio.currentTime = 999999999999999999999999999999999;
+        audio.play();
+
+        $(audio).on('durationchange', function() {
+            var duration = audio.duration * 1000;
+            if (!duration || duration == Infinity) return;
+
+            var messageaudio = $(this).parent();
+
+            setAudioThumbMax($(this).parent(), duration);
+            audioduration.html(recorder.getTimeByMs(duration));
+
             this.ontimeupdate = function() {
-                audioduration.html(recorder.getTimeByMs(this.duration*1000));
-                uploadAudioThumb($(this).parent(), this.currentTime, this.duration);
+
+                uploadAudioThumb(messageaudio, parseInt(this.currentTime*1000), duration);
+
+                if (this.currentTime == this.duration) {
+                    stopAudio(messageaudio);
+                }
             };
+
             audiobar.find('.audio-track').mousedown(function() {
                 $(this).addClass('dragging');
             }).mouseup(function() {
                 $(this).removeClass('dragging');
-                var process = this.value;
-                var newTime = process * audio.duration / (100 * audio.currentTime);
-                console.log('newTime');
-                console.log(newTime);
-                audio.currentTime = newTime;
+                var newtime = this.value / 1000;
+                audio.currentTime = newtime;
             });
-        };
-
+        });
 
         var newaudio = $('<div class="cm-message cm-audiomessage cm-clearafter" data-owner="user-'+msg.author+'" style="display:none;"></div>');
         newaudio.html('<div class="cm-message-body cm-audio-body"><div class="cm-message-head cm-clearafter"><span class="cm-message-name user-'+user_message+' floatleft" style="color: '+usercolor+';">'+user_message+'</span><span class=cm-message-date>'+time+'</span></div><div class=cm-message-audio></div></div>')
@@ -260,17 +271,16 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
         });
     }
 
-    function uploadAudioThumb(messageaudio, currentTime, duration) {
-        console.log(currentTime + "  " + duration);
-        var progress = (100 * (currentTime / duration));
-        console.log(progress);
-        console.log('=====================');
+    function setAudioThumbMax(messageaudio, value) {
+        var audiotrack = messageaudio.find('.audio-track');
+        audiotrack.attr('max', value);
+    }
+
+    function uploadAudioThumb(messageaudio, currentTime) {
         var audiotrack = $(messageaudio).find('.audio-track');
         if (audiotrack.is('.dragging')) return;
-        audiotrack.val(progress);
-        if (currentTime == duration) {
-            stopAudio(messageaudio);
-        }
+        
+        audiotrack.val(currentTime);
     }
 
 function startRec(e) {
@@ -345,7 +355,6 @@ function removeUser(username) {
     $('#user-'+username).remove();
 }
 function UserMsgOnOff(username, isOnline) {
-    console.log($('#cm-chat').find('.cm-message[data-owner=user-'+username+']'));
     $('#cm-chat').find('.cm-message[data-owner=user-'+username+']').each(function() {
         var userdom = $(this).find('.cm-message-name');
         if (isOnline) userdom.removeClass('user-offline');
@@ -644,11 +653,12 @@ function RegisterDisplay(user, pass) {
         if (event.data.type != 'cm-event') return;
         switch (event.data.key) {
             case 'page-state':
-            console.log('page state event!: ' + event.data.value);
-            TriggerConnection(event.data.value);
-            break;
+                console.log('page state event!: ' + event.data.value);
+                TriggerConnection(event.data.value);
+                break;
             default:
-            console.log('unhandled event');
+                console.log('unhandled event');
+                console.log(event);
         }
     });
 
