@@ -40,3 +40,4 @@
 - custom backrgound
 - mute for spam
 - length limit in global and site chats
+- delete your msgs possibility

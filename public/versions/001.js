@@ -132,11 +132,11 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
             lastmessage.find('.cm-message-body').append(textline);
             return textline;
         } else {
-            var newmessage = $('<div class="cm-message cm-textmessage cm-clearafter" data-owner="user-'+msg.author+'" style="display:none;"></div>');
-            newmessage.html('<div class="cm-message-body"><div class="cm-message-head cm-clearafter"><span class="cm-message-name user-'+user_message+' floatleft" style="color: '+usercolor+';">'+user_message+'</span><span class=cm-message-date>'+time+'</span></div><span class=cm-message-text>'+msg.text+'</span></div>');
-            if (user_message == 'You') newmessage.find('.cm-message-body').addClass('user-You textright');
-            $('#cm-chat-list').append(newmessage);
-            return newmessage;
+            var newtextmessage = $('<div class="cm-message cm-textmessage cm-clearafter" data-owner="user-'+msg.author+'" style="display:none;"></div>');
+            newtextmessage.html('<div class="cm-message-body"><div class="cm-message-head cm-clearafter"><span class="cm-message-name user-'+user_message+' floatleft" style="color: '+usercolor+';">'+user_message+'</span><span class=cm-message-date>'+time+'</span></div><span class=cm-message-text>'+msg.text+'</span></div>');
+            if (user_message == 'You') newtextmessage.find('.cm-message-body').addClass('user-You textright');
+            $('#cm-chat-list').append(newtextmessage);
+            return newtextmessage;
         }
     }
 
@@ -152,11 +152,40 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
 
         var audioduration = $('<span class="audio-duration">..:..</span>');
 
-        var blob = new Blob([msg.buffer], { 'type' : 'audio/ogg; codecs=opus' });
         var audio = document.createElement('audio');
         audio.className = 'main-audio';
         audio.setAttribute('preload', 'auto');
 
+        socket.emit('get audio', msg.id);
+
+        var newaudiomessage = $('<div class="cm-message cm-audiomessage cm-clearafter" data-owner="user-'+msg.author+'" style="display:none;"></div>');
+        newaudiomessage.html('<div class="cm-message-body cm-audio-body"><div class="cm-message-head cm-clearafter"><span class="cm-message-name user-'+user_message+' floatleft" style="color: '+usercolor+';">'+user_message+'</span><span class=cm-message-date>'+time+'</span></div><div class=cm-message-audio></div></div>')
+            .find('.cm-message-audio')
+            .append(playbutton)
+            .append(audiobar)
+            .append(audio)
+            .append(audioduration);
+
+        if (user_message == 'You') newaudiomessage.find('.cm-message-body').addClass('user-You');
+
+        newaudiomessage.attr('id', msg.id);
+
+        $('#cm-chat-list').append(newaudiomessage);
+        return newaudiomessage;
+    }
+
+    function setAudioMessage(msg) {
+
+        var audiocont = $('#'+msg.id);
+
+        var audio = audiocont.find('.main-audio')[0];
+        var audioduration = audiocont.find('.audio-duration');
+        var audiobar = audiocont.find('.audionav-body');
+
+        console.log(msg);
+        audioduration.html(recorder.getTimeByMs(msg.duration));
+
+        var blob = new Blob([msg.buffer], { 'type' : 'audio/ogg; codecs=opus' });
         audio.src = window.URL.createObjectURL(blob);
 
         audio.currentTime = 999999999999999999999999999999999;
@@ -168,7 +197,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
 
             var messageaudio = $(this).parent();
 
-            setAudioThumbMax($(this).parent(), duration);
+            setAudioThumbMax(messageaudio, duration);
             audioduration.html(recorder.getTimeByMs(duration));
 
             this.ontimeupdate = function() {
@@ -188,19 +217,6 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
                 audio.currentTime = newtime;
             });
         });
-
-        var newaudio = $('<div class="cm-message cm-audiomessage cm-clearafter" data-owner="user-'+msg.author+'" style="display:none;"></div>');
-        newaudio.html('<div class="cm-message-body cm-audio-body"><div class="cm-message-head cm-clearafter"><span class="cm-message-name user-'+user_message+' floatleft" style="color: '+usercolor+';">'+user_message+'</span><span class=cm-message-date>'+time+'</span></div><div class=cm-message-audio></div></div>')
-            .find('.cm-message-audio')
-            .append(playbutton)
-            .append(audiobar)
-            .append(audio)
-            .append(audioduration);
-
-        if (user_message == 'You') newaudio.find('.cm-message-body').addClass('user-You');
-
-        $('#cm-chat-list').append(newaudio);
-        return newaudio;
     }
 
     function setSystemMsg(msg, msgclass) {
@@ -502,6 +518,7 @@ function RegisterDisplay(user, pass) {
         socket.on('initchat', function() {
             switchchat($('.global-tab')); //change with cookie last chat
         });
+        socket.on('response audio', setAudioMessage);
         socket.on('new message', function (message) {
             input.removeAttr('disabled');
             input.focus();

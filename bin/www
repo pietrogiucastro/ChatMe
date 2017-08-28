@@ -11,6 +11,7 @@
  var http = require('http');
  var https = require('https');
  var anchorme = require('anchorme').default;
+ var guid = require('uuid').v4;
 
 /**
  * Get port from environment and store in Express.
@@ -105,7 +106,8 @@ var io = require('socket.io').listen(server);
 var ss = require('socket.io-stream');
 var r_global = 'global';
 
-var rooms = { global: { history : [], users: {}, userslist: [] } };
+var rooms = { global: { history : [], users: {}, userslist: [], audios: {} } };
+
 var customrooms = [];
 
 var status = {
@@ -180,29 +182,42 @@ io.sockets.on('connection', function(socket) {
       if (typeof msg != "string") {
         return Jsonerror(socket);
       }
-      var room = getsocketroom(socket);
-      if (!roomexists(room)) {
-        console.log('room %s does not exist!', room);
+      var roomname = getsocketroom(socket);
+      if (!roomexists(roomname)) {
+        console.log('room %s does not exist!', roomname);
         Jsonerror(socket, 'stderror', 'room does not exist!');
         return;
       }
       msg = elabMessage(msg);
       var msgobj = {type: 'user_msg', text: msg, time: new Date(), author: socket.name, ownercolor: socket.color};
-      sendMessage(socket, room, msgobj);
-      rooms[room].history.push(msgobj);
-      rooms[room].history = rooms[room].history.slice(-100);
+      sendMessage(roomname, msgobj);
+      rooms[roomname].history.push(msgobj);
+      sliceMsgs(roomname);
     });
 
-    socket.on('send audio', function(blob) {
-        if (typeof blob != "object") {
+    socket.on('send audio', function(audio) {
+        if (typeof audio != "object") {
           return Jsonerror(socket);
         }
         var roomname = getsocketroom(socket);
         if (!roomname) return Jsonerror(socket);
-        var msgobj = {type: 'user_audio', buffer: blob, time: new Date(), author: socket.name, ownercolor: socket.color};
-        sendMessage(socket, roomname, msgobj);
+
+        var audioid = guid();
+        rooms[roomname].audios[audioid] = {buffer: audio.buffer, duration: audio.duration};
+
+        var msgobj = {type: 'user_audio', id: audioid, time: new Date(), author: socket.name, ownercolor: socket.color};
+        sendMessage(roomname, msgobj);
         rooms[roomname].history.push(msgobj);
-        rooms[roomname].history = rooms[roomname].history.slice(-100);
+        sliceMsgs(roomname);
+    });
+
+    socket.on('get audio', function(audioid) {
+        var roomname = getsocketroom(socket);
+        if (!roomname) return Jsonerror(socket);
+
+        var buffer = rooms[roomname].audios[audioid].buffer;
+
+        socket.emit('response audio', {id: audioid, buffer: buffer});
     });
 
     ss(socket).on('file', function(stream) {
@@ -379,8 +394,7 @@ io.sockets.on('connection', function(socket) {
 
   });
 
-function sendMessage(socket, room, msgobj) {
-
+function sendMessage(room, msgobj) {
   var roomname = room.startsWith('site://') ? 'site' : room;
   io.sockets.in(room).emit('new message', {msg: msgobj, roomname: roomname});
 }
@@ -433,7 +447,7 @@ function joinroom(socket, roomname, callback) {
     if (rooms[roomname].userslist.indexOf(socket.name) == -1) { // if user is not connected to the room yet, send connection msg
 /*      var msgtxt = socket.name + " connected";
       var msgobj = {type: 'system_msg', text: msgtxt , time: new Date()};
-      sendMessage(socket, roomname, msgobj);*/
+      sendMessage(roomname, msgobj);*/
     }
 
 
@@ -469,7 +483,7 @@ function leaveroom(socket, roomname, callback) {
 
 /*      var msgtxt = socket.name + " disconnected";
       var msgobj = {type: 'system_msg', text: msgtxt , time: new Date()};
-      sendMessage(socket, roomname, msgobj);*/
+      sendMessage(roomname, msgobj);*/
     }
     console.log('left room ' + roomname);
     if (callback) callback();
@@ -490,21 +504,33 @@ function getroom(roomname) {
 function getrooms(callback) {
   callback(rooms);
 }
+
 function initroom(roomname, roompass, callback) {
-  rooms[roomname] = { history: [], password: roompass, users: {}, userslist: [] };
+  rooms[roomname] = { history: [], password: roompass, users: {}, userslist: [], audios: {} };
   customrooms.push(roomname);
   if (callback) callback();
 }
 
 function initsiteroom(roomname) {
-  rooms[roomname] = { history: [], users: {}, userslist: [] };
+  rooms[roomname] = { history: [], users: {}, userslist: [], audios: {} };
 }
+
 function getsocketroom(socket) {
   return Object.keys(socket.rooms)[1];
 }
 
 function roomexists(roomname) {
   return !!rooms[roomname];
+}
+
+function sliceMsgs(roomname) {
+  if (rooms[roomname].history.length > 100 ) {
+    var lastmsg = rooms[roomname].history.shift();
+    if (lastmsg.type == 'user_audio') {
+      var audioid = lastmsg.id;
+      delete rooms[roomname].audios[audioid];
+    }
+  }
 }
 
 function Jsonerror(socket, type='stderror', message='Internal error. Retry later.', data = {}) {
