@@ -151,6 +151,8 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
         //<div class="audionav-bar"><div class="audionav-thumb"></div></div>
 
         var audioduration = $('<span class="audio-duration">..:..</span>');
+        audioduration.html(recorder.getTimeByMs(msg.duration));
+        
 
         var audio = document.createElement('audio');
         audio.className = 'main-audio';
@@ -183,7 +185,6 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
         var audiobar = audiocont.find('.audionav-body');
 
         console.log(msg);
-        audioduration.html(recorder.getTimeByMs(msg.duration));
 
         var blob = new Blob([msg.buffer], { 'type' : 'audio/ogg; codecs=opus' });
         audio.src = window.URL.createObjectURL(blob);

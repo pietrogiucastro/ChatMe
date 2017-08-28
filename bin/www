@@ -203,9 +203,9 @@ io.sockets.on('connection', function(socket) {
         if (!roomname) return Jsonerror(socket);
 
         var audioid = guid();
-        rooms[roomname].audios[audioid] = {buffer: audio.buffer, duration: audio.duration};
+        rooms[roomname].audios[audioid] = {buffer: audio.buffer};
 
-        var msgobj = {type: 'user_audio', id: audioid, time: new Date(), author: socket.name, ownercolor: socket.color};
+        var msgobj = {type: 'user_audio', id: audioid, duration: audio.duration, time: new Date(), author: socket.name, ownercolor: socket.color};
         sendMessage(roomname, msgobj);
         rooms[roomname].history.push(msgobj);
         sliceMsgs(roomname);
