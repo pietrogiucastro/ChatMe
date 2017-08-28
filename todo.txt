@@ -41,3 +41,4 @@
 - mute for spam
 - length limit in global and site chats
 - delete your msgs possibility
+- prevent socket to be global
