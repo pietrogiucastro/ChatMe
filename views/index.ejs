@@ -145,6 +145,7 @@
       border: 1px solid #aaa;
       background-color: rgba(200,200,200, 0.9);
       color: #444;
+      font-family: Montserrat, sans-serif;
     }
     #options-content {
       width: 100%;
@@ -402,6 +403,7 @@
     }
     .settings-bottom button {
       margin-left: 10px;
+      font-weight: bold;
     }
 
 
@@ -868,8 +870,10 @@
       cursor: pointer;
     }
     .audio-duration {
+      width: 50px;
       font-size: 11px;
       margin-left: 5px;
+      text-align: right;
     }
   </style>
   <style type="text/css">
@@ -978,6 +982,16 @@
       background: rgb(70,130,210);
       cursor: pointer;
       margin-top: -6px;
+    }
+
+    .audio-track::-webkit-slider-thumb:before {
+        position: absolute;
+        top: 0;
+        right: 50%;
+        left: -200px;
+        background: #e00;
+        content: '';
+        height: 3px;
     }
 
     /* All the same stuff for Firefox */

@@ -5,13 +5,11 @@
 - substitute tab data-name and data-pass with just id and the password will be stored in 	the cookies as a token
 - users, rooms and messages in db
 - sort rooms result by relevance
-- prevent global room to appear in search
 - query rooms from db
 - change font
 - keep rooms even when switching page
 - max 5 chat per user
 - modal for generic error handling
-- prevent xss
 - fix multi tabs name disappear bug
 - fix resizable
 - auto select chat size and theme from cookies
@@ -42,3 +40,8 @@
 - length limit in global and site chats
 - delete your msgs possibility
 - prevent socket to be global
+- username can't contain spaces
+
+_create mongo db
+_create pmchat
+_images
