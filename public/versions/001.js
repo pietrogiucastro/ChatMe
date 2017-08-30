@@ -36,6 +36,11 @@ var emptychatmsg = 'Empty chat. Be the first to send a message!';
 var tabs = $('<div id="chat-me-tabs" class="cm-scroll scroll-x cm-tabs-scroll"><div class="chat-tab global-tab sel" data-name="global" data-type="global"><span class="volume-icon vol-true"></span>Global</div><div class="chat-tab site-tab" data-name="site" data-type="site"><span class="volume-icon vol-true"></span>Site</div></div>');
 
 var roomresultModel = $('<div class="chat-row"><span class="chat-name"></span> <span class="chat-online"><i class="fa fa-user" style="margin-right:4px;"></i><span class="online-num"></span></span></div>')[0];
+var messagemodal = $('<div class="cm-message-modal"><div class="modal-layout"><div class="modal-close"></div><div class="message-modal-body"></div></div></div>');
+messagemodal.find('.modal-close').click(function() {
+    $(this).parents('.cm-message-modal:first').hide();
+});
+
 // if user is running mozilla then use it's built-in WebSocket
 window.WebSocket = window.WebSocket || window.MozWebSocket;
 // if browser doesn't support WebSocket, just show
@@ -147,9 +152,9 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
 
         var playbutton = $('<a class="play-button paused" href="#"><div class="left"></div><div class="right"></div><div class="triangle-1"></div><div class="triangle-2"></div></a>')
             .click(toggleAudioByBtn);
+        var progressbar = $('<span class="progress-bar"></span');
         var audiobar = $('<span class="audionav-body"><input type="range" min="0" max="100" class="audio-track" value="0"></span>');
-        //<div class="audionav-bar"><div class="audionav-thumb"></div></div>
-
+        audiobar.append(progressbar);
         var audioduration = $('<span class="audio-duration">..:..</span>');
         audioduration.html(recorder.getTimeByMs(msg.duration));
         
@@ -199,35 +204,42 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
             setAudioThumbMax(messageaudio, duration);
             audioduration.html(recorder.getTimeByMs(duration));
 
-            var updateBarFunc = function() {
-                uploadAudioThumb(messageaudio, parseInt(audio.currentTime*1000), duration);
+            var updatePrgoressBarFunc = function() {
+                uploadAudioThumb(messageaudio, audio.currentTime*1000);
+                uploadProgressBar(messageaudio, audio.currentTime*1000, duration);
                 if (audio.currentTime == audio.duration) {
                     stopAudio(messageaudio);
-                    updateBarFunc();
+                    updatePrgoressBarFunc();
                 }
             };
-            var updateProgressFunc = function() {
+            var updateTimeProgressFunc = function() {
                 audioduration.html(recorder.getTimeByMs(audio.currentTime*1000))
             }
             var updateBarInterval;
-            var updateProgressInterval;
+            var updateTimeInterval;
+            var updateBarProgressInterval;
 
             this.onplay = function() {
-                updateProgressFunc();
-                updateBarInterval = setInterval(updateBarFunc, 50);
-                updateProgressInterval = setInterval(updateProgressFunc, 100);
+                updateTimeProgressFunc();
+                updateBarInterval = setInterval(updatePrgoressBarFunc, 50);
+                updateTimeInterval = setInterval(updateTimeProgressFunc, 100);
             };
 
             this.onpause = function() {
                 clearInterval(updateBarInterval);
-                clearInterval(updateProgressInterval);
+                clearInterval(updateTimeInterval);
                 audioduration.html(recorder.getTimeByMs(duration));
-            }
+            };
 
             audiobar.find('.audio-track').mousedown(function() {
                 $(this).addClass('dragging');
+                var input = $(this);
+                updateBarProgressInterval = setInterval(function() {
+                    uploadProgressBar(messageaudio, parseInt(input.val()), parseInt(input.attr('max')));
+                }, 50);
             }).mouseup(function() {
                 $(this).removeClass('dragging');
+                clearInterval(updateBarProgressInterval);
                 var newtime = this.value / 1000;
                 audio.currentTime = newtime;
             });
@@ -308,10 +320,15 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     }
 
     function uploadAudioThumb(messageaudio, currentTime) {
-        var audiotrack = $(messageaudio).find('.audio-track');
+        var audiotrack = messageaudio.find('.audio-track');
         if (audiotrack.is('.dragging')) return;
         
         audiotrack.val(currentTime);
+    }
+    function uploadProgressBar(messageaudio, currentTime, duration) {
+        var progressBar = messageaudio.find('.progress-bar');
+        var percent = (100*(currentTime / duration)) + '%';
+        progressBar.css('width', percent);
     }
 
 function startRec(e) {
@@ -615,16 +632,21 @@ function RegisterDisplay(user, pass) {
         socket.on('jsonerror', function(error) {
             switch (error.type) {
                 case 'stderror':
-                console.log(error.message);
-                break;
+                    console.log(error.message);
+                    showModalMessage(error.message);
+                    break;
                 case 'wrongpassword':
-                hideOptsWait();
-                var tab = $('.chat-tab[data-name=' + error.data.name + ']');
-                leaveChat(tab);
-                $('#type-password-message').html(error.message);
+                    if ($('#chat-me-options').is(':visible')) {
+                        hideOptsWait();
+                        $('#type-password-message').html(error.message);
+                    } else {
+                        var tab = $('.chat-tab[data-name=' + error.data.name + ']');
+                        leaveChat(tab);
+                        showModalMessage("Internal Error. Try to Join the chat again.");
+                    }
                 break;
                 default:
-                console.log('unhandled error type');
+                    console.log('unhandled error type');
             }
         });
         socket.on('jsonwarning', function(warning) {
@@ -658,7 +680,7 @@ function RegisterDisplay(user, pass) {
         .find('.message-input-cont').append('<input style="margin:0px; width:100%; height:100%;" type=text id=cm-message-input class=cm-input placeholder=Message>');
         $('#cm-message-panel').append(micbtn);
         micbtn.prepend(mictime);
-        // $('#chat-me-cont').append(messagemodal);
+        $('#chat-me-cont').append(messagemodal);
 
 
         input = $('#cm-message-input');
@@ -1012,6 +1034,11 @@ function joinPassRoom() {
 }
 function postParentMessage(key, value) {
     parent.postMessage({key: key, value: value, type: 'cm-event'}, '*');
+}
+
+function showModalMessage(message) {
+    $('.cm-message-modal').show()
+    .find('.message-modal-body').html(message);
 }
 
 $(document).on('click', '.chat-row', function() {

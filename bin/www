@@ -12,6 +12,7 @@
  var https = require('https');
  var anchorme = require('anchorme').default;
  var guid = require('uuid').v4;
+ var MongoClient = require('mongodb').MongoClient;
 
 /**
  * Get port from environment and store in Express.

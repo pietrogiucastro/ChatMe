@@ -41,6 +41,8 @@
 - delete your msgs possibility
 - prevent socket to be global
 - username can't contain spaces
+- no connection error handling
+- description popover on hover for tabs and buttons
 
 _create mongo db
 _create pmchat
