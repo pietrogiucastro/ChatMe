@@ -12,7 +12,18 @@
  var https = require('https');
  var anchorme = require('anchorme').default;
  var guid = require('uuid').v4;
- var MongoClient = require('mongodb').MongoClient;
+ var CryptoJS = require("crypto-js");
+
+/* 
+// Encrypt 
+var ciphertext = CryptoJS.AES.encrypt('my message', 'secret key 123');
+ 
+// Decrypt 
+var bytes  = CryptoJS.AES.decrypt(ciphertext.toString(), 'secret key 123');
+var plaintext = bytes.toString(CryptoJS.enc.Utf8);*/
+
+
+var db = require('../db/mongoose.js');
 
 /**
  * Get port from environment and store in Express.
@@ -190,7 +201,7 @@ io.sockets.on('connection', function(socket) {
         return;
       }
       msg = elabMessage(msg);
-      var msgobj = {type: 'user_msg', text: msg, time: new Date(), author: socket.name, ownercolor: socket.color};
+      var msgobj = {type: 'user_msg', text: msg, time: new Date().getTime(), author: socket.name, ownercolor: socket.color};
       sendMessage(roomname, msgobj);
       rooms[roomname].history.push(msgobj);
       sliceMsgs(roomname);
@@ -206,7 +217,7 @@ io.sockets.on('connection', function(socket) {
         var audioid = guid();
         rooms[roomname].audios[audioid] = {buffer: audio.buffer};
 
-        var msgobj = {type: 'user_audio', id: audioid, duration: audio.duration, time: new Date(), author: socket.name, ownercolor: socket.color};
+        var msgobj = {type: 'user_audio', id: audioid, duration: audio.duration, time: new Date().getTime(), author: socket.name, ownercolor: socket.color};
         sendMessage(roomname, msgobj);
         rooms[roomname].history.push(msgobj);
         sliceMsgs(roomname);
@@ -447,7 +458,7 @@ function joinroom(socket, roomname, callback) {
 
     if (rooms[roomname].userslist.indexOf(socket.name) == -1) { // if user is not connected to the room yet, send connection msg
 /*      var msgtxt = socket.name + " connected";
-      var msgobj = {type: 'system_msg', text: msgtxt , time: new Date()};
+      var msgobj = {type: 'system_msg', text: msgtxt , time: new Date().getTime()};
       sendMessage(roomname, msgobj);*/
     }
 
@@ -481,10 +492,6 @@ function leaveroom(socket, roomname, callback) {
     if (!stillConnected) {
       io.sockets.in(roomname).emit('remove_user', socket.name);
       delete rooms[roomname].users[socket.name];
-
-/*      var msgtxt = socket.name + " disconnected";
-      var msgobj = {type: 'system_msg', text: msgtxt , time: new Date()};
-      sendMessage(roomname, msgobj);*/
     }
     console.log('left room ' + roomname);
     if (callback) callback();
