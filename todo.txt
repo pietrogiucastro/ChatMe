@@ -13,7 +13,6 @@
 - fix multi tabs name disappear bug
 - fix resizable
 - auto select chat size and theme from cookies
-- check username must be without spaces
 - cookie switch chat on last used chat on logged display
 - fix time display also with days
 - remove selection possibility on buttons

@@ -1,6 +1,12 @@
 var MongoClient = require('mongodb').MongoClient;
+var CryptoJS = require("crypto-js");
 var mongoose = require('mongoose');
 mongoose.connect('mongodb://localhost/chatme');
+
+var Config = require('../environment'),
+	conf = new Config();
+
+var secretkey = conf.AES_SECRET;
 
 var Schema = mongoose.Schema;
 var connection = mongoose.connection;
@@ -8,8 +14,10 @@ var connection = mongoose.connection;
 var userSchema = new Schema({ //User schema
 	name: String,
 	token: String,
+	email: String,
 	color: String,
-	status: String
+	status: String,
+	created_at: {type: Date, default: Date.now()}
 });
 var messageSchema = new Schema({ //Message schema
 	type: String,
@@ -45,6 +53,21 @@ var newuser = new User({
 });
 
 */
+function AesEncrypt(text) {
+	var ciphertext = CryptoJS.AES.encrypt(text, secretkey);
+	return ciphertext.toString();
+}
+
+function AesDecrypt(ciphertext) {
+	var bytes  = CryptoJS.AES.decrypt(ciphertext, secretkey);
+	var plaintext = bytes.toString(CryptoJS.enc.Utf8);
+	return plaintext;
+}
+
+function validateEmail(email) {
+    var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    return re.test(email);
+}
 
 User.find({}, function(err, users) {
 	if (err) {
@@ -58,9 +81,87 @@ User.find({}, function(err, users) {
 });
 
 module.exports = {
-	createtUser: function(userdata, callback) {
-		var newuser = new User(userdata);
-		connection.collection('users').insert(newuser, callback);
+	createUser: function(username, password, email, callback) {
+		//check if username already exists
+		User.find({name: username}, function(err, users) {
+			if (err) {
+				callback(err);
+				return;
+			}
+		   // errors handler //
+			if (users.length) {
+				callback({
+					type: "cm-error",
+					result: "error",
+					error: "Username already exists"
+				});
+				return;
+			}
+			if (username.length > 10 || username.length < 4) {
+				callback({
+					type: "cm-error",
+					result: "error",
+					error: "Username length must be between 4 and 10 characters"
+				});
+			}
+			if (username.match(';') ||
+				username.match(' ') ||
+				username.match('<') ||
+				username.match('>')) {
+				callback({
+					type: "cm-error",
+					result: "error",
+					error: "Username must not contain spaces or special symbols"
+				});
+			}
+			if (username.toLowerCase() == 'you' ||
+				username.toLowerCase() == 'admin') {
+				callback({
+					type: "cm-error",
+					result: "error",
+					error: "Forbidden name"
+				});
+			}
+			if (password.length < 4 || password.length > 18 ) {
+				callback({
+					type: "cm-error",
+					result: "error",
+					error: "Password length must be between 4 and 18 characters"
+				});
+			}
+			if (!validateEmail(email)) {
+				callback({
+					type: "cm-error",
+					result: "error",
+					error: "Email not valid"
+				});
+			}
+		   // ============== //
+
+			var token = AesEncrypt(username+';'+password);
+			var newuser = new User({
+				name: username,
+				token: token,
+				color: 'default',
+				status: 'online'
+			});
+			connection.collection('users').insert(newuser, callback);
+		});
+	},
+	findUserByCredentials: function(username, password, callback) {
+		var token = AesEncrypt(username+';'+password);
+		User.find({token: token}, function(err, users) {
+			if (err) {
+				callback(err);
+				return;
+			}
+			if (!users.length) {
+				callback();
+				return;
+			}
+			var user = users[0];
+			callback(null, user);
+		});
 	},
 	updateUserData: function(id, userdata, callback) {
 		User.update({_id: id}, {$set: userdata}, callback);

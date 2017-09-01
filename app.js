@@ -5,7 +5,6 @@ var logger = require('morgan');
 
 var routes = require('./routes/index');
 var index = require(path.join(__dirname, 'routes/index'));
-var socket = require(path.join(__dirname, 'routes/socket'));
 
 var Config = require('./environment'),
 conf = new Config();

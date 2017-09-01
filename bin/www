@@ -1,9 +1,5 @@
 #!/usr/bin/env node
 
-/**
- * Module dependencies.
- */
-
  var app = require('../app');
  var debug = require('debug')('chatme:server');
  var fs = require('fs');
@@ -131,6 +127,7 @@ var status = {
 };
 
 var color = {
+  default: 'green',
   red : 'red',
   green: 'green',
   blue: 'blue',
@@ -541,11 +538,11 @@ function sliceMsgs(roomname) {
   }
 }
 
-function Jsonerror(socket, type='stderror', message='Internal error. Retry later.', data = {}) {
+function Jsonerror(socket, type='stderror', message='Internal error. Try again later.', data = {}) {
   socket.emit('jsonerror', {type: type, message: message, data: data});
 }
 
-function Jsonwarn(socket, type='stdwarn', message='Internal error. Retry later.') {
+function Jsonwarn(socket, type='stdwarn', message='Internal error. Try again later.') {
   socket.emit('jsonwarning', {type: type, message: message});
 }
 
