@@ -8,7 +8,6 @@ conf = new Config();
 
 var db = require('../db/mongoose.js');
 
-
 router.use(function(req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
@@ -25,41 +24,45 @@ router.get('/client/:version', function(req, res, next) {
 });
 
 router.post('/login', function(req, res, next) {
-	var username = req.params.user;
-	var password = req.params.pass;
+	var username = req.body.user;
+	var password = req.body.pass;
 
-	db.findUserByCredentials(username, password, function(err, user) {
+	db.getTokenByCredentials(username, password, function(err, token) {
 		if(err) {
 			res.json({result: 'error', error: 'Internal error. Try again later.'});
 			return;
 		}
-		if (!user) {
+		if (!token) {
 			res.json({result: 'error', error: 'Wrong username or password'});
 			return;
 		}
 		//send json with user and token
-			res.json({result: 'success', user: user.name, token: user.token});
+			res.json({result: 'success', user: username, token: token});
 	});
 });
 
 router.post('/signup', function(req, res, next) {
-	var username = req.params.user;
-	var password = req.params.pass;
-	var email = req.params.email;
+	var username = req.body.user;
+	var password = req.body.pass;
+	var email = req.body.email;
 	if (typeof username != 'string' || typeof password != 'string') {
+		console.log('/signup: undefined parameters');
 		res.json({result: 'error', error: 'Internal error. Try again later.'});
-	} 
+		return;
+	}
 
-	db.createUser(usermame, password, email, function(err, user) {
+	db.createUser(username, password, email, function(err) {
 		if (err) {
 			if (err.type == "cm-error") {
 				res.json(err);
 			} else {
 				res.json({result: 'error', error: 'Internal error. Try again later.'});
 			}
+
 			return;
 		}
-		res.json({result: 'success', message: 'Account created! Login with your credentials'});
+		console.log('created new account. username: ' + username);
+		res.json({result: 'success', message: 'Account created! Login with your credentials.'});
 	});
 });
 

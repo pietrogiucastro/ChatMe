@@ -13,11 +13,12 @@ var connection = mongoose.connection;
 
 var userSchema = new Schema({ //User schema
 	name: String,
-	token: String,
+	codedp: String,
 	email: String,
 	color: String,
 	status: String,
-	created_at: {type: Date, default: Date.now()}
+	created: {type: Date, default: Date.now()},
+	active: {type: Boolean, default: true}
 });
 var messageSchema = new Schema({ //Message schema
 	type: String,
@@ -44,15 +45,7 @@ var Message = mongoose.model('Message', messageSchema);
 var MediaObject = mongoose.model('MediaObject', mediaObjectSchema);
 var Room = mongoose.model('Room', roomSchema);
 
-/*
-var newuser = new User({
-	name: 'username',
-	token: 'asdasasasdda',
-	color: 'yellow',
-	status: 'online'
-});
 
-*/
 function AesEncrypt(text) {
 	var ciphertext = CryptoJS.AES.encrypt(text, secretkey);
 	return ciphertext.toString();
@@ -103,6 +96,7 @@ module.exports = {
 					result: "error",
 					error: "Username length must be between 4 and 10 characters"
 				});
+				return;
 			}
 			if (username.match(';') ||
 				username.match(' ') ||
@@ -113,6 +107,7 @@ module.exports = {
 					result: "error",
 					error: "Username must not contain spaces or special symbols"
 				});
+				return;
 			}
 			if (username.toLowerCase() == 'you' ||
 				username.toLowerCase() == 'admin') {
@@ -121,6 +116,7 @@ module.exports = {
 					result: "error",
 					error: "Forbidden name"
 				});
+				return;
 			}
 			if (password.length < 4 || password.length > 18 ) {
 				callback({
@@ -128,6 +124,15 @@ module.exports = {
 					result: "error",
 					error: "Password length must be between 4 and 18 characters"
 				});
+				return;
+			}
+			if (password.match(' ')) {
+				callback({
+					type: "cm-error",
+					result: "error",
+					error: "Password must not contain spaces"
+				});
+				return;
 			}
 			if (!validateEmail(email)) {
 				callback({
@@ -135,13 +140,14 @@ module.exports = {
 					result: "error",
 					error: "Email not valid"
 				});
+				return;
 			}
 		   // ============== //
-
-			var token = AesEncrypt(username+';'+password);
+		   	var codedp = new Buffer(password).toString('base64');
 			var newuser = new User({
 				name: username,
-				token: token,
+				codedp: codedp,
+				email: email,
 				color: 'default',
 				status: 'online'
 			});
@@ -149,19 +155,37 @@ module.exports = {
 		});
 	},
 	findUserByCredentials: function(username, password, callback) {
-		var token = AesEncrypt(username+';'+password);
-		User.find({token: token}, function(err, users) {
-			if (err) {
+		var codedp = new Buffer(password).toString('base64');
+		User.find({name: username, codedp: codedp}, function(err, users) {
+			if (err || !users.length) {
 				callback(err);
-				return;
-			}
-			if (!users.length) {
-				callback();
 				return;
 			}
 			var user = users[0];
 			callback(null, user);
 		});
+	},
+	getTokenByCredentials: function(username, password, callback) {
+		this.findUserByCredentials(username, password, function(err, user) {
+			if(err || !user) {
+				callback(err);
+				return;
+			}
+			var username = user.name;
+			var codedp = user.codedp;
+			var token = AesEncrypt(username + ' ' + codedp);
+			callback(null, token);
+		});
+	},
+	findUserByToken: function(token, callback) {
+		var credentials = AesDecrypt(token).split(' ');
+		if (!(credentials.length-1)) {
+			callback();
+			return;
+		}
+		var username = credentials[0];
+		var password = new Buffer(credentials[1], 'base64').toString('ascii');
+		this.findUserByCredentials(username, password, callback);
 	},
 	updateUserData: function(id, userdata, callback) {
 		User.update({_id: id}, {$set: userdata}, callback);
