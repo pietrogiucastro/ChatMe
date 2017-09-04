@@ -83,15 +83,15 @@ var server = https.createServer(options, app);
   // handle specific listen errors with friendly messages
   switch (error.code) {
     case 'EACCES':
-    console.error(bind + ' requires elevated privileges');
-    process.exit(1);
-    break;
+      console.error(bind + ' requires elevated privileges');
+      process.exit(1);
+      break;
     case 'EADDRINUSE':
-    console.error(bind + ' is already in use');
-    process.exit(1);
-    break;
+      console.error(bind + ' is already in use');
+      process.exit(1);
+      break;
     default:
-    throw error;
+      throw error;
   }
 }
 
@@ -128,7 +128,7 @@ var status = {
 
 var color = {
   default: 'green',
-  red : 'red',
+  red: 'red',
   green: 'green',
   blue: 'blue',
   black: 'black',
@@ -147,6 +147,8 @@ function elabMessage(msg) {
   });
   return msg;
 }
+
+db.deleteAllMedia();
 
 io.sockets.on('connection', function(socket) {
 
@@ -226,22 +228,41 @@ io.sockets.on('connection', function(socket) {
           var roomname = getsocketroom(socket);
           if (!roomname) return Jsonerror(socket);
 
-          var audioid = guid();
-          rooms[roomname].audios[audioid] = {buffer: audio.buffer};
+          db.createMedia({buffer: audio.buffer, type:'audio'}, function(err, result) {
+            if (err) {
+              console.log(err);
+              Jsonerror(socket);
+              return;
+            }
+            var media = result.ops[0];
 
-          var msgobj = {type: 'user_audio', id: audioid, duration: audio.duration, time: new Date().getTime(), author: socket.user.name, ownercolor: socket.user.color};
-          sendMessage(roomname, msgobj);
-          rooms[roomname].history.push(msgobj);
-          sliceMsgs(roomname);
+            var audioid = media._id;
+            var msgobj = {type: 'user_audio', id: audioid, duration: audio.duration, time: new Date().getTime(), author: socket.user.name, ownercolor: socket.user.color};
+            sendMessage(roomname, msgobj);
+            rooms[roomname].history.push(msgobj);
+            sliceMsgs(roomname);
+          });
+
       });
 
       socket.on('get audio', function(audioid) {
           var roomname = getsocketroom(socket);
           if (!roomname) return Jsonerror(socket);
 
-          var buffer = rooms[roomname].audios[audioid].buffer;
+          db.findMediaById(audioid, function(err, media) {
+            if (err) {
+              console.log(err);
+              Jsonerror(socket);
+              return;
+            }
+            if (!media) {
+              console.log('ERROR! No media found!');
+              Jsonerror(socket, 'nomediafound', 'error loading the media', {id: audioid});
+              return;
+            }
+            socket.emit('response audio', {id: audioid, buffer: media.buffer});
+          });
 
-          socket.emit('response audio', {id: audioid, buffer: buffer});
       });
 
       ss(socket).on('file', function(stream) {
@@ -553,7 +574,15 @@ function sliceMsgs(roomname) {
     var lastmsg = rooms[roomname].history.shift();
     if (lastmsg.type == 'user_audio') {
       var audioid = lastmsg.id;
-      delete rooms[roomname].audios[audioid];
+
+      db.deleteMediaById(audioid, function(err, media) {
+        if (err) {
+          console.log('failed to delete media with id :' + id);
+          console.log(err);
+          return;
+        }
+      });
+
     }
   }
 }

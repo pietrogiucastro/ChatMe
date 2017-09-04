@@ -26,12 +26,11 @@ var messageSchema = new Schema({ //Message schema
 	time: Number,
 	owner: Schema.Types.ObjectId,
 });
-var mediaObjectSchema = new Schema({ //MediaObject schema
-	id: String,
-	buffer: Buffer
+var mediaSchema = new Schema({ //Media schema
+	buffer: Buffer,
+	type: String
 });
-
-var roomSchema = new Schema({
+var roomSchema = new Schema({ //Room schema
 	name: String,
 	password: String,
 	history: [Schema.Types.ObjectId],
@@ -42,9 +41,8 @@ var roomSchema = new Schema({
 
 var User = mongoose.model('User', userSchema);
 var Message = mongoose.model('Message', messageSchema);
-var MediaObject = mongoose.model('MediaObject', mediaObjectSchema);
+var Media = mongoose.model('Media', mediaSchema);
 var Room = mongoose.model('Room', roomSchema);
-
 
 function AesEncrypt(text) {
 	var ciphertext = CryptoJS.AES.encrypt(text, secretkey);
@@ -62,20 +60,8 @@ function validateEmail(email) {
     return re.test(email);
 }
 
-User.find({}, function(err, users) {
-	if (err) {
-		return console.log(err);
-	}
-
-	//console.log(users);
-	users.forEach(function(user) {
-		console.log(user);
-	});
-});
-
 module.exports = {
 	createUser: function(username, password, email, callback) {
-		//check if username already exists
 		User.find({name: username}, function(err, users) {
 			if (err) {
 				callback(err);
@@ -156,12 +142,11 @@ module.exports = {
 	},
 	findUserByCredentials: function(username, password, callback) {
 		var codedp = new Buffer(password).toString('base64');
-		User.find({name: username, codedp: codedp}, function(err, users) {
-			if (err || !users.length) {
+		User.findOne({name: username, codedp: codedp}, function(err, user) {
+			if (err || !user) {
 				callback(err);
 				return;
 			}
-			var user = users[0];
 			callback(null, user);
 		});
 	},
@@ -192,7 +177,7 @@ module.exports = {
 	},
 	createMessage: function(roomname, messagedata, callback) {
 		connection.collection('messages').insert(messagedata, function(err, message) {
-			
+
 			if(err) {
 				callback(err);
 				return;
@@ -228,7 +213,20 @@ module.exports = {
 			});
 			callback(null, result);
 		});
+	},
+	createMedia: function(mediadata, callback) {
+		var newmedia = new Media(mediadata);
+
+		connection.collection('media').insert(newmedia, callback);
+	},
+	findMediaById: function(mediaid, callback) {
+		Media.findById(mongoose.Types.ObjectId(mediaid), callback);
+	},
+	deleteMediaById: function(mediaid, callback) {
+		Media.remove({_id: mongoose.Types.ObjectId(mediaid)}, callback);
+	},
+	deleteAllMedia: function() {
+		Media.find({}).remove().exec();
 	}
-	
 };
 

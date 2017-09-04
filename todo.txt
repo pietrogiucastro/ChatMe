@@ -16,7 +16,7 @@
 - cookie switch chat on last used chat on logged display
 - fix time display also with days
 - remove selection possibility on buttons
-- remove youtube match return
+- remove youtube/whatsapp match return
 - true HTTPSSSS!
 - resize animation on hover option
 - right spinner everywere
