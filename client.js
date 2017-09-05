@@ -31,6 +31,25 @@ var shw = '404px',shh = '174px',
 
 var input;
 
+var sizes = {
+    xs: {
+        x: '380px',
+        y: '194px'
+    },
+    sm: {
+        x: '400px',
+        y: '280px'
+    },
+    lg: {
+        x: '380px',
+        y: '460px'
+    },
+    res: {
+        x: '200px',
+        y: '200px'
+    }
+};
+
 if (document.domain == "www.youtube.com") return;
 
 if (window.location.href != window.parent.location.href) return; //if it's in iframe, return
@@ -44,9 +63,9 @@ if (document.domain == "web.whatsapp.com") return;
 
     $('head').append('<style type=text/css>.chat-me-notloaded {cursor:pointer; display:block !important;} #chat-me-cover { position:absolute; width:100%; height:100%; background-color:rgb(50,80,100); top:0; opacity:0.0; cursor:pointer; } #chat-me-container {position: fixed; z-index:99999999999999999999; bottom:20px; right:20px;} #chat-me-frame {border:0; width:100%; height:100%; overflow:hidden;} </style>');
 
-    $('head').append('<style type=text/css>.xs {width: 380px; height: 194px;} .sm {width: 400px; height: 280px} .lg {width: 380px; height: 460px;}</style>');
+    $('head').append('<style type=text/css>.xs {width: '+sizes.xs.x+'; height: '+sizes.xs.y+';} .sm {width: '+sizes.sm.x+'; height: '+sizes.sm.y+'} .lg {width: '+sizes.lg.x+'; height: '+sizes.lg.y+';}</style>');
 
-    $('body').append('<div id="chat-me-container" class="lg"></div>');
+    $('body').append('<div id="chat-me-container"></div>');
     $('#chat-me-container').append('<iframe id="chat-me-frame" src="https://'+server+':60000/"></iframe><div id="chat-me-cover" class="chat-me-notloaded" style="display:none;"></div>');
 
     $(document).on('click', '#chat-me-container:not(.cm-hidden) .chat-me-notloaded', hideChatMe)
@@ -54,14 +73,12 @@ if (document.domain == "web.whatsapp.com") return;
 
     container = document.getElementById('chat-me-container');
 
-    var windoww = $(window).width();
-    var windowh = $(window).height();
-
     $(window).mousemove(function(event) {
 
         if($(container).is(':not(.cm-hidden)')) return;
-
         event = event || window.event; // IE-ism
+        var windoww = $(window).width();
+        var windowh = $(window).height();
         var cursorX = windoww - event.clientX;
         var cursorY = windowh - event.clientY;
 
@@ -91,18 +108,20 @@ if (document.domain == "web.whatsapp.com") return;
         });
     }
     function resizableChatMe() {
-        $('#chat-me-container').resizable({handles: 'n, w, nw', minWith: 150, minHeight: 100});
+        $(container).resizable({handles: 'n, w, nw', minWith: 150, minHeight: 100});
     }
     window.setWindowSize = function(size) {
-        $('#chat-me-container').removeClass().addClass(size);
+        if (!size || !sizes[size]) size = 'sm';
+
+        $(container).removeClass().addClass(size);
         if (size == 'res') resizableChatMe();
+
+        shw = sizes[size].x;
+        shh = sizes[size].y;
+
+        GM_setValue('size', size);
+        postChildMessage('selectedsize', size);
     };
-
-
-    if (GM_getValue('isHidden')) {
-        setChatMeHidden();
-    }
-
 
     //         worth it?           //
     var dragging = false;
@@ -145,6 +164,16 @@ if (document.domain == "web.whatsapp.com") return;
                 console.log('unhandled event: ' + event.data);
         }
     });
+
+    !function main() {
+        //get size by GM
+        var currentsize = GM_getValue('size');
+        setWindowSize(currentsize);
+
+        if (GM_getValue('isHidden')) {
+            setChatMeHidden();
+        }
+    }();
 
 })();
 
@@ -216,8 +245,18 @@ function postChildMessage(key, value) {
 function successLoad() {
     console.log('cmloaded');
     $('#chat-me-cover').removeClass('chat-me-notloaded').click(showChatMe);
+    postChildMessage('selectedsize', GM_getValue('size'));
 }
-
+/*
+!function trigger() {
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-105840630-1', 'auto');
+  ga('send', 'pageview');
+}();
+*/
 (function() {
     var hidden = "hidden";
 

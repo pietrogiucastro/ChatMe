@@ -13,6 +13,7 @@ site = 'site://' + url_domain(site);
 
 var socket;
 var displaytype;
+var selectedsize;
 var sess_token = $.cookie('sess_token');
 var sess_user = $.cookie('sess_user');
 
@@ -720,6 +721,9 @@ function RegisterDisplay(user, pass) {
                 console.log('page state event!: ' + event.data.value);
                 TriggerConnection(event.data.value);
                 break;
+            case 'selectedsize':
+                selectedsize = event.data.value;
+                break;
             default:
                 console.log('unhandled event');
                 console.log(event);
@@ -793,6 +797,8 @@ var chatOptions = {
     displaySettingsDis: function() {
         spinner.hide();
         chatOptions.container.html(chatOptions.display.displaySettings);
+        var selopt = '.settings-option[value='+selectedsize+']';
+        chatOptions.container.find('#select-size '+selopt).attr('selected', '');
     },
     searchChatDis: function() {
         spinner.hide();
