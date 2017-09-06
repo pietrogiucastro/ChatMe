@@ -33,10 +33,14 @@ var mediaSchema = new Schema({ //Media schema
 var roomSchema = new Schema({ //Room schema
 	name: String,
 	password: String,
-	history: [Schema.Types.ObjectId],
-	users: Schema.Types.Mixed,
-	userslist: [String],
-	audios: Schema.Types.Mixed
+	history: {
+		type: [Schema.Types.ObjectId],
+		ref: 'Message'
+	},
+	media: {
+		type: [Schema.Types.ObjectId],
+		ref: 'Media'
+	}
 });
 
 var User = mongoose.model('User', userSchema);
@@ -199,20 +203,46 @@ module.exports = {
 		});
 	},
 	createRoom: function(roomdata, callback) {
-		var newroom = new Room(roomdata);
-		connection.collection('rooms').insert(newuser, callback);
+		this.findRoomByName(roomdata.roomname, function(err, roomexists) {
+			if (err) {
+				callback(err);
+				return;
+			}
+			if (roomexists) {
+				callback();
+				return;
+			}
+			var newroom = new Room(roomdata);
+			connection.collection('rooms').insert(newroom, callback);
+		});
 	},
-	findRoomsByName: function(roomname, callback) {
+	findRoomByName: function(roomname, callback) {
+		Room.findOne({name: roomname}, function(err, room) {
+			if (err || !room) {
+				callback(err, room);
+				return;
+			}
+			callback(null, room);
+		});
+	},
+	findRoomsByNameMatch: function(roomname, callback) {
 		Room.find({name: '%'+roomname+'%'}, function(err, rooms) {
 			if (err) {
 				callback(err);
 				return;
 			}
 			var result = rooms.map(function(room) {
-				return {name: room.name, password: room.password};
+				return {name: room.name, haspassword: !!room.password};
 			});
 			callback(null, result);
 		});
+	},
+	appendMessageToRoom: function(roomname, msg, callback) {
+		Room.update({name: roomname}, {
+			$push: {
+				history: {$each: [msg], $slice: -100}
+			}
+		}, callback);
 	},
 	createMedia: function(mediadata, callback) {
 		var newmedia = new Media(mediadata);
@@ -225,8 +255,10 @@ module.exports = {
 	deleteMediaById: function(mediaid, callback) {
 		Media.remove({_id: mongoose.Types.ObjectId(mediaid)}, callback);
 	},
-	deleteAllMedia: function() {
+	reset: function() {
 		Media.find({}).remove().exec();
+		Room.find({}).remove().exec();
+		Message.find({}).remove().exec();
 	}
 };
 

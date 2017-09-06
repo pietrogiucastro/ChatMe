@@ -148,7 +148,7 @@ function elabMessage(msg) {
   return msg;
 }
 
-db.deleteAllMedia();
+db.reset();
 
 io.sockets.on('connection', function(socket) {
 
@@ -217,7 +217,6 @@ io.sockets.on('connection', function(socket) {
         msg = elabMessage(msg);
         var msgobj = {type: 'user_msg', text: msg, time: new Date().getTime(), author: socket.user.name, ownercolor: socket.user.color};
         sendMessage(roomname, msgobj);
-        rooms[roomname].history.push(msgobj);
         sliceMsgs(roomname);
       });
 
@@ -239,7 +238,6 @@ io.sockets.on('connection', function(socket) {
             var audioid = media._id;
             var msgobj = {type: 'user_audio', id: audioid, duration: audio.duration, time: new Date().getTime(), author: socket.user.name, ownercolor: socket.user.color};
             sendMessage(roomname, msgobj);
-            rooms[roomname].history.push(msgobj);
             sliceMsgs(roomname);
           });
 
@@ -449,6 +447,11 @@ io.sockets.on('connection', function(socket) {
 function sendMessage(room, msgobj) {
   var roomname = room.startsWith('site://') ? 'site' : room;
   io.sockets.in(room).emit('new message', {msg: msgobj, roomname: roomname});
+  rooms[room].history.push(msgobj);
+  db.appendMessageToRoom(room, msgobj, function(err, room) {
+    if (err) console.log(err);
+    else if (!room) console.log('ERROR! no room found in db with name ' + room);
+  });
 }
 
 function switchsiteroom(socket, roomname) {
@@ -488,11 +491,14 @@ function switchroom(socket, roomname, sentpass, forcecreate, callback) {
 
 function createroom(socket, roomname, roompass) {
   initroom(roomname, roompass);
-  switchroom(socket, roomname, roompass, false, function() {
-    console.log('new room created: ' + roomname + ' password: ' + !!roompass);
-    socket.emit('set room', {name: roomname, pass: roompass});
+  createDbRoom(socket, {name: roomname, password: roompass}, function() {
+    switchroom(socket, roomname, roompass, false, function() {
+      console.log('new room created: ' + roomname + ' password: ' + !!roompass);
+      socket.emit('set room', {name: roomname, pass: roompass});
+    });
   });
 }
+
 function joinroom(socket, roomname, callback) {
   function nowjoin() {
 
@@ -595,6 +601,23 @@ function updateUserData(data, socketdata, callback) {
       }
       Object.assign(socket.user, socketdata);
       callback();
+  });
+}
+
+function createDbRoom(socket, roomdata, callback) {
+  db.createRoom(roomdata, function(err, room) {
+
+    if (err) {
+      console.log(err);
+      return Jsonerror(socket);
+    }
+    if (!room) {
+      console.log('ERROR! Room already exists');
+      return Jsonerror(socket, 'roomexists', 'Room already exists!');
+    }
+    console.log('created room' + 'global');
+    if (callback) callback();
+
   });
 }
 
