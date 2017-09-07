@@ -148,9 +148,19 @@ function elabMessage(msg) {
   return msg;
 }
 
-db.reset();
+//db.reset();
 
-io.sockets.on('connection', function(socket) {
+db.getRoomsHistory(function(err, rooms) {
+  if (err || !rooms) {
+    console.log('ERROR! Can\'t get rooms!');
+    console.log(err);
+    return;
+  }
+  console.log(rooms);
+//  io.sockets.on('connection', startChatMe);
+});
+
+var startChatMe = function(socket) {
 
   // init connection //
   
@@ -202,7 +212,9 @@ io.sockets.on('connection', function(socket) {
 
       user = undefined;
 
-      socket.emit('initchat');
+      socket.emit('init', {
+        name: socket.user.name
+      });
 
       socket.on('send message', function(msg) {
         if (typeof msg != "string") {
@@ -215,7 +227,7 @@ io.sockets.on('connection', function(socket) {
           return;
         }
         msg = elabMessage(msg);
-        var msgobj = {type: 'user_msg', text: msg, time: new Date().getTime(), author: socket.user.name, ownercolor: socket.user.color};
+        var msgobj = {id: db.getNewId(), type: 'user_msg', text: msg, time: new Date(), author: socket.user.name, ownercolor: socket.user.color};
         sendMessage(roomname, msgobj);
         sliceMsgs(roomname);
       });
@@ -236,7 +248,7 @@ io.sockets.on('connection', function(socket) {
             var media = result.ops[0];
 
             var audioid = media._id;
-            var msgobj = {type: 'user_audio', id: audioid, duration: audio.duration, time: new Date().getTime(), author: socket.user.name, ownercolor: socket.user.color};
+            var msgobj = {type: 'user_audio', id: audioid, duration: audio.duration, time: new Date(), author: socket.user.name, ownercolor: socket.user.color};
             sendMessage(roomname, msgobj);
             sliceMsgs(roomname);
           });
@@ -402,7 +414,7 @@ io.sockets.on('connection', function(socket) {
           Jsonerror(socket);
           return;
         }
-        switchroom(socket, room.name, room.pass, false, function() {
+        switchroom(socket, room.name, room.pass, function() {
           socket.emit('set room', {name: room.name, pass: room.pass});
         });
       });
@@ -448,30 +460,33 @@ function sendMessage(room, msgobj) {
   var roomname = room.startsWith('site://') ? 'site' : room;
   io.sockets.in(room).emit('new message', {msg: msgobj, roomname: roomname});
   rooms[room].history.push(msgobj);
-  db.appendMessageToRoom(room, msgobj, function(err, room) {
+  db.createMessage(socket.user.id, room, msgobj, function(err, room) {
     if (err) console.log(err);
     else if (!room) console.log('ERROR! no room found in db with name ' + room);
   });
 }
 
 function switchsiteroom(socket, roomname) {
-  if (!roomexists(roomname)) initsiteroom(roomname);
-  joinroom(socket, roomname, function() {
-    console.log('joined site room ' + roomname);
-  });
+  if (!roomexists(roomname)) {
+      initsiteroom(roomname, function() {
+        joinroom(socket, roomname, function() {
+        console.log('joined site room ' + roomname);
+      });
+    });
+  } else {
+    joinroom(socket, roomname, function() {
+      console.log('joined site room ' + roomname);
+    });
+  }
 }
 
-function switchroom(socket, roomname, sentpass, forcecreate, callback) {
+function switchroom(socket, roomname, sentpass, callback) {
 
   if (!roomexists(roomname)) {
 
-    if (!forcecreate) {
-      console.log('error! room  %s does not exist', roomname);
-      Jsonerror(socket, 'stderror', 'room does not exist!');
-      return;
-    } else {
-      initroom(roomname, sentpass);
-    }
+    console.log('error! room  %s does not exist', roomname);
+    Jsonerror(socket, 'stderror', 'room does not exist!');
+    return;
 
   } else {
 
@@ -490,12 +505,11 @@ function switchroom(socket, roomname, sentpass, forcecreate, callback) {
 }
 
 function createroom(socket, roomname, roompass) {
-  initroom(roomname, roompass);
-  createDbRoom(socket, {name: roomname, password: roompass}, function() {
-    switchroom(socket, roomname, roompass, false, function() {
+  initroom(roomname, roompass, function() {
       console.log('new room created: ' + roomname + ' password: ' + !!roompass);
-      socket.emit('set room', {name: roomname, pass: roompass});
-    });
+      switchroom(socket, roomname, roompass, function() {
+        socket.emit('set room', {name: roomname, pass: roompass});
+      });
   });
 }
 
@@ -558,13 +572,18 @@ function getrooms(callback) {
 }
 
 function initroom(roomname, roompass, callback) {
-  rooms[roomname] = { history: [], password: roompass, users: {}, userslist: [], audios: {} };
-  customrooms.push(roomname);
-  if (callback) callback();
+  createDbRoom(socket, {name: roomname, password: roompass}, function() {
+    rooms[roomname] = { history: [], password: roompass, users: {}, userslist: [], audios: {} };
+    customrooms.push(roomname);
+    if (callback) callback();
+  });
 }
 
-function initsiteroom(roomname) {
-  rooms[roomname] = { history: [], users: {}, userslist: [], audios: {} };
+function initsiteroom(roomname, callback) {
+  createDbRoom(socket, {name: roomname}, function() {
+    rooms[roomname] = { history: [], users: {}, userslist: [], audios: {} };
+    if (callback) callback();
+  });
 }
 
 function getsocketroom(socket) {
@@ -578,12 +597,20 @@ function roomexists(roomname) {
 function sliceMsgs(roomname) {
   if (rooms[roomname].history.length > 100 ) {
     var lastmsg = rooms[roomname].history.shift();
-    if (lastmsg.type == 'user_audio') {
-      var audioid = lastmsg.id;
+    var msgid = lastmsg.id;
 
-      db.deleteMediaById(audioid, function(err, media) {
+    db.deleteMessageById(msgid, function(err) {
+      if (err) {
+        console.log('ERROR! Failed to delete message with id: ' + msgid)
+        console.log(err);
+      }
+    });
+
+    if (lastmsg.type == 'user_audio') {
+
+      db.deleteMediaById(msgid, function(err, media) {
         if (err) {
-          console.log('failed to delete media with id :' + id);
+          console.log('failed to delete media with id :' + msgid);
           console.log(err);
           return;
         }
@@ -630,4 +657,4 @@ function Jsonwarn(socket, type='stdwarn', message='Internal error. Try again lat
 }
 
 
-});
+};

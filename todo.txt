@@ -43,6 +43,7 @@
 - no connection error handling
 - description popover on hover for tabs and buttons
 - db password!
+- compress media quality
 
 _create mongo db
 _create pmchat
