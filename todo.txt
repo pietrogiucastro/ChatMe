@@ -28,6 +28,7 @@
 - from jquery to vanilla js on tampermonkey
 - get user colors from db
 - auto select colors from cookies
+- auto select btns settings (mute and show/hide users) from cookies
 - audio notes
 - change not sound
 - show('slide') for both full message and text?
@@ -44,7 +45,9 @@
 - description popover on hover for tabs and buttons
 - db password!
 - compress media quality
+- insert email check on signup
+- delete messages (check if they are mine before);
+- enter to submit/select everywhere
 
-_create mongo db
 _create pmchat
 _images

@@ -38,6 +38,9 @@ var chats = {global: {volume: true}, site: {volume: true}};
 var currentchat;
 var emptychatmsg = 'Empty chat. Be the first to send a message!';
 
+var currentchat;
+var currentusers = [];
+
 var tabs = $('<div id="chat-me-tabs" class="cm-scroll scroll-x cm-tabs-scroll"><div class="chat-tab global-tab sel" data-name="global" data-type="global"><span class="volume-icon vol-true"></span>Global</div><div class="chat-tab site-tab" data-name="site" data-type="site"><span class="volume-icon vol-true"></span>Site</div></div>');
 
 var roomresultModel = $('<div class="chat-row"><span class="chat-name"></span> <span class="chat-online"><i class="fa fa-user" style="margin-right:4px;"></i><span class="online-num"></span></span></div>')[0];
@@ -121,6 +124,9 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
         }
         else if (history) {
             fadein(message);
+            if (currentusers.indexOf(msg.ownername) < 0) { //offline user
+                message.find('.cm-message-name').addClass('user-offline');
+            }
         }
         else { // send single message
             if (message.is('.cm-message-text')) message.slideDown('fast');
@@ -132,17 +138,17 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     }
 
     function createTextMessage(msg) {
-        var user_message = sess_user == msg.author? 'You' : msg.author;
+        var user_message = sess_user == msg.ownername? 'You' : msg.ownername;
         var time = new Date(msg.time).toLocaleString().split(', ')[1].slice(0, -3);
         var usercolor = msg.ownercolor;
 
         var lastmessage = $('#cm-chat-list').children(':last');
-        if (lastmessage.is('.cm-textmessage') && lastmessage.data('owner') == 'user-'+msg.author) {
+        if (lastmessage.is('.cm-textmessage') && lastmessage.data('owner') == 'user-'+msg.ownername) {
             var textline = $('<span class="cm-message-text" style="display:none;">'+msg.text+'</span>');
             lastmessage.find('.cm-message-body').append(textline);
             return textline;
         } else {
-            var newtextmessage = $('<div class="cm-message cm-textmessage cm-clearafter" data-owner="user-'+msg.author+'" style="display:none;"></div>');
+            var newtextmessage = $('<div class="cm-message cm-textmessage cm-clearafter" data-owner="user-'+msg.ownername+'" style="display:none;"></div>');
             newtextmessage.html('<div class="cm-message-body"><div class="cm-message-head cm-clearafter"><span class="cm-message-name user-'+user_message+' floatleft" style="color: '+usercolor+';">'+user_message+'</span><span class=cm-message-date>'+time+'</span></div><span class=cm-message-text>'+msg.text+'</span></div>');
             if (user_message == 'You') newtextmessage.find('.cm-message-body').addClass('user-You textright');
             $('#cm-chat-list').append(newtextmessage);
@@ -151,7 +157,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     }
 
     function createAudioMessage(msg) {
-        var user_message = sess_user == msg.author? 'You' : msg.author;
+        var user_message = sess_user == msg.ownername? 'You' : msg.ownername;
         var time = new Date(msg.time).toLocaleString().split(', ')[1].slice(0, -3);
         var usercolor = msg.ownercolor;
 
@@ -168,9 +174,8 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
         audio.className = 'main-audio';
         audio.setAttribute('preload', 'auto');
 
-        socket.emit('get audio', msg.id);
 
-        var newaudiomessage = $('<div class="cm-message cm-audiomessage cm-clearafter" data-owner="user-'+msg.author+'" style="display:none;"></div>');
+        var newaudiomessage = $('<div class="cm-message cm-audiomessage cm-clearafter" data-owner="user-'+msg.ownername+'" style="display:none;"></div>');
         newaudiomessage.html('<div class="cm-message-body cm-audio-body"><div class="cm-message-head cm-clearafter"><span class="cm-message-name user-'+user_message+' floatleft" style="color: '+usercolor+';">'+user_message+'</span><span class=cm-message-date>'+time+'</span></div><div class=cm-message-audio></div></div>')
             .find('.cm-message-audio')
             .append(playbutton)
@@ -180,9 +185,10 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
 
         if (user_message == 'You') newaudiomessage.find('.cm-message-body').addClass('user-You');
 
-        newaudiomessage.attr('id', msg.id);
-
+        newaudiomessage.attr('id', msg._id);
         $('#cm-chat-list').append(newaudiomessage);
+        socket.emit('get audio', msg._id);
+
         return newaudiomessage;
     }
 
@@ -389,6 +395,7 @@ function showChatNot(roomname) {
 }
 function setUsers(users) {
     $('#cm-online-list').empty();
+    currentusers = [];
     for (var username in users) {
        var user = users[username];
        appendUser(user);
@@ -399,13 +406,16 @@ function appendUser(user) {
     var typingclass = user.istyping ? ' typing' : '';
     status.classname += typingclass;
     $('#cm-online-list').prepend('<li class="cm-message-name cm-online-name" id="user-'+user.name+'" style="color:'+user.color+';"><div class="username">'+user.name+'</div><div class="cm-message-status '+status.classname+'">'+status.message+'</div></li>');
+    currentusers.push(user.name);
 }
 function refreshUser(user) {
-    $('#user-'+user.name).remove();
+    removeUser(user.name);
     appendUser(user);
 }
 function removeUser(username) {
     $('#user-'+username).remove();
+    var listindex = currentusers.indexOf(username);
+    if (listindex > -1) currentusers.splice(listindex, 1);
 }
 function UserMsgOnOff(username, isOnline) {
     $('#cm-chat').find('.cm-message[data-owner=user-'+username+']').each(function() {
@@ -573,8 +583,8 @@ function RegisterDisplay(user, pass) {
             }
         });
         socket.on('history_users', function(data) {
-            setHistory(data.history, noslide);
             setUsers(data.users);
+            setHistory(data.history, noslide);
             showChatNot(data.roomname);
             noslide = false;
         });
@@ -781,7 +791,7 @@ function RegisterDisplay(user, pass) {
 
             searchchat: '<div class="search-chat cm-scroll"><div id="type-password-mod" style="display:none"><i class="fa fa-remove hidetypepass" onclick="hideTypePass()"></i><div class="type-password-cont"><div id="type-password-text">password for room <div id="type-password-name"></div></div><input id="type-password" type="password" placeholder="password" autofocus="true"><div id="type-password-message"></div></div></div><center class="search-chat-cont"><input class="search-chat-input" placeholder="Search chat" autofocus="true"><span class="search-chat-icon"></span></center><hr class="search-div"><div class="search-body"></div></div>',
 
-            addchat : '<div class="add-chat"> <center> <label>Chat name: <input id="addchat-name" type="text" maxlength="30"></label> <label>Chat password (empty for no password): <input id="addchat-pass" type="password" maxlength="15"></label> <button class="addchat-btn" onclick="chatOptions.submitChat()">ADD CHAT</button> <div id="addchat-message"></div> </center> </div>',
+            addchat : '<div class="add-chat"> <center> <label>Chat name: <input id="addchat-name" type="text" maxlength="30"></label> <label>Chat password (empty for no password): <input id="addchat-pass" type="password" maxlength="15"></label> <button class="addchat-btn">ADD CHAT</button> <div id="addchat-message"></div> </center> </div>',
         },
 
         container : $('#options-content'),
@@ -813,6 +823,7 @@ function RegisterDisplay(user, pass) {
         addChatDis : function() {
             spinner.hide();
             chatOptions.container.html(chatOptions.display.addchat);
+            chatOptions.container.find('.addchat-btn').click(chatOptions.submitChat);
         },
         submitChat : function() {
             chatOptions.container.find('#addchat-message').html('');

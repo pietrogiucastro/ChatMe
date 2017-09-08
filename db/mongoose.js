@@ -20,17 +20,24 @@ var userSchema = new Schema({ //User schema
 	created: {type: Date, default: Date.now()},
 	active: {type: Boolean, default: true}
 });
+
 var messageSchema = new Schema({ //Message schema
 	type: String,
 	text: String,
 	time: Date,
+	duration: Number,
+	ownername: String,
+	roomname: String,
 	owner: {type: Schema.Types.ObjectId, ref: 'User'},
-	room: {type: Schema.Types.ObjectId, ref: 'Room'}
 });
+
 var mediaSchema = new Schema({ //Media schema
 	buffer: Buffer,
-	type: String
+	type: String,
+	roomname: String,
+	messageid: {type: Schema.Types.ObjectId, ref: 'Message'}
 });
+
 var roomSchema = new Schema({ //Room schema
 	name: String,
 	password: String,
@@ -38,16 +45,20 @@ var roomSchema = new Schema({ //Room schema
 		type: Schema.Types.ObjectId,
 		ref: 'Message'
 	}],
-	media: [{
-		type: Schema.Types.ObjectId,
-		ref: 'Media'
-	}]
+	iscustom: Boolean
 });
+
 
 var User = mongoose.model('User', userSchema);
 var Message = mongoose.model('Message', messageSchema);
 var Media = mongoose.model('Media', mediaSchema);
 var Room = mongoose.model('Room', roomSchema);
+
+
+mediaSchema.pre('remove', function(next) {
+	Room.update( { name: this.roomname }, { $pull: { media: this._id } } )
+});
+
 
 function AesEncrypt(text) {
 	var ciphertext = CryptoJS.AES.encrypt(text, secretkey);
@@ -181,7 +192,6 @@ module.exports = {
 		User.update({_id: id}, {$set: userdata}, callback);
 	},
 	createMessage: function(userid, roomname, msgdata, callback) {
-		msgdata._id = msgdata.id;
 		var msg = new Message(msgdata);
 		connection.collection('messages').insert(msg, function(err, message) {
 			if(err)	return callback(err);
@@ -204,19 +214,28 @@ module.exports = {
 			callback(null, messages);
 		});
 	},
-	getRoomsHistory: function(callback) {
+	getRooms: function(callback) {
 		Room.find().populate('history').exec(function(err, rooms) {
 			if (err) return callback(err);
 			if (!rooms) return callback();
 
-			var result = rooms.map(room => {
-				return {
-					name: room.name,
+			var result = {
+				rooms: {},
+				customrooms: []
+			};
+			rooms.forEach(room => {
+				result.rooms[room.name] = {
 					password: room.password,
 					history: room.history,
-					audios: room.media
+					users: {},
+					userslist: [],
+					iscustom: room.iscustom
+				}
+				if (room.iscustom) {
+					result.customrooms.push(room.name);
 				}
 			});
+
 			callback(null, result);
 		});
 	},
@@ -255,32 +274,30 @@ module.exports = {
 			callback(null, result);
 		});
 	},
-	appendMessageToRoom: function(roomname, msgdata, callback) {
-		var msg = new Message(msgdata);
-		Room.update({name: roomname}, {
-			$push: {
-				history: {$each: [msg], $slice: -100}
-			}
-		}, callback);
-	},
-	createMedia: function(mediadata, callback) {
+	createMedia: function(roomname, mediadata, callback) {
+		mediadata.roomname = roomname;
+
 		var newmedia = new Media(mediadata);
-		connection.collection('media').insert(newmedia, callback);
+		connection.collection('media').insert(newmedia, err => {
+			callback(err, newmedia);
+		});
 	},
-	findMediaById: function(mediaid, callback) {
-		Media.findById(mediaid, callback);
+	findMedia: function(mediadata, callback) {
+		Media.findOne(mediadata, callback);
 	},
-	deleteMediaById: function(mediaid, callback) {
-		Media.find({_id: mediaid}).remove(callback);
+	deleteMedia: function(mediadata, callback) {
+		Media.findOne(mediadata).remove(callback);
 	},
 	getNewId: function() {
 		return mongoose.Types.ObjectId();
 	},
 	reset: function() {
 		Media.find().remove().exec();
-		Room.find().remove().exec();
+		Room.find().remove(function() {
+			var newroom = new Room({name: 'global', iscustom: false});
+			connection.collection('rooms').insert(newroom);
+		});
 		Message.find().remove().exec();
-		var newroom = new Room({name: 'global'});
-		connection.collection('rooms').insert(newroom);
+		console.log('reset executed.');
 	}
 };

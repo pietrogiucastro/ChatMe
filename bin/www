@@ -114,8 +114,7 @@ var io = require('socket.io').listen(server);
 var ss = require('socket.io-stream');
 var r_global = 'global';
 
-var rooms = { global: { history : [], users: {}, userslist: [], audios: {} } };
-
+var rooms = {};
 var customrooms = [];
 
 var status = {
@@ -148,16 +147,15 @@ function elabMessage(msg) {
   return msg;
 }
 
-//db.reset();
-
-db.getRoomsHistory(function(err, rooms) {
-  if (err || !rooms) {
+db.getRooms(function(err, dbrooms) {
+  if (err || !dbrooms) {
     console.log('ERROR! Can\'t get rooms!');
     console.log(err);
     return;
   }
-  console.log(rooms);
-//  io.sockets.on('connection', startChatMe);
+  rooms = dbrooms.rooms;
+  customrooms = dbrooms.customrooms;
+  io.sockets.on('connection', startChatMe);
 });
 
 var startChatMe = function(socket) {
@@ -227,7 +225,7 @@ var startChatMe = function(socket) {
           return;
         }
         msg = elabMessage(msg);
-        var msgobj = {id: db.getNewId(), type: 'user_msg', text: msg, time: new Date(), author: socket.user.name, ownercolor: socket.user.color};
+        var msgobj = {_id: db.getNewId(), type: 'user_msg', text: msg, time: new Date(), ownername: socket.user.name, ownercolor: socket.user.color};
         sendMessage(roomname, msgobj);
         sliceMsgs(roomname);
       });
@@ -239,38 +237,39 @@ var startChatMe = function(socket) {
           var roomname = getsocketroom(socket);
           if (!roomname) return Jsonerror(socket);
 
-          db.createMedia({buffer: audio.buffer, type:'audio'}, function(err, result) {
+          var messageid = db.getNewId();
+
+          db.createMedia(roomname, {buffer: audio.buffer, type:'audio', messageid: messageid}, function(err, media) {
             if (err) {
               console.log(err);
               Jsonerror(socket);
               return;
             }
-            var media = result.ops[0];
 
-            var audioid = media._id;
-            var msgobj = {type: 'user_audio', id: audioid, duration: audio.duration, time: new Date(), author: socket.user.name, ownercolor: socket.user.color};
+            var msgobj = {_id: messageid, type: 'user_audio', duration: audio.duration, time: new Date(), ownername: socket.user.name, ownercolor: socket.user.color};
+            console.log(msgobj);
             sendMessage(roomname, msgobj);
             sliceMsgs(roomname);
           });
 
       });
 
-      socket.on('get audio', function(audioid) {
+      socket.on('get audio', function(messageid) {
           var roomname = getsocketroom(socket);
           if (!roomname) return Jsonerror(socket);
 
-          db.findMediaById(audioid, function(err, media) {
+          db.findMedia({roomname: roomname, messageid: messageid}, function(err, media) {
             if (err) {
               console.log(err);
               Jsonerror(socket);
               return;
             }
             if (!media) {
-              console.log('ERROR! No media found!');
-              Jsonerror(socket, 'nomediafound', 'error loading the media', {id: audioid});
+              console.log('ERROR! No media found for id ' + messageid);
+              Jsonerror(socket, 'nomediafound', 'error loading the media', {id: messageid});
               return;
             }
-            socket.emit('response audio', {id: audioid, buffer: media.buffer});
+            socket.emit('response audio', {id: messageid, buffer: media.buffer});
           });
 
       });
@@ -457,9 +456,10 @@ var startChatMe = function(socket) {
   });
 
 function sendMessage(room, msgobj) {
-  var roomname = room.startsWith('site://') ? 'site' : room;
-  io.sockets.in(room).emit('new message', {msg: msgobj, roomname: roomname});
+  var clientroomname = room.startsWith('site://') ? 'site' : room;
+  io.sockets.in(room).emit('new message', {msg: msgobj, roomname: clientroomname});
   rooms[room].history.push(msgobj);
+  console.log(msgobj);
   db.createMessage(socket.user.id, room, msgobj, function(err, room) {
     if (err) console.log(err);
     else if (!room) console.log('ERROR! no room found in db with name ' + room);
@@ -572,16 +572,31 @@ function getrooms(callback) {
 }
 
 function initroom(roomname, roompass, callback) {
-  createDbRoom(socket, {name: roomname, password: roompass}, function() {
-    rooms[roomname] = { history: [], password: roompass, users: {}, userslist: [], audios: {} };
+  createDbRoom(socket, {name: roomname, password: roompass, iscustom: true}, function() {
+
+    rooms[roomname] = {
+      history: [],
+      password: roompass,
+      users: {},
+      userslist: [],
+      iscustom: true
+    };
+
     customrooms.push(roomname);
     if (callback) callback();
   });
 }
 
 function initsiteroom(roomname, callback) {
-  createDbRoom(socket, {name: roomname}, function() {
-    rooms[roomname] = { history: [], users: {}, userslist: [], audios: {} };
+  createDbRoom(socket, {name: roomname, iscustom: false}, function() {
+
+    rooms[roomname] = {
+      history: [],
+      users: {},
+      userslist: [],
+      iscustom: false
+    };
+
     if (callback) callback();
   });
 }
@@ -608,7 +623,7 @@ function sliceMsgs(roomname) {
 
     if (lastmsg.type == 'user_audio') {
 
-      db.deleteMediaById(msgid, function(err, media) {
+      db.deleteMedia({roomname: roomname, messageid: msgid}, function(err, media) {
         if (err) {
           console.log('failed to delete media with id :' + msgid);
           console.log(err);
