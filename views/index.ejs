@@ -52,26 +52,72 @@
       position: relative;
       height: 100%;
     }
-    #chat-me-tabs {
-      white-space: nowrap;
-      height: 24px;
-      font-size: 0;
+    #chat-me-head {
       position: absolute;
-      top:0%;
+      box-sizing: border-box;
+      height: 24px;
+      top: 0%;
       width: 100%;
       background: -webkit-linear-gradient(#6d727a, #7f8595, #b4bdd1);
       background: -o-linear-gradient(#6d727a, #7f8595, #b4bdd1);
       background: linear-gradient(#6d727a, #7f8595, #b4bdd1);
+      display: flex;
+    }
+    #chat-me-tabs {
+      white-space: nowrap;
+      height: 100%;
+      font-size: 0;
+      width: 100%;
+    }
+    #pm-msgs {
+      width: 30px;
+      height: 100%;
+      box-sizing: border-box;
+      padding: 2px;
+      padding-right: 3px;
+    }
+    #pm-msgs-btn {
+      position: relative;
+      background: #eee;
+      border-radius: 3px;
+      display: flex;
+      align-items: center;
+      height: 100%;
+      color: #222;
+      cursor: pointer;
+    }
+    #pm-msgs-btn:after {
+      font-family: fontawesome;
+      content: "\f0e6";
+      margin: auto;
+    }
+    #pm-msgs-btn:hover {
+      background: #fff;
+      color: black;
+    }
+    .pm-msgs-nots {
+      font-family: Montserrat;
+      position: absolute;
+      bottom: 0;
+      right: 50%;
+      padding: 0px 3px;
+      min-width: 10px;
+      border-radius: 3px;
+      background: rgba(186,11,11,0.9);
+      color: white;
+      font-size: 11px;
+      text-align: center;
     }
     #chat-me-tabs .chat-tab {
       position: relative;
       display: inline-block;
+      box-sizing: border-box;
+      height: 100%;
       overflow: hidden;
       border-right: 1px solid #aaa;
       cursor: pointer;
-      font-weight: bold;
-      font-size: 13px;
-      padding: 4px 6px;
+      font-size: 11px;
+      padding: 4px 7px;
       background-color: #ddd;
       color: #333;
       max-width: 20%;
@@ -102,7 +148,6 @@
     .chat-tab:before {
       position: absolute;
       font-family: fontawesome;
-      font-size: 11px;
       left: 5px;
       padding-top: 6px;
       top: 0%;
@@ -134,6 +179,7 @@
       color: red;
     }
     .chat-tab .tab-text {
+      font-family: Montserrat;
       overflow: hidden;
       white-space: nowrap;
     }
@@ -204,56 +250,66 @@
       color: navajowhite;
     }
     .add-chat {
-      width: 70%;
       height: 100%;
       margin: auto;
       display: flex;
       align-content: center;
     }
-    .add-chat center {
+    .add-chat > center {
       margin: auto;
+      width: 70%;
+      max-width: 350px;
     }
-    .add-chat label {
-      display: block;
-      margin-top: 12px;
-      font-weight: bold;
+    .add-chat .add-chat-title {
+      margin-bottom: 10px;
+    }
+    .add-chat .cm-cont-input {
+      margin-bottom: 10px;
+      padding: 4px 8px;
     }
     .add-chat input {
       display: block;
       width: 100%;
-      text-align: center;
+      font-weight: bold;
+      font-size: 12px;
     }
     .add-chat .addchat-btn {
       margin-top: 20px;
       font-weight: bold;
-      font-size: 11px;
-      background-color: #2d48db;
-      color: white;
-      border: 0;
       padding: 7px 10px;
-      cursor: pointer;
+      position: relative;
+      font-size: 11px;
+      width: auto;
     }
     .add-chat #addchat-message {
       padding: 6px;
       margin-top: 5px;
       height: 12px;
       color: darkred;
+      font-size: 13px;
+    }
+    .add-chat .chat-ico:before {
+      font-family: fontawesome;
+      content: "\f234";
+    }
+    .add-chat .pass-ico:before {
+      font-family: fontawesome;
+      content: "\f023";
     }
     .search-chat {
       box-sizing: border-box;
       height: 100%;
       padding: 15px 40px;
     }
-    .search-chat-cont {
+    .cm-cont-input {
       margin: auto;
       display: flex;
       align-items: center;
-      width: 60%;
       padding: 2px 8px;
       border-radius: 4px;
       background-color: white;
     }
-    .search-chat-input {
+    .cm-opts-input {
       width: 100%;
       outline: none;
       border: 0;
@@ -276,6 +332,7 @@
       align-items: center;
       padding: 5px;
       cursor: pointer;
+      overflow: hidden;
     }
     .search-chat .chat-row:hover {
       background-color: #ddd;
@@ -284,6 +341,7 @@
       font-weight: bold;
       color: #32472d;
       margin-right: auto;
+      word-break: break-all;
     }
     .chat-row .chat-online {
       color: #333;
@@ -580,7 +638,7 @@
       text-align: center;
       color: white;
       font-size: 12px;
-      background: rgba(9,154,70,0.8);
+      background: rgba(9,154,70,0.9);
       border-radius: 9px;
     }
     #unseen-icon {
@@ -745,6 +803,7 @@
     }
 
     .chat-tab:before {
+      top: -100%;
       animation: downin 0.13s forwards;
     }
 
@@ -1073,6 +1132,7 @@
       width: 100%; height: 100%;
       background-color: rgba(100,100,100,0.5);
       display: none;
+      z-index: 100000000;
     }
     .modal-layout {
       position: absolute;
@@ -1113,6 +1173,39 @@
       content: "\f071";
       color: darkred;
       margin-left: 5px;
+    }
+
+    .pm-msgs-modal {
+      position: absolute;
+      bottom: -30px;
+      right: 5px;
+    }
+    .pm-msgs-modal .modal-body {
+      box-sizing: border-box;
+      background-color: white;
+      padding: 5px;
+      border-radius: 3px;
+      width: 300px;
+    }
+    .pm-msgs-modal .pm-message {
+      width: 100%;
+      background-color: white;
+      border-bottom: 2px solid #aaa;
+    }
+    .pm-message > .pm-head {
+      padding: 2px 5px;
+    }
+    .pm-message > .pm-head:after {
+      clear: both;
+    }
+    .pm-head > .pm-name {
+      float: left;
+    }
+    .pm-head > .pm-date {
+      float: right;
+    }
+    .pm-msg .pm-body {
+      height: 40px;
     }
   </style>
 </head>

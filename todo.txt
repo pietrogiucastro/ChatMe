@@ -3,6 +3,7 @@
 - remove rooms if not used anymore
 - overflow-x scroll in tabs
 - substitute tab data-name and data-pass with just id and the password will be stored in 	the cookies as a token
+- chats in cookies
 - users, rooms and messages in db
 - sort rooms result by relevance
 - query rooms from db
@@ -19,7 +20,7 @@
 - remove youtube/whatsapp match return
 - true HTTPSSSS!
 - resize animation on hover option
-- right spinner everywere
+- right spinner everywere (user fa spinners and animations)
 - pm users
 - empty chat placeholder
 - Settings: add user color
@@ -46,8 +47,10 @@
 - db password!
 - compress media quality
 - insert email check on signup
-- delete messages (check if they are mine before);
+- possibility to delete messages (check if they are mine before);
 - enter to submit/select everywhere
-
+- search rooms via db
+- google analytics
+- right message time (yesterday ecc..)
 _create pmchat
 _images

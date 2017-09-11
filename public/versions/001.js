@@ -41,14 +41,20 @@ var emptychatmsg = 'Empty chat. Be the first to send a message!';
 var currentchat;
 var currentusers = [];
 
-var tabs = $('<div id="chat-me-tabs" class="cm-scroll scroll-x cm-tabs-scroll"><div class="chat-tab global-tab sel" data-name="global" data-type="global"><span class="volume-icon vol-true"></span>Global</div><div class="chat-tab site-tab" data-name="site" data-type="site"><span class="volume-icon vol-true"></span>Site</div></div>');
-
+var tabs = $('<div id="chat-me-head"><div id="chat-me-tabs" class="cm-scroll scroll-x cm-tabs-scroll"><div class="chat-tab global-tab sel" data-name="global" data-type="global"><span class="volume-icon vol-true"></span><div class="tab-text">Global</div></div><div class="chat-tab site-tab" data-name="site" data-type="site"><span class="volume-icon vol-true"></span><div class="tab-text">Site</div></div></div><div id="pm-msgs"></div></div>');
+var msgbtn = $('<div id="pm-msgs-btn"><div class="pm-msgs-nots" style="display:none;"></div></div>');
+var msgnots = msgbtn.find('.pm-msgs-nots');
+tabs.find('#pm-msgs').append(msgbtn);
 var roomresultModel = $('<div class="chat-row"><span class="chat-name"></span> <span class="chat-online"><i class="fa fa-user" style="margin-right:4px;"></i><span class="online-num"></span></span></div>')[0];
 var messagemodal = $('<div class="cm-message-modal"><div class="modal-layout"><div class="modal-close"></div><div class="message-modal-body"></div></div></div>');
 messagemodal.find('.modal-close').click(function() {
     $(this).parents('.cm-message-modal:first').hide();
+    hideOpts();
 });
-
+var pmModal = $('<div class="modal pm-msgs-modal" style="z-index:1000;"><div class="modal-body"></div></div>');
+tabs.find('#pm-msgs').append(pmModal);
+var pmMessage = $('<div class="pm-message"><div class="pm-head"><div class="pm-name">Speep90</div><div class="pm-date">08:09</div></div><div class="pm-body">ciaone</div></div>');
+pmModal.find('.modal-body').append(pmMessage);
 // if user is running mozilla then use it's built-in WebSocket
 window.WebSocket = window.WebSocket || window.MozWebSocket;
 // if browser doesn't support WebSocket, just show
@@ -114,6 +120,9 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
         } else if (msg.type == 'user_audio') { //audio
             message = createAudioMessage(msg);
         }
+        if (currentusers.indexOf(msg.ownername) < 0) { //offline user
+            message.find('.cm-message-name').addClass('user-offline');
+        }
 
         function unseenmsg() {
             $(message).addClass('cm-unseen');
@@ -124,9 +133,6 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
         }
         else if (history) {
             fadein(message);
-            if (currentusers.indexOf(msg.ownername) < 0) { //offline user
-                message.find('.cm-message-name').addClass('user-offline');
-            }
         }
         else { // send single message
             if (message.is('.cm-message-text')) message.slideDown('fast');
@@ -616,7 +622,7 @@ function RegisterDisplay(user, pass) {
             $('.chat-tab[data-name='+room.name+']').remove();
             var newTab = $('<div class="chat-tab custom" data-type="custom" data-name="' + room.name + '" data-pass="' + room.pass + '"><span class="volume-icon vol-true"></span><div class="tab-text">'+room.name+'</div><i class="fa fa-times remove-tab"></i></div>');
             newTab.addClass(room.pass ? 'pass' : 'free');
-            tabs.append(newTab);
+            tabs.children('#chat-me-tabs').append(newTab);
             selectchat(room.name);
         });
         socket.on('rooms result', function(result) {
@@ -753,7 +759,7 @@ function RegisterDisplay(user, pass) {
     $(function main() {
         postParentMessage('successload');
 
-        /*css*/ $('head').append('<style type=text/css>body {margin: 0;} #chat-me {position:relative; overflow:hidden; height:100vh;} #chat-me-cont {box-sizing:border-box; padding:5px; padding-top:28px; width:100%; height:100%; background-color:rgba(50,80,100,1.0); border-radius:3px; font-family:tahoma !important;} #cm-inline-btns {position:absolute; box-sizing:border-box; width:100%; height:15px; margin-bottom:6px;} #cm-message-panel {position: absolute; bottom:0; height:25px; width:100%;} .cm-label {display:inline-block; color:rgb(230,230,230); font-weight:bold; margin:10px; width: 25%;} .cm-button {position:absolute; overflow:hidden; color:white; text-align:center; width:60px; font-size:10px; background-color:rgb(10,200,50); border:0px; box-shadow:none !important; cursor:pointer; height:100%; border-radius: 2px;} .cm-button:not(.recording):hover {background-color:rgb(20,220,60);} .message-input-cont {box-sizing:border-box; width: 100%; height:100%; padding-right:45px;} .cm-input {box-sizing:border-box; background-color:rgb(240,240,240)!important; border:0px; font-size:12px!important; font-family:\'Montserrat\', sans-serif; width:230px; border:0px; border-radius:2px; padding-left:5px;} #cm-error-cont {color:rgb(220,0,0); font-size:12px; margin-left:8px; margin-top:10px; max-width:200px} #cm-error-cont.success {color: rgb(10,200,50);} #cm-chat {font-family:\'Montserrat\', sans-serif; width:100%; height:100%; background-color:rgb(240,240,240); border-radius:2px;} #cm-chat-list {margin:0; padding:3px 0; font-size:11px;} .cm-message:first-child {margin-top:0 !important}.cm-message:last-child {border:0;} .cm-message {padding: 3px 5px; padding-top:2px;} .cm-message-head {margin-bottom:4px;} .cm-message-body {display: inline-block; max-width:85%; margin: 3px; margin-bottom: 0; border-radius: 5px; background: #d3e4f1; box-shadow: 1px 1px 1px #ccc; padding: 5px 6px;} .cm-clearafter:after {content:\'\'; display:block; clear: both;} .cm-message:hover,.cm-message-name:hover {background-color: rgba(230,230,230,0.4);} .cm-message-name {font-family:\'Montserrat\', sans-serif; font-weight:bold; color:rgb(0,80,0); font-size:9px; cursor: pointer; margin-right: 23px;} .cm-online-name {padding-left:4px; margin-right:0;} .cm-message-status {font-family:\'Montserrat\', sans-serif; color:grey; font-size: 8px;} .cm-message-text {display:block; margin-left: 3px; margin-right:10px; max-width:310px; word-wrap:break-word; color:#07324e;} .cm-message-date {float:right; color:grey; font-size:9px;} #cm-display-panel {display:flex; box-sizing:border-box; padding-top:20px; padding-bottom:30px; height: 100%; } #cm-online-panel {margin-right:5px; width:90px;} #cm-online {height:100%; background-color:rgb(240,240,240); border-radius:2px;} #cm-online-list {margin:0; padding:5px 0; font-size:11px;} #cm-record {box-sizing:border-box; display:flex; align-items:center; width: 40px;} .micico {position: absolute; font-size: 165%; top: 0%; right: 15px; padding-top: 5px;}</style>');
+        /*css*/ $('head').append('<style type=text/css>body {margin: 0;} #chat-me {position:relative; overflow:hidden; height:100vh;} #chat-me-cont {box-sizing:border-box; padding:5px; padding-top:28px; width:100%; height:100%; background-color:rgba(50,80,100,1.0); border-radius:3px; font-family:tahoma !important;} #cm-inline-btns {position:absolute; box-sizing:border-box; width:100%; height:15px; margin-bottom:6px;} #cm-message-panel {position: absolute; bottom:0; height:25px; width:100%;} .cm-label {display:inline-block; color:rgb(230,230,230); font-weight:bold; margin:10px; width: 25%;} .cm-button {position:absolute; overflow:hidden; color:white; text-align:center; width:60px; font-size:10px; background-color:rgb(10,200,50); border:0px; box-shadow:none !important; cursor:pointer; height:100%; border-radius: 2px;} .cm-button:not(.recording):hover {background-color:rgb(20,220,60);} .message-input-cont {box-sizing:border-box; width: 100%; height:100%; padding-right:45px;} .cm-input {box-sizing:border-box; background-color:rgb(240,240,240)!important; border:0px; font-size:12px!important; font-family:\'Montserrat\', sans-serif; width:230px; border:0px; border-radius:2px; padding-left:5px;} #cm-error-cont {color:rgb(220,0,0); font-size:12px; margin-left:8px; margin-top:10px; max-width:200px} #cm-error-cont.success {color: rgb(10,200,50);} #cm-chat {font-family:\'Montserrat\', sans-serif; width:100%; height:100%; background-color:rgb(240,240,240); border-radius:2px;} #cm-chat-list {margin:0; padding:3px 0; font-size:11px;} .cm-message:first-child {margin-top:0 !important}.cm-message:last-child {border:0;} .cm-message {padding: 3px 5px; padding-top:2px;} .cm-message-head {margin-bottom:4px;} .cm-message-body {display: inline-block; max-width:85%; margin: 3px; margin-bottom: 0; border-radius: 5px; background: #d3e4f1; box-shadow: 1px 1px 1px #ccc; padding: 5px 6px;} .cm-clearafter:after {content:\'\'; display:block; clear: both;} .cm-message:hover,.cm-online-name:hover {background-color: rgba(230,230,230,0.4);} .cm-message-name:hover {text-decoration:underline;} .cm-message-name {font-family:\'Montserrat\', sans-serif; font-weight:bold; color:rgb(0,80,0); font-size:9px; cursor: pointer; margin-right: 23px;} .cm-online-name {padding-left:4px; margin-right:0;} .cm-online-name:hover {text-decoration:none;} .cm-message-name:hover .username {text-decoration:underline;} .cm-message-status {font-family:\'Montserrat\', sans-serif; color:grey; font-size: 8px;} .cm-message-text {display:block; margin-left: 3px; margin-right:10px; max-width:310px; word-wrap:break-word; color:#07324e;} .cm-message-date {float:right; color:grey; font-size:9px;} #cm-display-panel {display:flex; box-sizing:border-box; padding-top:20px; padding-bottom:30px; height: 100%; } #cm-online-panel {margin-right:5px; width:90px;} #cm-online {height:100%; background-color:rgb(240,240,240); border-radius:2px;} #cm-online-list {margin:0; padding:5px 0; font-size:11px;} #cm-record {box-sizing:border-box; display:flex; align-items:center; width: 40px;} .micico {position: absolute; font-size: 165%; top: 0%; right: 15px; padding-top: 5px;}</style>');
         if (!$('#chat-me-cont').length) return;
 
         if (!sess_token) InitDisplay();
@@ -761,8 +767,8 @@ function RegisterDisplay(user, pass) {
     });
 
     var chatOptions = {
-        display : {
-            options : {
+        display: {
+            options: {
                 container: '<div class="options-center"><div class="options-block"></div></div>',
                 buttons: [
                     {click: 'userSettingsDis', element: '<div class="option">USER SETTINGS</div>'},
@@ -771,7 +777,7 @@ function RegisterDisplay(user, pass) {
                 ]
             },
 
-            userSettings :
+            userSettings:
             '<div class="settings"><div class="settings-row"> <span class="settings-text">User color:</span><select id="select-color" class="settings-select">'
                 + '<option class="settings-option">green</option>'
                 + '<option class="settings-option">red</option>'
@@ -784,14 +790,14 @@ function RegisterDisplay(user, pass) {
             + '<div class="settings-bottom"><button class="cm-button cm-right" onclick="chatOptions.submitUserSettings()">Confirm</button><button class="cm-button cm-secondary cm-right" onclick="chatOptions.initDis()">Cancel</button></div>'
             + '</div>',
 
-            displaySettings : '<div class="settings"><div class="settings-row"><span class="settings-text">Window size:</span><select id="select-size" class="settings-select">'
+            displaySettings: '<div class="settings"><div class="settings-row"><span class="settings-text">Window size:</span><select id="select-size" class="settings-select">'
             + '<option class="settings-option" value="xs">small</option><option class="settings-option" value="sm">medium</option><option class="settings-option" value="lg">large</option><option class="settings-option" value="res">custom (resizable)</option></select></div>'
             + '<div class="settings-row"><span class="settings-text">Theme:</span><select id="select-theme" class="settings-select">'
             + '<option class="settings-option">default</option><option class="settings-option">dark</option><option class="settings-option">holo</option></select></div></div>',
 
-            searchchat: '<div class="search-chat cm-scroll"><div id="type-password-mod" style="display:none"><i class="fa fa-remove hidetypepass" onclick="hideTypePass()"></i><div class="type-password-cont"><div id="type-password-text">password for room <div id="type-password-name"></div></div><input id="type-password" type="password" placeholder="password" autofocus="true"><div id="type-password-message"></div></div></div><center class="search-chat-cont"><input class="search-chat-input" placeholder="Search chat" autofocus="true"><span class="search-chat-icon"></span></center><hr class="search-div"><div class="search-body"></div></div>',
+            searchchat: '<div class="search-chat cm-scroll"><div id="type-password-mod" style="display:none"><i class="fa fa-remove hidetypepass" onclick="hideTypePass()"></i><div class="type-password-cont"><div id="type-password-text">password for room <div id="type-password-name"></div></div><input id="type-password" type="password" placeholder="password" autofocus="true"><div id="type-password-message"></div></div></div><center class="cm-cont-input search-chat-cont" style="width: 60%;"><input class="cm-opts-input search-chat-input" placeholder="Search chat" autofocus="true"><span class="search-chat-icon"></span></center><hr class="search-div"><div class="search-body"></div></div>',
 
-            addchat : '<div class="add-chat"> <center> <label>Chat name: <input id="addchat-name" type="text" maxlength="30"></label> <label>Chat password (empty for no password): <input id="addchat-pass" type="password" maxlength="15"></label> <button class="addchat-btn">ADD CHAT</button> <div id="addchat-message"></div> </center> </div>',
+            addchat: '<div class="add-chat"> <center> <div class="add-chat-title">Create new chat</div> <div class="cm-cont-input"><input id="addchat-name" class="cm-opts-input" type="text" maxlength="30" placeholder="Chat name"><span class="chat-ico fa-fw"></span></div> <div class="cm-cont-input"><input id="addchat-pass" class="cm-opts-input" maxlength="15" placeholder="Password (empty for free chat)"><span class="pass-ico fa-fw"></span></div> <button class="cm-button addchat-btn">ADD CHAT</button> <div id="addchat-message"></div> </center> </div>',
         },
 
         container : $('#options-content'),

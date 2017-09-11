@@ -358,14 +358,14 @@ var startChatMe = function(socket) {
 
       socket.on('search rooms', function(roomquery) {
         if (roomquery.length < 3) {
-          console.log('roomquery query too short');
+          console.log('ERROR! roomquery query too short');
           Jsonwarn(socket, 'invalidroomname');
           return;
         }
 
         var result = {query: roomquery, rooms: []};
 
-        customrooms.forEach(function(thisroom) {
+        customrooms.forEach(function(thisroom) { //change with db call
           if (thisroom.match(roomquery) && thisroom != 'global') {
             var haspass = !!rooms[thisroom].password;
             var users = 3;
@@ -420,25 +420,30 @@ var startChatMe = function(socket) {
 
 
       socket.on('create room', function(room) {
-        if (!room.name) {
+        if (typeof room.name != 'string') {
           Jsonerror(socket);
           return;
         }
         var roomname = room.name.replace(/ /g, '');
         var roompass = room.pass;
 
+        if (!roomname.length) {
+          console.log("ERROR! empty roomname");
+          Jsonwarn(socket, 'invalidroomname', 'Room name can\'t be empty.');
+          return;
+        }
         if (roomname.length < 3) {
-          console.log(roomname + ": name too short");
+          console.log(roomname + ": ERROR! Name too short");
           Jsonwarn(socket, 'invalidroomname', 'name is too short!');
           return;
         }
-        if (roomname.startsWith('site://') || roomname.startsWith('http://') || roomname.startsWith('https://') || roomname.startsWith('www.')) {
-          console.log(roomname + ": invalid name");
+        if (roomname.startsWith('site://') || roomname.startsWith('http://') || roomname.startsWith('https://') || roomname.startsWith('www.') || roomname.toLowerCase() == 'global') {
+          console.log(roomname + ": ERROR! Invalid name");
           Jsonwarn(socket, 'invalidroomname', 'invalid name!');
           return;
         }
         if (roomexists(roomname)) {
-          console.log(roomname + ' room already exists');
+          console.log(roomname + ' ERROR! Room already exists');
           Jsonwarn(socket, 'invalidroomname', 'the room already exists');
           return;
         } // else
