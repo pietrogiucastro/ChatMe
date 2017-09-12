@@ -2,7 +2,8 @@
 - custom settings
 - remove rooms if not used anymore
 - overflow-x scroll in tabs
-- substitute tab data-name and data-pass with just id and the password will be stored in 	the cookies as a token
+- substitute tab data-name and data-pass with just token
+- save user open chats on db and send them on login
 - chats in cookies
 - users, rooms and messages in db
 - sort rooms result by relevance
@@ -28,7 +29,7 @@
 - my messages history with arrows up and down
 - from jquery to vanilla js on tampermonkey
 - get user colors from db
-- auto select colors from cookies
+- auto select colors from db
 - auto select btns settings (mute and show/hide users) from cookies
 - audio notes
 - change not sound
@@ -52,5 +53,30 @@
 - search rooms via db
 - google analytics
 - right message time (yesterday ecc..)
+- audio size limit
+- audio download button (don't auto download)
+- fix pm modal click bug when re-login
+- start npm with "infinite" on the server
+
 _create pmchat
 _images
+
+
+
+I messaggi privati sono gestiti dal db e dall oggetto rooms.
+
+Ogni chat pm è una room di tipo pm nominata in questo modo: pm://id1-id2, dove id1<id2.
+
+Nella history room non avverrà uno slice di -100
+
+La room avrà una chiave "unseen" che avrà un hash di due id, che conterranno i valori di quanti messaggi non sono stati visti (integer)
+
+
+lato client:
+ - aperta la modal della chat, verrano caricate le conversazioni dal server.
+ 	Se una conversazione avrà messaggi non visti, verrà aggiunta la classe unseen con il numero di messaggi non visti.
+ - Cliccata una conversazione, verrà aperta una chat, con relativa scheda, nel pannello
+ 	principale, e verrà chiamato il server per confermare l'avvenuta lettura dei messaggi.
+ - Appena aperta una conversazione, verrà creata la stanza se non ancora creata nel db;
+ 	altrimenti verrà presa dal db e inserita nell'oggetto rooms
+ - Appena inviato un messaggio alla stanza, esso verrà salvato sul db aggiungendo 1 allo stato di unseen dei messaggi dell'altro utente. Appena arrivato il messaggio all'altro utente nella chat (questo vuol dire che è online), verrà riazzerato il suo stato di unseen sul db.

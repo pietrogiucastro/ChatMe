@@ -41,7 +41,7 @@ var emptychatmsg = 'Empty chat. Be the first to send a message!';
 var currentchat;
 var currentusers = [];
 
-var tabs = $('<div id="chat-me-head"><div id="chat-me-tabs" class="cm-scroll scroll-x cm-tabs-scroll"><div class="chat-tab global-tab sel" data-name="global" data-type="global"><span class="volume-icon vol-true"></span><div class="tab-text">Global</div></div><div class="chat-tab site-tab" data-name="site" data-type="site"><span class="volume-icon vol-true"></span><div class="tab-text">Site</div></div></div><div id="pm-msgs"></div></div>');
+var tabs = $('<div id="chat-me-head"><div id="chat-me-tabs" class="cm-scroll scroll-x cm-tabs-scroll"><div class="chat-tab global-tab sel noselect" name="global" data-type="global"><span class="volume-icon vol-true"></span><div class="tab-text">Global</div></div><div class="chat-tab site-tab noselect" name="site" data-type="site"><span class="volume-icon vol-true"></span><div class="tab-text">Site</div></div></div><div id="pm-msgs"></div></div>');
 var msgbtn = $('<div id="pm-msgs-btn"><div class="pm-msgs-nots" style="display:none;"></div></div>');
 var msgnots = msgbtn.find('.pm-msgs-nots');
 tabs.find('#pm-msgs').append(msgbtn);
@@ -51,10 +51,16 @@ messagemodal.find('.modal-close').click(function() {
     $(this).parents('.cm-message-modal:first').hide();
     hideOpts();
 });
-var pmModal = $('<div class="modal pm-msgs-modal" style="z-index:1000;"><div class="modal-body"></div></div>');
-tabs.find('#pm-msgs').append(pmModal);
-var pmMessage = $('<div class="pm-message"><div class="pm-head"><div class="pm-name">Speep90</div><div class="pm-date">08:09</div></div><div class="pm-body">ciaone</div></div>');
-pmModal.find('.modal-body').append(pmMessage);
+var pmModal = $('<div class="pm-msgs-modal" style="z-index:1000;"><div class="pm-close"></div><div class="modal-body cm-scroll"><div class="pm-title">Private Messages</div><div class="pm-search"></div><div class="pm-messages"></div></div></div>');
+var pmMessage = $('<div class="pm-message"><div class="pm-head cm-clearafter"><div class="pm-name">Speep90</div><div class="pm-date">08:09</div></div><div class="pm-body"><div class="pm-text">ciaone</div><div class="pm-not">1</div></div>');
+msgbtn.click(function() {
+    pmModal.show();
+});
+pmModal.click(function(e) {
+    if ($(e.target).parents('.modal-body').length) return;
+    $(this).hide();
+});
+
 // if user is running mozilla then use it's built-in WebSocket
 window.WebSocket = window.WebSocket || window.MozWebSocket;
 // if browser doesn't support WebSocket, just show
@@ -619,9 +625,16 @@ function RegisterDisplay(user, pass) {
 
             chats[room.name] = {volume: true};
 
-            $('.chat-tab[data-name='+room.name+']').remove();
-            var newTab = $('<div class="chat-tab custom" data-type="custom" data-name="' + room.name + '" data-pass="' + room.pass + '"><span class="volume-icon vol-true"></span><div class="tab-text">'+room.name+'</div><i class="fa fa-times remove-tab"></i></div>');
-            newTab.addClass(room.pass ? 'pass' : 'free');
+            $('.chat-tab[name="'+room.name+'"]').remove();
+            var type = room.type ? room.type : 'custom';
+            var newTab = $('<div class="chat-tab custom noselect" data-type="' + type + '" name="' + room.name + '" pass="' + room.pass + '"><span class="volume-icon vol-true"></span><div class="tab-text">'+room.name+'</div><i class="fa fa-times remove-tab"></i></div>');
+
+            if (type == 'pm') {
+                newTab.addClass('pm');
+            }
+            else {
+                newTab.addClass(room.pass ? 'pass' : 'free');
+            }
             tabs.children('#chat-me-tabs').append(newTab);
             selectchat(room.name);
         });
@@ -639,7 +652,7 @@ function RegisterDisplay(user, pass) {
                 var htmlquery = '<span class="sel">' + result.query + '</span>';
                 var htmlname = room.name.replace(result.query, htmlquery);
 
-                roomresult.addClass(typeclass).data('name', room.name).find('.chat-name').html(htmlname);
+                roomresult.addClass(typeclass).attr('name', room.name).find('.chat-name').html(htmlname);
                 roomresult.find('.online-num').html(room.users);
 
                 
@@ -659,12 +672,18 @@ function RegisterDisplay(user, pass) {
                     console.log(error.message);
                     InitDisplay();
                     break;
+                case 'roomdoesnotexist':
+                    console.log(error.message);
+                    showModalMessage(error.message);
+                    var tab = $('.chat-tab[name="' + error.data.name + '"]');
+                    leaveChat(tab);
+                    break;
                 case 'wrongpassword':
                     if ($('#chat-me-options').is(':visible')) {
                         hideOptsWait();
                         $('#type-password-message').html(error.message);
                     } else {
-                        var tab = $('.chat-tab[data-name=' + error.data.name + ']');
+                        var tab = $('.chat-tab[name="' + error.data.name + '"]');
                         leaveChat(tab);
                         showModalMessage("Internal Error. Try to Join the chat again.");
                     }
@@ -695,7 +714,6 @@ function RegisterDisplay(user, pass) {
         $('#chat-me').find(tabs).remove();
         $('#chat-me').prepend(tabs);
 
-
         $('#chat-me-cont').html('');
         $('#chat-me-cont').append('<div id="chat-me-label"></div>');
         $('#chat-me-label').append(inlinebtns.container)
@@ -709,6 +727,11 @@ function RegisterDisplay(user, pass) {
         $('#cm-message-panel').append(micbtn);
         micbtn.prepend(mictime);
         $('#chat-me-cont').append(messagemodal);
+
+        pmModal.find('.pm-messages').append(pmMessage);
+        pmModal.find('.pm-messages').append(pmMessage[0].outerHTML);
+        pmModal.find('.pm-messages').append(pmMessage[0].outerHTML);
+        $('#chat-me-cont').append(pmModal);
 
 
         input = $('#cm-message-input');
@@ -759,7 +782,7 @@ function RegisterDisplay(user, pass) {
     $(function main() {
         postParentMessage('successload');
 
-        /*css*/ $('head').append('<style type=text/css>body {margin: 0;} #chat-me {position:relative; overflow:hidden; height:100vh;} #chat-me-cont {box-sizing:border-box; padding:5px; padding-top:28px; width:100%; height:100%; background-color:rgba(50,80,100,1.0); border-radius:3px; font-family:tahoma !important;} #cm-inline-btns {position:absolute; box-sizing:border-box; width:100%; height:15px; margin-bottom:6px;} #cm-message-panel {position: absolute; bottom:0; height:25px; width:100%;} .cm-label {display:inline-block; color:rgb(230,230,230); font-weight:bold; margin:10px; width: 25%;} .cm-button {position:absolute; overflow:hidden; color:white; text-align:center; width:60px; font-size:10px; background-color:rgb(10,200,50); border:0px; box-shadow:none !important; cursor:pointer; height:100%; border-radius: 2px;} .cm-button:not(.recording):hover {background-color:rgb(20,220,60);} .message-input-cont {box-sizing:border-box; width: 100%; height:100%; padding-right:45px;} .cm-input {box-sizing:border-box; background-color:rgb(240,240,240)!important; border:0px; font-size:12px!important; font-family:\'Montserrat\', sans-serif; width:230px; border:0px; border-radius:2px; padding-left:5px;} #cm-error-cont {color:rgb(220,0,0); font-size:12px; margin-left:8px; margin-top:10px; max-width:200px} #cm-error-cont.success {color: rgb(10,200,50);} #cm-chat {font-family:\'Montserrat\', sans-serif; width:100%; height:100%; background-color:rgb(240,240,240); border-radius:2px;} #cm-chat-list {margin:0; padding:3px 0; font-size:11px;} .cm-message:first-child {margin-top:0 !important}.cm-message:last-child {border:0;} .cm-message {padding: 3px 5px; padding-top:2px;} .cm-message-head {margin-bottom:4px;} .cm-message-body {display: inline-block; max-width:85%; margin: 3px; margin-bottom: 0; border-radius: 5px; background: #d3e4f1; box-shadow: 1px 1px 1px #ccc; padding: 5px 6px;} .cm-clearafter:after {content:\'\'; display:block; clear: both;} .cm-message:hover,.cm-online-name:hover {background-color: rgba(230,230,230,0.4);} .cm-message-name:hover {text-decoration:underline;} .cm-message-name {font-family:\'Montserrat\', sans-serif; font-weight:bold; color:rgb(0,80,0); font-size:9px; cursor: pointer; margin-right: 23px;} .cm-online-name {padding-left:4px; margin-right:0;} .cm-online-name:hover {text-decoration:none;} .cm-message-name:hover .username {text-decoration:underline;} .cm-message-status {font-family:\'Montserrat\', sans-serif; color:grey; font-size: 8px;} .cm-message-text {display:block; margin-left: 3px; margin-right:10px; max-width:310px; word-wrap:break-word; color:#07324e;} .cm-message-date {float:right; color:grey; font-size:9px;} #cm-display-panel {display:flex; box-sizing:border-box; padding-top:20px; padding-bottom:30px; height: 100%; } #cm-online-panel {margin-right:5px; width:90px;} #cm-online {height:100%; background-color:rgb(240,240,240); border-radius:2px;} #cm-online-list {margin:0; padding:5px 0; font-size:11px;} #cm-record {box-sizing:border-box; display:flex; align-items:center; width: 40px;} .micico {position: absolute; font-size: 165%; top: 0%; right: 15px; padding-top: 5px;}</style>');
+        /*css*/ $('head').append('<style type=text/css>body {margin: 0;} #chat-me {position:relative; overflow:hidden; height:100vh; border-radius:3px;} #chat-me-cont {box-sizing:border-box; padding:5px; padding-top:28px; width:100%; height:100%; background-color:rgba(50,80,100,1.0); font-family:tahoma !important;} #cm-inline-btns {position:absolute; box-sizing:border-box; width:100%; height:15px; margin-bottom:6px;} #cm-message-panel {position: absolute; bottom:0; height:25px; width:100%;} .cm-label {display:inline-block; color:rgb(230,230,230); font-weight:bold; margin:10px; width: 25%;} .cm-button {position:absolute; overflow:hidden; color:white; text-align:center; width:60px; font-size:10px; background-color:rgb(10,200,50); border:0px; box-shadow:none !important; cursor:pointer; height:100%; border-radius: 2px;} .cm-button:not(.recording):hover {background-color:rgb(20,220,60);} .message-input-cont {box-sizing:border-box; width: 100%; height:100%; padding-right:45px;} .cm-input {box-sizing:border-box; background-color:rgb(240,240,240)!important; border:0px; font-size:12px!important; font-family:\'Montserrat\', sans-serif; width:230px; border:0px; border-radius:2px; padding-left:5px;} #cm-error-cont {color:rgb(220,0,0); font-size:12px; margin-left:8px; margin-top:10px; max-width:200px} #cm-error-cont.success {color: rgb(10,200,50);} #cm-chat {font-family:\'Montserrat\', sans-serif; width:100%; height:100%; background-color:rgb(240,240,240); border-radius:2px;} #cm-chat-list {margin:0; padding:3px 0; font-size:11px;} .cm-message:first-child {margin-top:0 !important}.cm-message:last-child {border:0;} .cm-message {padding: 3px 5px; padding-top:2px;} .cm-message-head {margin-bottom:4px;} .cm-message-body {display: inline-block; max-width:85%; margin: 3px; margin-bottom: 0; border-radius: 5px; background: #d3e4f1; box-shadow: 1px 1px 1px #ccc; padding: 5px 6px;} .cm-clearafter:after {content:\'\'; display:block; clear: both;} .cm-message:hover,.cm-online-name:hover {background-color: rgba(230,230,230,0.4);} .cm-message-name:hover {text-decoration:underline;} .cm-message-name {font-family:\'Montserrat\', sans-serif; font-weight:bold; color:rgb(0,80,0); font-size:9px; cursor: pointer; margin-right: 23px;} .cm-online-name {padding-left:4px; margin-right:0;} .cm-online-name:hover {text-decoration:none;} .cm-message-name:hover .username {text-decoration:underline;} .cm-message-status {font-family:\'Montserrat\', sans-serif; color:grey; font-size: 8px;} .cm-message-text {display:block; margin-left: 3px; margin-right:10px; max-width:310px; word-wrap:break-word; color:#07324e;} .cm-message-date {float:right; color:grey; font-size:9px;} #cm-display-panel {display:flex; box-sizing:border-box; padding-top:20px; padding-bottom:30px; height: 100%; } #cm-online-panel {margin-right:5px; width:90px;} #cm-online {height:100%; background-color:rgb(240,240,240); border-radius:2px;} #cm-online-list {margin:0; padding:5px 0; font-size:11px;} #cm-record {box-sizing:border-box; display:flex; align-items:center; width: 40px;} .micico {position: absolute; font-size: 165%; top: 0%; right: 15px; padding-top: 5px;}</style>');
         if (!$('#chat-me-cont').length) return;
 
         if (!sess_token) InitDisplay();
@@ -771,9 +794,9 @@ function RegisterDisplay(user, pass) {
             options: {
                 container: '<div class="options-center"><div class="options-block"></div></div>',
                 buttons: [
-                    {click: 'userSettingsDis', element: '<div class="option">USER SETTINGS</div>'},
-                    {click: 'displaySettingsDis', element: '<div class="option">WINDOW SETTINGS</div>'},
-                    {click: 'logout', element: '<div class="option">LOGOUT</div>'}
+                    {click: 'userSettingsDis', element: '<div class="option noselect">USER SETTINGS</div>'},
+                    {click: 'displaySettingsDis', element: '<div class="option noselect">WINDOW SETTINGS</div>'},
+                    {click: 'logout', element: '<div class="option noselect">LOGOUT</div>'}
                 ]
             },
 
@@ -808,7 +831,7 @@ function RegisterDisplay(user, pass) {
             chatOptions.container.html($(chatOptions.display.options.container));
             chatOptions.display.options.buttons.forEach(option => {
                 var button = $(option.element);
-                button.click(chatOptions[option.click]);
+                button.mouseup(chatOptions[option.click]);
                 chatOptions.container.find('.options-block').append(button);
             });
         },
@@ -855,14 +878,14 @@ function RegisterDisplay(user, pass) {
     var inlinebtns = {
         container: $('<div id="cm-inline-btns"></div>'),
         btns: {
-            minbtn: {element: $('<span class="btn min-btn">_</span>'), display: 'init,logged,register'},
-            optsbtn: {element: $('<span class="btn opts-btn"></span>'), display: 'logged'},
-            statusbtn: {element: $('<span class="btn status-btn modal-toggle"><div class="modal status-modal"><div class="modal-body"></div></div></span>'), display: 'logged'},
-            searchbtn: {element: $('<span class="btn search-btn"></span>'), display: 'logged'},
-            addbtn: {element: $('<span class="btn add-btn"></span>'), display: 'logged'},
-            attachbtn: {element: $('<span class="btn attach-btn"><label id="attach-label" for="cm-attach"></label></span>'), display: 'logged'},
-            mutebtn: {element: $('<span class="btn mute-btn mute-false"></span>'), display: 'logged'},
-            showusersbtn: {element: $('<span class="btn show-users-btn users-true"></span>'), display: 'logged'},
+            minbtn: {element: $('<span class="noselect btn min-btn">_</span>'), display: 'init,logged,register'},
+            optsbtn: {element: $('<span class="noselect btn opts-btn"></span>'), display: 'logged'},
+            statusbtn: {element: $('<span class="noselect btn status-btn modal-toggle"><div class="modal status-modal"><div class="modal-body"></div></div></span>'), display: 'logged'},
+            searchbtn: {element: $('<span class="noselect btn search-btn"></span>'), display: 'logged'},
+            addbtn: {element: $('<span class="noselect btn add-btn"></span>'), display: 'logged'},
+            attachbtn: {element: $('<span class="noselect btn attach-btn"><label id="attach-label" for="cm-attach"></label></span>'), display: 'logged'},
+            mutebtn: {element: $('<span class="noselect btn mute-btn mute-false"></span>'), display: 'logged'},
+            showusersbtn: {element: $('<span class="noselect btn show-users-btn users-true"></span>'), display: 'logged'},
         },
         data : {
             statusmodal : [
@@ -949,8 +972,8 @@ function RegisterDisplay(user, pass) {
 function switchchat(tab) {
     tab = $(tab);
     roomtype = tab.data('type');
-    roomname = roomtype == 'site' ? site : tab.data('name');
-    roompass = tab.data('pass');
+    roomname = roomtype == 'site' ? site : tab.attr('name');
+    roompass = tab.attr('pass');
     
     var room = {
         type: roomtype,
@@ -964,7 +987,7 @@ function switchchat(tab) {
 function selectchat(chat) {
     tabs.find('.chat-tab').removeClass('sel');
     if (typeof chat == 'string') {
-        tabs.find('.chat-tab[data-name=' + chat + ']').addClass('sel');
+        tabs.find('.chat-tab[name="' + chat + '"]').addClass('sel');
     } else if (typeof chat == 'object') {
         tabs.find(chat).addClass('sel');
     }
@@ -988,7 +1011,7 @@ function checkTyping() {
     }
 }
 function switchvolume(tab) {
-    var chatname = $(tab).data('name');
+    var chatname = $(tab).attr('name');
     var volume = chats[chatname].volume;
     chats[chatname].volume = !volume;
     $(tab).find('.volume-icon').removeClass('vol-'+volume).addClass('vol-'+!volume);
@@ -1059,7 +1082,7 @@ function hideOptsWait() {
 
 function showTypePass(roomname) {
     $('#type-password-name').html(roomname);
-    $('#type-password-mod').data('name', roomname).show();
+    $('#type-password-mod').attr('name', roomname).show();
 }
 
 function hideTypePass() {
@@ -1069,7 +1092,7 @@ function hideTypePass() {
 
 function joinPassRoom() {
     $('#type-password-message').empty();
-    var roomname = $('#type-password-mod').data('name');
+    var roomname = $('#type-password-mod').attr('name');
     var roompass = $('#type-password').val();
     var room = {
         name: roomname,
@@ -1087,7 +1110,7 @@ function showModalMessage(message) {
 }
 
 $(document).on('click', '.chat-row', function() {
-    roomname = $(this).data('name');
+    roomname = $(this).attr('name');
     var room = {name: roomname};
     if ($(this).is('.free')) {
         socket.emit('join room', room);
@@ -1106,8 +1129,9 @@ $(document).on('change', '#select-size', function() {
 
 $(document).on('keyup', '#cm-message-input', checkTyping);
 
-$(document).on( 'keydown', function ( e ) {
+$(document).on('keydown', function ( e ) {
     if ( e.keyCode === 27 ) {
         hideOpts();
+        $(pmModal).hide();
     }
 });

@@ -47,12 +47,21 @@ var roomSchema = new Schema({ //Room schema
 	}],
 	iscustom: Boolean
 });
+var pmRoomSchema = new Schema({
+	name: String,
+	history: [{
+		type: Schema.Types.ObjectId,
+		ref: 'Message'
+	}],
+	unseen: Schema.Types.Mixed
+});
 
 
 var User = mongoose.model('User', userSchema);
 var Message = mongoose.model('Message', messageSchema);
 var Media = mongoose.model('Media', mediaSchema);
 var Room = mongoose.model('Room', roomSchema);
+var PmRoom = mongoose.model('PmRoom', pmRoomSchema);
 
 
 mediaSchema.pre('remove', function(next) {
@@ -101,7 +110,9 @@ module.exports = {
 				return;
 			}
 			if (username.match(';') ||
+				username.match(':') ||
 				username.match(' ') ||
+				username.match('/') ||
 				username.match('<') ||
 				username.match('>')) {
 				callback({
@@ -188,6 +199,14 @@ module.exports = {
 		var password = new Buffer(credentials[1], 'base64').toString('ascii');
 		this.findUserByCredentials(username, password, callback);
 	},
+	findUserByName: function(username, callback) {
+		User.findOne({name: username}, function(err, user) {
+			if (err || !user) return callback(err, user);
+
+			user.codedp = undefined;
+			callback(null, user);
+		});
+	},
 	updateUserData: function(id, userdata, callback) {
 		User.update({_id: id}, {$set: userdata}, callback);
 	},
@@ -241,14 +260,8 @@ module.exports = {
 	},
 	createRoom: function(roomdata, callback) {
 		this.findRoomByName(roomdata.roomname, function(err, roomexists) {
-			if (err) {
-				callback(err);
-				return;
-			}
-			if (roomexists) {
-				callback();
-				return;
-			}
+			if (err || roomexists) return callback(err, null);
+
 			var newroom = new Room(roomdata);
 			connection.collection('rooms').insert(newroom, callback);
 		});
@@ -264,14 +277,30 @@ module.exports = {
 	},
 	findRoomsByNameMatch: function(roomname, callback) {
 		Room.find({name: '%'+roomname+'%'}, function(err, rooms) {
-			if (err) {
-				callback(err);
-				return;
-			}
+			if (err) return callback(err);
+
 			var result = rooms.map(function(room) {
 				return {name: room.name, haspassword: !!room.password};
 			});
 			callback(null, result);
+		});
+	},
+	createPmRoom: function(roomdata, callback) {
+
+		PmRoom.findOne({name: roomdata.name}, function(err, exists) {
+			if (err || exists) return callback(err, null);
+
+			var unseendata = {};
+			unseendata[roomdata.ids[0]] = 0;
+			unseendata[roomdata.ids[1]] = 0;
+
+			var newpmroom = new PmRoom({
+				name: roomdata.name,
+				unseen: unseendata
+			});
+			connection.collection('pmrooms').insert(newpmroom, err => {
+				callback(err, newpmroom);
+			});
 		});
 	},
 	createMedia: function(roomname, mediadata, callback) {
