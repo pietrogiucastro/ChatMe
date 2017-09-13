@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 
- var app = require('../app');
- var debug = require('debug')('chatme:server');
- var fs = require('fs');
- var path = require('path');
- var http = require('http');
- var https = require('https');
- var anchorme = require('anchorme').default;
- var guid = require('uuid').v4;
- var CryptoJS = require("crypto-js");
+var app = require('../app');
+var debug = require('debug')('chatme:server');
+var fs = require('fs');
+var path = require('path');
+var http = require('http');
+var https = require('https');
+var anchorme = require('anchorme').default;
+var guid = require('uuid').v4;
+var CryptoJS = require("crypto-js");
 
 /* 
 // Encrypt 
@@ -25,16 +25,16 @@ var db = require('../db/mongoose.js');
  * Get port from environment and store in Express.
  */
 
- var port = normalizePort(process.env.PORT || '60000');
- app.set('port', port);
+var port = normalizePort(process.env.PORT || '60000');
+app.set('port', port);
 
 /**
  * Create HTTP server.
  */
 
- var options = {
-  key: fs.readFileSync('key.pem'),
-  cert: fs.readFileSync('cert.pem')
+var options = {
+    key: fs.readFileSync('key.pem'),
+    cert: fs.readFileSync('cert.pem')
 };
 
 var server = https.createServer(options, app);
@@ -43,69 +43,69 @@ var server = https.createServer(options, app);
  * Listen on provided port, on all network interfaces.
  */
 
- server.listen(port);
- server.on('error', onError);
- server.on('listening', onListening);
+server.listen(port);
+server.on('error', onError);
+server.on('listening', onListening);
 
 /**
  * Normalize a port into a number, string, or false.
  */
 
- function normalizePort(val) {
-  var port = parseInt(val, 10);
+function normalizePort(val) {
+    var port = parseInt(val, 10);
 
-  if (isNaN(port)) {
-    // named pipe
-    return val;
-  }
+    if (isNaN(port)) {
+        // named pipe
+        return val;
+    }
 
-  if (port >= 0) {
-    // port number
-    return port;
-  }
+    if (port >= 0) {
+        // port number
+        return port;
+    }
 
-  return false;
+    return false;
 }
 
 /**
  * Event listener for HTTP server "error" event.
  */
 
- function onError(error) {
-  if (error.syscall !== 'listen') {
-    throw error;
-  }
+function onError(error) {
+    if (error.syscall !== 'listen') {
+        throw error;
+    }
 
-  var bind = typeof port === 'string'
-  ? 'Pipe ' + port
-  : 'Port ' + port;
+    var bind = typeof port === 'string' ?
+        'Pipe ' + port :
+        'Port ' + port;
 
-  // handle specific listen errors with friendly messages
-  switch (error.code) {
-    case 'EACCES':
-      console.error(bind + ' requires elevated privileges');
-      process.exit(1);
-      break;
-    case 'EADDRINUSE':
-      console.error(bind + ' is already in use');
-      process.exit(1);
-      break;
-    default:
-      throw error;
-  }
+    // handle specific listen errors with friendly messages
+    switch (error.code) {
+        case 'EACCES':
+            console.error(bind + ' requires elevated privileges');
+            process.exit(1);
+            break;
+        case 'EADDRINUSE':
+            console.error(bind + ' is already in use');
+            process.exit(1);
+            break;
+        default:
+            throw error;
+    }
 }
 
 /**
  * Event listener for HTTP server "listening" event.
  */
 
- function onListening() {
-  var addr = server.address();
-  var bind = typeof addr === 'string'
-  ? 'pipe ' + addr
-  : 'port ' + addr.port;
-  debug('Listening on ' + bind);
-  console.log('Listening on ' + bind + ' mode: ' + process.env.NODE_ENV);
+function onListening() {
+    var addr = server.address();
+    var bind = typeof addr === 'string' ?
+        'pipe ' + addr :
+        'port ' + addr.port;
+    debug('Listening on ' + bind);
+    console.log('Listening on ' + bind + ' mode: ' + process.env.NODE_ENV);
 }
 
 var connections = [];
@@ -118,627 +118,821 @@ var rooms = {};
 var customrooms = [];
 
 var status = {
-  online : {message: 'Online', classname: 'isonline'},
-  offline : {message: 'Offline', classname: 'isoffline'},
-  busy : {message: 'Busy', classname: 'isbusy'},
-  afk : {message: 'AFK', classname: 'isafk'},
-  toilet : {message: 'Toilet!', classname: 'istoilet'},
+    online: {
+        message: 'Online',
+        classname: 'isonline'
+    },
+    offline: {
+        message: 'Offline',
+        classname: 'isoffline'
+    },
+    busy: {
+        message: 'Busy',
+        classname: 'isbusy'
+    },
+    afk: {
+        message: 'AFK',
+        classname: 'isafk'
+    },
+    toilet: {
+        message: 'Toilet!',
+        classname: 'istoilet'
+    },
 };
 
 var color = {
-  default: 'darkgreen',
-  red: 'red',
-  green: 'darkgreen',
-  blue: 'blue',
-  black: 'black',
-  yellow: 'yellow',
-  orange: 'orange',
-  skyblue: 'skyblue'
+    default: 'darkgreen',
+    red: 'red',
+    green: 'darkgreen',
+    blue: 'blue',
+    black: 'black',
+    yellow: 'yellow',
+    orange: 'orange',
+    skyblue: 'skyblue'
 };
 
 function elabMessage(msg) {
-  msg = msg.replace(/</g, '&lt').replace(/>/g, '&gt').trim();
-  msg = anchorme(msg, {
-    attributes:[{
-      name:"target",
-      value:"_blank"
-    }]
-  });
-  return msg;
+    msg = msg.replace(/</g, '&lt').replace(/>/g, '&gt').trim();
+    msg = anchorme(msg, {
+        attributes: [{
+            name: "target",
+            value: "_blank"
+        }]
+    });
+    return msg;
 }
 
 db.getRooms(function(err, dbrooms) {
-  if (err || !dbrooms) {
-    console.log('ERROR! Can\'t get rooms!');
-    console.log(err);
-    return;
-  }
-  rooms = dbrooms.rooms;
-  customrooms = dbrooms.customrooms;
-  io.sockets.on('connection', startChatMe);
+    if (err || !dbrooms) {
+        console.log('ERROR! Can\'t get rooms!');
+        console.log(err);
+        return;
+    }
+    rooms = dbrooms.rooms;
+    customrooms = dbrooms.customrooms;
+    io.sockets.on('connection', startChatMe);
 });
 
 var startChatMe = function(socket) {
 
-  // init connection //
-  
-  connections.push(socket);
+    // init connection //
 
-  console.log('a user connected. Online users: ' + connections.length);
-  //send history to user
+    connections.push(socket);
 
-  // =============== //
+    console.log('a user connected. Online users: ' + connections.length);
+    //send history to user
 
-  //     events      //
+    // =============== //
 
-  socket.on('disconnect', function() {
-    connections.splice(connections.indexOf(socket), 1);
+    //     events      //
 
-    if (socket.user && socket.user.lastroom) {
-      leaveroom(socket, socket.user.lastroom);
-    }
+    socket.on('disconnect', function() {
+        connections.splice(connections.indexOf(socket), 1);
 
-    console.log('user disconnected. Online users: ' + connections.length);
-  });
-
-  socket.on('define user', function(token) {
-    if (!token) {
-      Jsonerror(socket);
-      return;
-    }
-    db.findUserByToken(token, function(err, user) {
-      if (err) {
-        console.log(err);
-        return Jsonerror(socket);
-      }
-      if (!user) {
-        console.log('no user found for given token.');
-        return Jsonerror(socket, 'invalidtoken', 'invalid token!');
-      }
-
-      socket.user = { //set user metadata
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        color: color[user.color],
-        status: status[user.status],
-        created: user.created,
-        istyping: false,
-        isrecording: false,
-        lastroom: undefined
-      }
-
-      user = undefined;
-
-      socket.emit('init', {
-        name: socket.user.name
-      });
-
-      socket.on('send message', function(msg) {
-        if (typeof msg != "string") {
-          return Jsonerror(socket);
-        }
-        var roomname = getsocketroom(socket);
-
-        if (!roomexists(roomname)) {
-          console.log('room %s does not exist!', roomname);
-          Jsonerror(socket, 'stderror', 'room does not exist!');
-          return;
+        if (socket.user && socket.user.lastroom) {
+            leaveroom(socket, socket.user.lastroom);
         }
 
-        msg = elabMessage(msg);
-        var msgobj = {_id: db.getNewId(), type: 'user_msg', text: msg, time: new Date(), ownername: socket.user.name, ownercolor: socket.user.color};
-        sendMessage(roomname, msgobj);
-        sliceMsgs(roomname);
-      });
+        console.log('user disconnected. Online users: ' + connections.length);
+    });
 
-      socket.on('send audio', function(audio) {
-          if (typeof audio != "object") {
-            return Jsonerror(socket);
-          }
-          var roomname = getsocketroom(socket);
-          if (!roomname) return Jsonerror(socket);
-
-          var messageid = db.getNewId();
-
-          db.createMedia(roomname, {buffer: audio.buffer, type:'audio', messageid: messageid}, function(err, media) {
-            if (err) {
-              console.log(err);
-              Jsonerror(socket);
-              return;
-            }
-
-            var msgobj = {_id: messageid, type: 'user_audio', duration: audio.duration, time: new Date(), ownername: socket.user.name, ownercolor: socket.user.color};
-            sendMessage(roomname, msgobj);
-            sliceMsgs(roomname);
-          });
-
-      });
-
-      socket.on('get audio', function(messageid) {
-          var roomname = getsocketroom(socket);
-          if (!roomname) return Jsonerror(socket);
-
-          db.findMedia({roomname: roomname, messageid: messageid}, function(err, media) {
-            if (err) {
-              console.log(err);
-              Jsonerror(socket);
-              return;
-            }
-            if (!media) {
-              console.log('ERROR! No media found for id ' + messageid);
-              Jsonerror(socket, 'nomediafound', 'error loading the media', {id: messageid});
-              return;
-            }
-            socket.emit('response audio', {id: messageid, buffer: media.buffer});
-          });
-
-      });
-
-      ss(socket).on('file', function(stream) {
-        console.log(stream);
-        return;
-        var uploadpath = process.cwd()+'/uploads/ciao.jpg';
-        
-        // try {
-          stream.pipe(fs.createWriteStream(uploadpath));
-        /*} catch(e) {
-          console.log(e);
-          return Jsonerror(socket);
-        }*/
-      });
-
-      socket.on('change_status', function(value) {
-        var newstatus = status[value];
-        if (!newstatus) return Jsonerror(socket, 'stderror', 'Error: unknown status: ' + value);
-
-        updateUserData({
-          status: value
-        }, {
-          status: newstatus
-        }, function() {
-          var roomname = getsocketroom(socket);
-          io.sockets.in(roomname).emit('refresh_user', {name: socket.user.name, status: newstatus});
-        });
-
-      });
-
-      socket.on('change_userset', function(settings) {
-        try {
-          var newcolor = color[settings.color];
-          if (!newcolor) {
-            console.log('unknown color!');
-            return Jsonerror(socket);
-          }
-
-          socket.user.color = newcolor;
-
-          updateUserData({color: settings.color}, {color: newcolor}, function() {
-
-            var roomname = getsocketroom(socket);
-            if (roomname) {
-
-              rooms[roomname].users[socket.user.name].color = newcolor;
-              io.sockets.in(roomname).emit('user_color', {name: socket.user.name, color: newcolor});
-
-            } else {
-
-              socket.emit('user_color', {name: socket.user.name, color: newcolor});
-
-            }
-
-            socket.emit('settings_saved');
-
-          });
-
-        }
-
-        catch(e) {
-          console.log(e);
-          return Jsonerror(socket);
-        }
-      });
-
-      socket.on('typingstatus', function(value) {
-        var roomname = getsocketroom(socket);
-        if (!roomname) return;
-        socket.user.istyping = !!value;
-        try {rooms[roomname].users[socket.user.name].istyping = socket.user.istyping;}
-        catch(e) { console.log('error for user ' + socket.user.name); console.log(e); }
-        io.sockets.in(roomname).emit('user_typing', {name: socket.user.name, istyping: socket.user.istyping});
-      });
-
-      socket.on('recording', function(value) {
-        var roomname = getsocketroom(socket);
-        if (!roomname) return;
-        socket.user.isrecording = !!value;
-        try {rooms[roomname].users[socket.user.name].isrecording = socket.user.isrecording;}
-        catch(e) { console.log('error for user ' + socket.user.name); console.log(e); }
-        io.sockets.in(roomname).emit('user_recording', {name: socket.user.name, isrecording: socket.user.isrecording});
-      });
-
-      socket.on('search rooms', function(roomquery) {
-        if (roomquery.length < 3) {
-          console.log('ERROR! roomquery query too short');
-          Jsonwarn(socket, 'invalidroomname');
-          return;
-        }
-
-        var result = {query: roomquery, rooms: []};
-
-        customrooms.forEach(function(thisroom) { //change with db call
-          if (thisroom.match(roomquery) && thisroom != 'global') {
-            var haspass = !!rooms[thisroom].password;
-            var users = 3;
-            result.rooms.push({name: thisroom, haspass: haspass, users: users});
-          }
-        });
-
-        socket.emit('rooms result', result);
-
-      });
-
-      socket.on('switch room', function(room) {
-
-        if (typeof room.name !== 'string') {
-          Jsonerror(socket);
-          return;
-        }
-
-        if (!room.pass) room.pass = '';
-
-        room.name = room.name ? room.name.replace(/ /g, '') : '';
-        switch(room.type) {
-
-          case 'global':
-            switchroom(socket, 'global');
-            break;
-
-          case 'site':
-            switchsiteroom(socket, room.name);
-            break;
-
-          case 'custom': //custom room
-            switchroom(socket, room.name, room.pass);
-            break;
-
-          default:
+    socket.on('define user', function(token) {
+        if (!token) {
+            console.log("ERROR! No token sent");
             Jsonerror(socket);
             return;
-          }
+        }
+        db.findUserByToken(token, function(err, user) {
+            if (err) {
+                console.log(err);
+                return Jsonerror(socket);
+            }
+            if (!user) {
+                console.log('no user found for given token.');
+                return Jsonerror(socket, 'invalidtoken', 'invalid token!');
+            }
 
-      });
+            socket.user = { //set user metadata
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                color: color[user.color],
+                status: status[user.status],
+                created: user.created,
+                istyping: false,
+                isrecording: false,
+                lastroom: undefined
+            }
 
-      socket.on('switch pmroom', function(username) {
-        db.findUserByName(username, function(err, user) {
-          if (err) {
-            console.log("ERROR!");
-            console.log(err);
-            return Jsonerror(socket);
-          }
-          if (!user) {
-            console.log("ERROR! No user found for name: " + username);
-            return Jsonerror(socket);
-          }
+            user = undefined;
 
-          var socketid = socket.user.id;
-          var userid = user.id;
+            socket.emit('init', {
+                name: socket.user.name
+            });
 
-          if (socketid == userid) {
-            console.log("ERROR! socketid and recipientid match!");
-            return Jsonerror(socket);
-          }
+            socket.on('send message', function(msg) {
+                if (typeof msg != "string") {
+                    console.log("ERROR! Wrong msg datatype");
+                    return Jsonerror(socket);
+                }
+                var roomname = getsocketroom(socket);
 
-          var roomname = 'pm://' + (socketid < userid ? socketid + '-' + userid : userid + '-' + socketid);
-          var joinroomdata = {pmRecipient: username};
-          var afterjoin = function(clientroom) {
-            console.log('joined pm room ' + roomname);
-            socket.emit('set room', {name: clientroom, type: 'pm'});
-          }
+                if (!roomexists(roomname)) {
+                    console.log('room %s does not exist!', roomname);
+                    Jsonerror(socket, 'stderror', 'room does not exist!');
+                    return;
+                }
 
-          if (!roomexists(roomname)) {
+                msg = elabMessage(msg);
+                var msgobj = {
+                    _id: db.getNewId(),
+                    type: 'user_msg',
+                    text: msg,
+                    time: new Date(),
+                    ownername: socket.user.name,
+                    ownercolor: socket.user.color
+                };
+                if (roomname.startsWith('pm://')) {
+                    sendPmMessage(roomname, msgobj);
+                } else {
+                    sendMessage(roomname, msgobj);
+                    sliceMsgs(roomname);
+                }
+            });
 
-            createDbPmRoom(socket, {name: roomname, ids: [socketid, userid]}, function() {
+            socket.on('send audio', function(audio) {
+                if (typeof audio != "object") {
+                    console.log("ERROR! Wrong audio datatype: " + typeof audio);
+                    return Jsonerror(socket);
+                }
+                var roomname = getsocketroom(socket);
+                if (!roomname) return Jsonerror(socket);
 
-              rooms[roomname] = {
-                history : [],
-                iscustom: false,
-                users: {},
-                userslist: []
-              }
+                var messageid = db.getNewId();
 
-              joinroom(socket, roomname, afterjoin, joinroomdata);
+                db.createMedia(roomname, {
+                    buffer: audio.buffer,
+                    type: 'audio',
+                    messageid: messageid
+                }, function(err, media) {
+                    if (err) {
+                        console.log(err);
+                        Jsonerror(socket);
+                        return;
+                    }
+
+                    var msgobj = {
+                        _id: messageid,
+                        type: 'user_audio',
+                        duration: audio.duration,
+                        time: new Date(),
+                        ownername: socket.user.name,
+                        ownercolor: socket.user.color
+                    };
+                    if (roomname.startsWith('pm://')) {
+                        sendPmMessage(roomname, msgobj);
+                    } else {
+                        sendMessage(roomname, msgobj);
+                        sliceMsgs(roomname);
+                    }
+                });
 
             });
-          } else {
-            joinroom(socket, roomname, afterjoin, joinroomdata);
-          }
+
+            socket.on('get audio', function(messageid) {
+                var roomname = getsocketroom(socket);
+                if (!roomname) return Jsonerror(socket);
+
+                db.findMedia({
+                    roomname: roomname,
+                    messageid: messageid
+                }, function(err, media) {
+                    if (err) {
+                        console.log(err);
+                        Jsonerror(socket);
+                        return;
+                    }
+                    if (!media) {
+                        console.log('ERROR! No media found for id ' + messageid);
+                        Jsonerror(socket, 'nomediafound', 'error loading the media', {
+                            id: messageid
+                        });
+                        return;
+                    }
+                    socket.emit('response audio', {
+                        id: messageid,
+                        buffer: media.buffer
+                    });
+                });
+
+            });
+
+            ss(socket).on('file', function(stream) {
+                console.log(stream);
+                return;
+                var uploadpath = process.cwd() + '/uploads/ciao.jpg';
+
+                // try {
+                stream.pipe(fs.createWriteStream(uploadpath));
+                /*} catch(e) {
+                  console.log(e);
+                  return Jsonerror(socket);
+                }*/
+            });
+
+            socket.on('change_status', function(value) {
+                var newstatus = status[value];
+                if (!newstatus) return Jsonerror(socket, 'stderror', 'Error: unknown status: ' + value);
+
+                updateUserData({
+                    status: value
+                }, {
+                    status: newstatus
+                }, function() {
+                    var roomname = getsocketroom(socket);
+                    io.sockets.in(roomname).emit('refresh_user', {
+                        name: socket.user.name,
+                        status: newstatus
+                    });
+                });
+
+            });
+
+            socket.on('change_userset', function(settings) {
+                try {
+                    var newcolor = color[settings.color];
+                    if (!newcolor) {
+                        console.log('unknown color!');
+                        return Jsonerror(socket);
+                    }
+
+                    socket.user.color = newcolor;
+
+                    updateUserData({
+                        color: settings.color
+                    }, {
+                        color: newcolor
+                    }, function() {
+
+                        var roomname = getsocketroom(socket);
+                        if (roomname) {
+
+                            rooms[roomname].users[socket.user.name].color = newcolor;
+                            io.sockets.in(roomname).emit('user_color', {
+                                name: socket.user.name,
+                                color: newcolor
+                            });
+
+                        } else {
+
+                            socket.emit('user_color', {
+                                name: socket.user.name,
+                                color: newcolor
+                            });
+
+                        }
+
+                        socket.emit('settings_saved');
+
+                    });
+
+                } catch (e) {
+                    console.log(e);
+                    return Jsonerror(socket);
+                }
+            });
+
+            socket.on('typingstatus', function(value) {
+                var roomname = getsocketroom(socket);
+                if (!roomname) return;
+                socket.user.istyping = !!value;
+                try {
+                    rooms[roomname].users[socket.user.name].istyping = socket.user.istyping;
+                } catch (e) {
+                    console.log('error for user ' + socket.user.name);
+                    console.log(e);
+                }
+                io.sockets.in(roomname).emit('user_typing', {
+                    name: socket.user.name,
+                    istyping: socket.user.istyping
+                });
+            });
+
+            socket.on('recording', function(value) {
+                var roomname = getsocketroom(socket);
+                if (!roomname) return;
+                socket.user.isrecording = !!value;
+                try {
+                    rooms[roomname].users[socket.user.name].isrecording = socket.user.isrecording;
+                } catch (e) {
+                    console.log('error for user ' + socket.user.name);
+                    console.log(e);
+                }
+                io.sockets.in(roomname).emit('user_recording', {
+                    name: socket.user.name,
+                    isrecording: socket.user.isrecording
+                });
+            });
+
+            socket.on('search rooms', function(roomquery) {
+                if (roomquery.length < 3) {
+                    console.log('ERROR! roomquery query too short');
+                    Jsonwarn(socket, 'invalidroomname');
+                    return;
+                }
+
+                var result = {
+                    query: roomquery,
+                    rooms: []
+                };
+
+                customrooms.forEach(function(thisroom) { //change with db call
+                    if (thisroom.match(roomquery) && thisroom != 'global') {
+                        var haspass = !!rooms[thisroom].password;
+                        var users = 3;
+                        result.rooms.push({
+                            name: thisroom,
+                            haspass: haspass,
+                            users: users
+                        });
+                    }
+                });
+
+                socket.emit('rooms result', result);
+
+            });
+
+            socket.on('get pmlist', function(data, callback) {
+            	console.log('entered');
+            	db.getPmList(socket.user.id, function(err, pmlist) {
+            		if (err) {
+            			console.log(err);
+            			return Jsonerror(socket);
+            		}
+            		if (!pmlist) {
+            			console.log("Error! No user found for id " + socket.user.id);
+            			return Jsonerror(socket);
+            		}
+            		callback(null, pmlist);
+            	});
+            });
+
+            socket.on('switch room', function(room) {
+
+                if (typeof room.name !== 'string') {
+                    Jsonerror(socket);
+                    return;
+                }
+
+                if (!room.pass) room.pass = '';
+
+                room.name = room.name ? room.name.replace(/ /g, '') : '';
+                switch (room.type) {
+
+                    case 'global':
+                        switchroom(socket, 'global');
+                        break;
+
+                    case 'site':
+                        switchsiteroom(socket, room.name);
+                        break;
+
+                    case 'custom': //custom room
+                        switchroom(socket, room.name, room.pass);
+                        break;
+
+                    case 'pm': //private message
+                        switchpmroom(room.name, false);
+                        break;
+
+                    default:
+                        console.log("ERROR! Unknown room type: " + room.type);
+                        Jsonerror(socket);
+                        return;
+                }
+
+            });
+
+            socket.on('switch pmroom', function(username) {
+                switchpmroom(username, true);
+            });
+
+            socket.on('join room', function(room) {
+                if (!room.name) {
+                    console.log('ERROR! No room.name!');
+                    Jsonerror(socket);
+                    return;
+                }
+                switchroom(socket, room.name, room.pass, function() {
+                    socket.emit('set room', {
+                        name: room.name,
+                        pass: room.pass,
+                        html: room.name
+                    });
+                });
+            });
+
+
+            socket.on('create room', function(room) {
+                if (typeof room.name != 'string') {
+                    console.log("ERROR! wrong room  datatype");
+                    Jsonerror(socket);
+                    return;
+                }
+                var roomname = room.name.replace(/ /g, '');
+                var roompass = room.pass;
+
+                if (!roomname.length) {
+                    console.log("ERROR! empty roomname");
+                    Jsonwarn(socket, 'invalidroomname', 'Room name can\'t be empty.');
+                    return;
+                }
+                if (roomname.length < 3) {
+                    console.log(roomname + ": ERROR! Name too short");
+                    Jsonwarn(socket, 'invalidroomname', 'name is too short!');
+                    return;
+                }
+                if (roomname.startsWith('pm://') || roomname.startsWith('site://') || roomname.startsWith('http://') || roomname.startsWith('https://') || roomname.startsWith('www.') || roomname.toLowerCase() == 'global') {
+                    console.log(roomname + ": ERROR! Invalid name");
+                    Jsonwarn(socket, 'invalidroomname', 'invalid name!');
+                    return;
+                }
+                if (roomexists(roomname)) {
+                    console.log(roomname + ' ERROR! Room already exists');
+                    Jsonwarn(socket, 'invalidroomname', 'the room already exists');
+                    return;
+                } // else
+
+                createroom(socket, roomname, roompass);
+            });
+
+            socket.on('leave room', function(roomname) {
+                leaveroom(roomname);
+            });
+
+            // ================ //  
         });
-      });
 
-      socket.on('join room', function(room) {
-        if(!room.name) {
-          Jsonerror(socket);
-          return;
-        }
-        switchroom(socket, room.name, room.pass, function() {
-          socket.emit('set room', {name: room.name, pass: room.pass});
-        });
-      });
-
-
-      socket.on('create room', function(room) {
-        if (typeof room.name != 'string') {
-          Jsonerror(socket);
-          return;
-        }
-        var roomname = room.name.replace(/ /g, '');
-        var roompass = room.pass;
-
-        if (!roomname.length) {
-          console.log("ERROR! empty roomname");
-          Jsonwarn(socket, 'invalidroomname', 'Room name can\'t be empty.');
-          return;
-        }
-        if (roomname.length < 3) {
-          console.log(roomname + ": ERROR! Name too short");
-          Jsonwarn(socket, 'invalidroomname', 'name is too short!');
-          return;
-        }
-        if (roomname.startsWith('pm://') || roomname.startsWith('site://') || roomname.startsWith('http://') || roomname.startsWith('https://') || roomname.startsWith('www.') || roomname.toLowerCase() == 'global') {
-          console.log(roomname + ": ERROR! Invalid name");
-          Jsonwarn(socket, 'invalidroomname', 'invalid name!');
-          return;
-        }
-        if (roomexists(roomname)) {
-          console.log(roomname + ' ERROR! Room already exists');
-          Jsonwarn(socket, 'invalidroomname', 'the room already exists');
-          return;
-        } // else
-
-        createroom(socket, roomname, roompass);
-      });
-
-      socket.on('leave room', function(roomname) {
-        leaveroom(roomname);
-      });
-
-      // ================ //  
     });
 
-  });
+    function sendMessage(room, msgobj) {
+        io.sockets.in(room).emit('new message', msgobj);
+        rooms[room].history.push(msgobj);
+        db.createMessage(socket.user.id.toString(), room, msgobj, function(err, result) {
+            if (err) console.log(err);
+            else if (!result.nModified) console.log('ERROR! no room found in db with name ' + room);
+        });
+    }
 
-function sendMessage(room, msgobj) {
-  var clientroomname = room.startsWith('site://') ? 'site' : room;
-  io.sockets.in(room).emit('new message', {msg: msgobj, roomname: clientroomname});
-  rooms[room].history.push(msgobj);
-  console.log(msgobj);
-  db.createMessage(socket.user.id, room, msgobj, function(err, room) {
-    if (err) console.log(err);
-    else if (!room) console.log('ERROR! no room found in db with name ' + room);
-  });
-}
+    function sendPmMessage(room, msgobj) {
+        io.sockets.in(room).emit('new message', msgobj);
 
-function switchsiteroom(socket, roomname) {
-  if (!roomexists(roomname)) {
-      initsiteroom(roomname, function() {
+        var recipientid = getRecipientId(socket.user.id.toString(), room);
+        if (!recipientid) return console.log("ERROR! Userid is not in roomname! room: " + room + " | userid: " + socket.user.id);
+        rooms[room].history.push(msgobj);
+        rooms[room].unseen[recipientid]++;
+        rooms[room].lastmsg = msgobj;
+
+        db.createPmMessageAndUpdate(socket.user.id.toString(), recipientid, room, msgobj, function(err, users) {
+            if (err) console.log(err);
+            else if (!users.length) console.log("ERROR! No user found for id " + socket.user.id + " or id " + recipientid);
+        });
+    }
+
+    function getRecipientId(userid, roomname) {
+        var ids = roomname.replace('pm://', '').split('-');
+        if (ids.indexOf(userid) == -1) return;
+        ids.splice(ids.indexOf(userid), 1);
+        var recipientid = ids[0];
+
+        return recipientid;
+    }
+
+    function switchsiteroom(socket, roomname) {
+        if (!roomexists(roomname)) {
+            initsiteroom(roomname, function() {
+                joinroom(socket, roomname, function() {
+                    console.log('joined site room ' + roomname);
+                });
+            });
+        } else {
+            joinroom(socket, roomname, function() {
+                console.log('joined site room ' + roomname);
+            });
+        }
+    }
+
+    function switchpmroom(username, setclient) {
+
+        db.findUserByName(username, function(err, user) {
+            if (err) {
+                console.log("ERROR!");
+                console.log(err);
+                return Jsonerror(socket);
+            }
+            if (!user) {
+                console.log("ERROR! No user found for name: " + username);
+                return Jsonerror(socket, 'roomdoesnotexist', 'no user found for given name!', {
+                    name: username,
+                    type: 'pm'
+                });
+            }
+
+            var socketid = socket.user.id;
+            var userid = user.id;
+
+            if (socketid == userid) {
+                console.log("ERROR! socketid and recipientid match!");
+                return Jsonerror(socket);
+            }
+
+            var roomname = 'pm://' + (socketid < userid ? socketid + '-' + userid : userid + '-' + socketid);
+            var joinroomdata = {
+                pmRecipient: username
+            };
+            var afterjoin = function(clientroom) {
+                console.log('joined pm room ' + roomname);
+                if (setclient) socket.emit('set room', {
+                    name: username,
+                    type: 'pm',
+                    html: clientroom
+                });
+            }
+
+            if (!roomexists(roomname)) {
+
+            	var usernames = {};
+            	usernames[socketid] = socket.user.name;
+            	usernames[userid] = username;
+
+                createGetDbPmRoom(socket, {
+                    name: roomname,
+                    ids: [socketid, userid],
+                    usernames: usernames
+                }, function(dbroom) {
+
+                    rooms[roomname] = {
+                        history: dbroom.history,
+                        iscustom: false,
+                        users: {},
+                        userslist: [],
+                        usernames: dbroom.usernames,
+                        unseen: dbroom.unseen
+                    }
+
+                    joinroom(socket, roomname, afterjoin, joinroomdata);
+
+                });
+            } else {
+                joinroom(socket, roomname, afterjoin, joinroomdata);
+            }
+        });
+
+    }
+
+    function switchroom(socket, roomname, sentpass, callback) {
+
+        if (!roomexists(roomname)) {
+
+            console.log('error! room  %s does not exist', roomname);
+            Jsonerror(socket, 'roomdoesnotexist', 'room does not exist!', {
+                name: roomname,
+                type: 'custom'
+            });
+            return;
+
+        } else {
+
+            var roompass = getroom(roomname).password;
+            if (roompass && sentpass != roompass) {
+                Jsonerror(socket, 'wrongpassword', 'Wrong password!', {
+                    name: roomname,
+                    type: 'custom'
+                });
+                return;
+            }
+
+        }
         joinroom(socket, roomname, function() {
-        console.log('joined site room ' + roomname);
-      });
-    });
-  } else {
-    joinroom(socket, roomname, function() {
-      console.log('joined site room ' + roomname);
-    });
-  }
-}
-
-function switchroom(socket, roomname, sentpass, callback) {
-
-  if (!roomexists(roomname)) {
-
-    console.log('error! room  %s does not exist', roomname);
-    Jsonerror(socket, 'roomdoesnotexist', 'room does not exist!', {name: roomname});
-    return;
-
-  } else {
-
-    var roompass = getroom(roomname).password;
-    if (roompass && sentpass != roompass) {
-      Jsonerror(socket, 'wrongpassword', 'Wrong password!', {name : roomname});
-      return;
-    }
-
-  }
-  joinroom(socket, roomname, function() {
-    console.log('joined room ' + roomname);
-    if (callback) callback();
-  });
-
-}
-
-function createroom(socket, roomname, roompass) {
-  initroom(roomname, roompass, function() {
-      console.log('new room created: ' + roomname + ' password: ' + !!roompass);
-      switchroom(socket, roomname, roompass, function() {
-        socket.emit('set room', {name: roomname, pass: roompass});
-      });
-  });
-}
-
-function joinroom(socket, roomname, callback, data) {
-  function nowjoin() {
-
-    if (rooms[roomname].userslist.indexOf(socket.user.name) == -1) { // if user is not connected to the room yet, send connection msg
+            console.log('joined room ' + roomname);
+            if (callback) callback();
+        });
 
     }
 
-    socket.join(roomname, function() {
-      var userdata = { name: socket.user.name, status: socket.user.status, istyping: socket.user.istyping, color:socket.user.color };
-      io.sockets.in(roomname).emit('add_user', userdata);
-
-      rooms[roomname].users[socket.user.name] = userdata;
-      rooms[roomname].userslist.push(socket.user.name);
-      var room = roomname.startsWith('site://') ? 'site' : (roomname.startsWith('pm://') ? 'pm:' + data.pmRecipient : roomname);
-      socket.emit('history_users', {history: rooms[roomname].history, users: rooms[roomname].users, roomname: room});
-      socket.user.lastroom = roomname;
-
-      if (callback) callback(room);
-    });
-
-  }
-
-  var currentroom = getsocketroom(socket);
-  if (currentroom) leaveroom(socket, currentroom, nowjoin);
-  else nowjoin();
-
-}
-
-function leaveroom(socket, roomname, callback) {
-  socket.leave(roomname, function() {
-    var socketindex = rooms[roomname].userslist.indexOf(socket.user.name);
-    if (socketindex + 1)
-      rooms[roomname].userslist.splice(socketindex, 1);
-    var stillConnected = rooms[roomname].userslist.indexOf(socket.user.name) + 1;
-    if (!stillConnected) {
-      io.sockets.in(roomname).emit('remove_user', socket.user.name);
-      delete rooms[roomname].users[socket.user.name];
+    function createroom(socket, roomname, roompass) {
+        initroom(roomname, roompass, function() {
+            console.log('new room created: ' + roomname + ' password: ' + !!roompass);
+            switchroom(socket, roomname, roompass, function() {
+                socket.emit('set room', {
+                    name: roomname,
+                    pass: roompass,
+                    html: roomname
+                });
+            });
+        });
     }
-    console.log('left room ' + roomname);
-    if (callback) callback();
 
-      // delete user joined rooms in db
+    function joinroom(socket, roomname, callback, data) {
+        function nowjoin() {
 
-      // delete room if no users are in the room
-      // delete customrooms[romname];
-      //
-      /*var index = customrooms.indexOf(5);
-      if (index + 1) customrooms.splice(index, 1);*/
-    });
-}
-function getroom(roomname) {
-  return rooms[roomname];
-}
+            if (rooms[roomname].userslist.indexOf(socket.user.name) == -1) { // if user is not connected to the room yet, send connection msg
 
-function getrooms(callback) {
-  callback(rooms);
-}
+            }
 
-function initroom(roomname, roompass, callback) {
-  createDbRoom(socket, {name: roomname, password: roompass, iscustom: true}, function() {
+            socket.join(roomname, function() {
+                var userdata = {
+                    name: socket.user.name,
+                    status: socket.user.status,
+                    istyping: socket.user.istyping,
+                    color: socket.user.color
+                };
+                io.sockets.in(roomname).emit('add_user', userdata);
 
-    rooms[roomname] = {
-      history: [],
-      password: roompass,
-      users: {},
-      userslist: [],
-      iscustom: true
-    };
+                rooms[roomname].users[socket.user.name] = userdata;
+                rooms[roomname].userslist.push(socket.user.name);
+                var room = roomname.startsWith('site://') ? 'site' : (roomname.startsWith('pm://') ? 'pm:' + data.pmRecipient : roomname);
+                socket.emit('history_users', {
+                    history: rooms[roomname].history,
+                    users: rooms[roomname].users,
+                    roomname: room
+                });
+                socket.user.lastroom = roomname;
 
-    customrooms.push(roomname);
-    if (callback) callback();
-  });
-}
+                if (callback) callback(room);
+            });
 
-function initsiteroom(roomname, callback) {
-  createDbRoom(socket, {name: roomname, iscustom: false}, function() {
-
-    rooms[roomname] = {
-      history: [],
-      users: {},
-      userslist: [],
-      iscustom: false
-    };
-
-    if (callback) callback();
-  });
-}
-
-function getsocketroom(socket) {
-  return Object.keys(socket.rooms)[1];
-}
-
-function roomexists(roomname) {
-  return !!rooms[roomname];
-}
-
-function sliceMsgs(roomname) {
-  if (rooms[roomname].history.length > 100 ) {
-    var lastmsg = rooms[roomname].history.shift();
-    var msgid = lastmsg.id;
-
-    db.deleteMessageById(msgid, function(err) {
-      if (err) {
-        console.log('ERROR! Failed to delete message with id: ' + msgid)
-        console.log(err);
-      }
-    });
-
-    if (lastmsg.type == 'user_audio') {
-
-      db.deleteMedia({roomname: roomname, messageid: msgid}, function(err, media) {
-        if (err) {
-          console.log('failed to delete media with id :' + msgid);
-          console.log(err);
-          return;
         }
-      });
+
+        var currentroom = getsocketroom(socket);
+        if (currentroom) leaveroom(socket, currentroom, nowjoin);
+        else nowjoin();
 
     }
-  }
-}
 
-function updateUserData(data, socketdata, callback) {
-  db.updateUserData(socket.user.id, data, function(err) {
-      if(err) {
-        console.log(err);
-        return Jsonerror(socket);
-      }
-      Object.assign(socket.user, socketdata);
-      callback();
-  });
-}
+    function leaveroom(socket, roomname, callback) {
+        socket.leave(roomname, function() {
+            var socketindex = rooms[roomname].userslist.indexOf(socket.user.name);
+            if (socketindex + 1)
+                rooms[roomname].userslist.splice(socketindex, 1);
+            var stillConnected = rooms[roomname].userslist.indexOf(socket.user.name) + 1;
+            if (!stillConnected) {
+                io.sockets.in(roomname).emit('remove_user', socket.user.name);
+                delete rooms[roomname].users[socket.user.name];
+            }
+            console.log('left room ' + roomname);
+            if (callback) callback();
 
-function createDbRoom(socket, roomdata, callback) {
-  db.createRoom(roomdata, function(err, room) {
+            // delete user joined rooms in db
 
-    if (err) {
-      console.log(err);
-      return Jsonerror(socket);
+            // delete room if no users are in the room
+            // delete customrooms[romname];
+            //
+            /*var index = customrooms.indexOf(5);
+            if (index + 1) customrooms.splice(index, 1);*/
+        });
     }
-    if (!room) {
-      console.log('ERROR! Room already exists');
-      return Jsonerror(socket, 'roomexists', 'Room already exists!');
+
+    function getroom(roomname) {
+        return rooms[roomname];
     }
-    console.log('created room ' + roomdata.name);
-    if (callback) callback();
 
-  });
-}
-
-function createDbPmRoom(socket, roomname, callback) {
-  db.createPmRoom(roomname, function(err, room) {
-    if (err) {
-      console.log(err);
-      return Jsonerror(socket);
+    function getrooms(callback) {
+        callback(rooms);
     }
-    if (!room) {
-      // If a pm room already exists, continue without throwing errors.
-      callback();
-      return;
+
+    function initroom(roomname, roompass, callback) {
+        createDbRoom(socket, {
+            name: roomname,
+            password: roompass,
+            iscustom: true
+        }, function() {
+
+            rooms[roomname] = {
+                history: [],
+                password: roompass,
+                users: {},
+                userslist: [],
+                iscustom: true
+            };
+
+            customrooms.push(roomname);
+            if (callback) callback();
+        });
     }
-    console.log('created pm room ' + roomname);
-    callback();
-  });
-}
 
-function Jsonerror(socket, type='stderror', message='Internal error. Try again later.', data = {}) {
-  socket.emit('jsonerror', {type: type, message: message, data: data});
-}
+    function initsiteroom(roomname, callback) {
+        createDbRoom(socket, {
+            name: roomname,
+            iscustom: false
+        }, function() {
 
-function Jsonwarn(socket, type='stdwarn', message='Internal error. Try again later.') {
-  socket.emit('jsonwarning', {type: type, message: message});
-}
+            rooms[roomname] = {
+                history: [],
+                users: {},
+                userslist: [],
+                iscustom: false
+            };
+
+            if (callback) callback();
+        });
+    }
+
+    function getsocketroom(socket) {
+        return Object.keys(socket.rooms)[1];
+    }
+
+    function roomexists(roomname) {
+        return !!rooms[roomname];
+    }
+
+    function sliceMsgs(roomname) {
+        if (rooms[roomname].history.length > 100) {
+            var lastmsg = rooms[roomname].history.shift();
+            var msgid = lastmsg.id;
+
+            db.deleteMessageById(msgid, function(err) {
+                if (err) {
+                    console.log('ERROR! Failed to delete message with id: ' + msgid)
+                    console.log(err);
+                }
+            });
+
+            if (lastmsg.type == 'user_audio') {
+
+                db.deleteMedia({
+                    roomname: roomname,
+                    messageid: msgid
+                }, function(err, media) {
+                    if (err) {
+                        console.log('failed to delete media with id :' + msgid);
+                        console.log(err);
+                        return;
+                    }
+                });
+
+            }
+        }
+    }
+
+    function updateUserData(data, socketdata, callback) {
+        db.updateUserData(socket.user.id, data, function(err) {
+            if (err) {
+                console.log(err);
+                return Jsonerror(socket);
+            }
+            Object.assign(socket.user, socketdata);
+            callback();
+        });
+    }
+
+    function createDbRoom(socket, roomdata, callback) {
+        db.createRoom(roomdata, function(err, room) {
+
+            if (err) {
+                console.log(err);
+                return Jsonerror(socket);
+            }
+            if (!room) {
+                console.log('ERROR! Room already exists');
+                return Jsonerror(socket, 'roomexists', 'Room already exists!');
+            }
+            console.log('created room ' + roomdata.name);
+            if (callback) callback();
+
+        });
+    }
+
+    function createGetDbPmRoom(socket, roomdata, callback) {
+        db.createGetPmRoom(roomdata, function(err, room) {
+            if (err) {
+                console.log(err);
+                return Jsonerror(socket);
+            }
+            if (!room) {
+                // If a pm room already exists, continue without throwing errors.
+                callback();
+                return;
+            }
+            console.log('created pm room ' + roomdata.name);
+            callback(room);
+        });
+    }
+
+    function Jsonerror(socket, type = 'stderror', message = 'Internal error. Try again later.', data = {}) {
+        socket.emit('jsonerror', {
+            type: type,
+            message: message,
+            data: data
+        });
+    }
+
+    function Jsonwarn(socket, type = 'stdwarn', message = 'Internal error. Try again later.') {
+        socket.emit('jsonwarning', {
+            type: type,
+            message: message
+        });
+    }
 
 
 };

@@ -33,6 +33,7 @@
     "anchorme": "*",
     "uuid": "*",
     "crypto-js": "*",
-    "mongoose": "*"
+    "mongoose": "*",
+    "mongoose-deep-populate": "*"
   }
 }

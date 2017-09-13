@@ -135,10 +135,10 @@
     }
     .chat-tab .volume-icon {
       position: absolute;
-      left: 2px;
+      left: 3px;
       top: 100%;
       padding: 1px;
-      padding-top: 4px;
+      padding-top: 5px;
     }
     .vol-true {
       color: green;
@@ -172,6 +172,10 @@
     }
     .chat-tab.free:before {
       content: "\f0ac";
+    }
+    .chat-tab.pm:before {
+      content: "\f007";
+      padding-left: 1px;
     }
     .chat-tab.custom {
       padding-right: 15px !important;
@@ -1228,7 +1232,12 @@
       text-align: center;
       font-size: 14px;
       color: #aaa;
+    }
+    .pm-msgs-modal .modal-body.msgs:after {
       content: "End of messages";
+    }
+    .pm-msgs-modal .modal-body.nomsg:after {
+      content: "No message found";
     }
     .modal-body .pm-title {
       font-size: 15px;
