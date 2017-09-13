@@ -59,8 +59,8 @@ messagemodal.find('.modal-close').click(function() {
     $(this).parents('.cm-message-modal:first').hide();
     hideOpts();
 });
-var pmModal = $('<div class="pm-msgs-modal" style="z-index:1000;"><div class="pm-close"></div><div class="modal-body cm-scroll"><div class="pm-title">Private Messages</div><div class="pm-search"></div><div class="pm-messages"></div></div></div>');
-var pmMessage = $('<div class="pm-message"><div class="pm-head cm-clearafter"><div class="pm-name"></div><div class="pm-date"></div></div><div class="pm-body"><div class="pm-text"></div><div class="pm-not"></div></div>')[0];
+var pmModal = $('<div class="pm-msgs-modal" style="z-index:1000; display:none;"><div class="pm-close"></div><div class="modal-body cm-scroll"><div class="pm-title">Private Messages</div><div class="pm-search"></div><div class="pm-messages"></div></div></div>');
+var pmMessage = $('<div class="pm-message"><div class="pm-head cm-clearafter"><div class="pm-name"></div><div class="pm-date"></div></div><div class="pm-body"><div class="pm-text"><span class="pm-msgowner"></span></div><div class="pm-not"></div></div>')[0];
 msgbtn.click(function() {
     showPmModal();
 });
@@ -1128,13 +1128,26 @@ function hideOpts() {
 }
 
 function showPmModal() {
+	var pmMessages = pmModal.find('.pm-messages');
+	pmMessages.empty();
     pmModal.removeClass('nomsg msgs');
     pmModal.show();
     socket.emit('get pmlist', null, function(err, pmlist) {
+    	if ((!pmlist).length) pmModal.addClass('nomsg');
+    	else pmModal.addClass('msgs');
+
         pmlist.forEach(pmrow => {
             console.log(pmrow);
             var domRow = $(pmMessage.cloneNode(true));
-            
+            var msgtime = new Date(pmrow.lastmsg.time).toLocaleString().split(', ')[1].slice(0, -3);
+
+            domRow.find('.pm-name').html(pmrow.recipientnamefor);
+            domRow.find('.pm-date').html(msgtime);
+            domRow.find('.pm-msgowner').html(sess_user == pmrow.lastmsg.ownername? 'You' : pmrow.lastmsg.ownername);
+            domRow.find('.pm-text').append(pmrow.lastmsg.text);
+
+            if (pmrow.unseen) domRow.addClass('pm-unseen').find('.pm-not').html(pmrow.unseen);
+            pmMessages.append(domRow);
         });
     });
 }

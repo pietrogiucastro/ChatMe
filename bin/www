@@ -463,7 +463,6 @@ var startChatMe = function(socket) {
             });
 
             socket.on('get pmlist', function(data, callback) {
-            	console.log('entered');
             	db.getPmList(socket.user.id, function(err, pmlist) {
             		if (err) {
             			console.log(err);
@@ -585,6 +584,7 @@ var startChatMe = function(socket) {
     }
 
     function sendPmMessage(room, msgobj) {
+        console.log(msgobj);
         io.sockets.in(room).emit('new message', msgobj);
 
         var recipientid = getRecipientId(socket.user.id.toString(), room);
@@ -661,14 +661,14 @@ var startChatMe = function(socket) {
 
             if (!roomexists(roomname)) {
 
-            	var usernames = {};
-            	usernames[socketid] = socket.user.name;
-            	usernames[userid] = username;
+            	var recipientnamefor = {};
+            	recipientnamefor[socketid] = username;
+            	recipientnamefor[userid] = socket.user.name;
 
                 createGetDbPmRoom(socket, {
                     name: roomname,
                     ids: [socketid, userid],
-                    usernames: usernames
+                    recipientnamefor: recipientnamefor
                 }, function(dbroom) {
 
                     rooms[roomname] = {
@@ -676,7 +676,7 @@ var startChatMe = function(socket) {
                         iscustom: false,
                         users: {},
                         userslist: [],
-                        usernames: dbroom.usernames,
+                        recipientnamefor: dbroom.recipientnamefor,
                         unseen: dbroom.unseen
                     }
 

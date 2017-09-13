@@ -57,6 +57,7 @@
 - audio download button (don't auto download)
 - fix pm modal click bug when re-login
 - start npm with "infinite" on the server
+- insert enter + shift to wrap message text
 
 _create pmchat
 _images

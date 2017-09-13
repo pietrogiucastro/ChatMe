@@ -72,7 +72,7 @@ var pmRoomSchema = new Schema({
         type: Schema.Types.ObjectId,
         ref: 'Message'
     }],
-    usernames: Schema.Types.Mixed,
+    recipientnamefor: Schema.Types.Mixed,
     unseen: Schema.Types.Mixed,
     lastmsg: {
     	type: Schema.Types.ObjectId,
@@ -322,10 +322,15 @@ module.exports = {
 
 			var pmlist = user.pmlist;
 			pmlist.forEach(pmroom => {
-				//var recipientname = pmroom.usernames
+				console.log(pmroom);
+				var recipientname = pmroom.recipientnamefor[userid.toString()];
+
 				pmroom.unseen = pmroom.unseen[userid.toString()];
-				pmroom.history = undefined;
 				pmroom.lastmsg.text = pmroom.lastmsg.text.substr(0, 60);
+				pmroom.recipientnamefor = recipientname;
+
+				pmroom.history = undefined;
+				pmroom.name = undefined;
 			});
 			callback(null, pmlist);
     	});
@@ -417,7 +422,7 @@ module.exports = {
 
             var newpmroom = new PmRoom({
                 name: roomdata.name,
-                usernames: roomdata.usernames,
+                recipientnamefor: roomdata.recipientnamefor,
                 unseen: unseendata
             });
             connection.collection('pmrooms').insert(newpmroom, err => {

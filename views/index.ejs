@@ -1292,6 +1292,17 @@
       white-space: nowrap;
       overflow: hidden;
     }
+    .pm-message .pm-msgowner {
+      font-weight: bold;
+      display: inline-block;
+      margin-right: 5px;
+      font-size: 13px;
+    }
+    .pm-msgowner:after {
+      display: inline;
+      content: ":";
+    }
+
     .pm-message.pm-unseen .pm-text {
       font-weight: bold;
     }
@@ -1308,6 +1319,9 @@
       background: green;
       color: white;
       border-left: 7px solid white;
+    }
+    .pm-message.pm-unseen:hover .pm-not {
+      border-left: 7px solid rgb(248,248,250);
     }
   </style>
 </head>
