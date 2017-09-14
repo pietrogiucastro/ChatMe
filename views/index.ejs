@@ -1299,6 +1299,52 @@
     .pm-btn.pm-show:before, .pm-btn.pm-show:after {
       color: skyblue;
     }
+
+    .modal-body .pm-results-cont {
+      width: 90%;
+      margin: auto;
+      padding: 20px 0;
+    }
+
+    .pm-results-cont .search-results {
+      font-family: Montserrat;
+      background: rgb(245,245,250);
+      padding: 10px 0;
+      font-size: 13px;
+      text-align: center;
+      border-radius: 5px;
+    }
+
+    .search-results:before {
+      display: block;
+      font-size: 13px;
+      font-weight: bold;
+      color: gray;    
+    }
+
+    .search-results.tooshort:before {
+      content: "Type at least 3 characters";
+    }
+
+    .search-results.nomatches:before {
+      content: "No matches found";
+    }
+
+    .search-results .pm-user-result {
+      padding: 3px;
+      cursor: pointer;
+      color: #32472d;
+    }
+
+    .search-results .pm-user-result:hover {
+      background: #dde;
+      color: black !important;
+    }
+
+    .pm-user-result .sel {
+      color: #36ad3c;
+    }
+
     .modal-body .pm-messages:before {
       display: block;
       content: "";
@@ -1358,6 +1404,12 @@
     .pm-message.pm-unseen .pm-text {
       font-weight: bold;
     }
+    .pm-text .pm-audio-ico:before {
+      font-family: fontawesome;
+      content: "\f130";
+      margin-right: 5px;
+    }
+
     .pm-unseen .pm-not {
       display: block !important;
     }

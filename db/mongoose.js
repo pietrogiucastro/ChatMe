@@ -332,11 +332,15 @@ module.exports = {
 				var recipientname = pmroom.recipientnamefor[userid.toString()];
 
 				pmroom.unseen = pmroom.unseen[userid.toString()];
-				pmroom.lastmsg.text = pmroom.lastmsg.text.substr(0, 60);
 				pmroom.recipientnamefor = recipientname;
 
 				pmroom.history = undefined;
 				pmroom.name = undefined;
+
+				if (pmroom.lastmsg.type == 'user_audio')
+					pmroom.lastmsg.text = '<span class="pm-audio-ico">audio</span>';
+				else
+					pmroom.lastmsg.text = pmroom.lastmsg.text.substr(0, 60);
 			});
 			callback(null, pmlist);
     	});

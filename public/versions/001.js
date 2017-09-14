@@ -59,7 +59,7 @@ messagemodal.find('.modal-close').click(function() {
     $(this).parents('.cm-message-modal:first').hide();
     hideOpts();
 });
-var pmModal = $('<div class="pm-msgs-modal" style="z-index:1000; display:none;"><div class="pm-close"></div><div class="modal-body cm-scroll"><div class="pm-title">Private Messages</div><div class="pm-search cm-clearafter"><span class="pm-btn pm-add-btn"><input class="pm-add-input" style="display:none;" placeholder="add new user"><span class="pm-clear-search"></span></span><span class="pm-btn pm-search-btn"><span class="pm-clear-search"></span><input class="pm-search-input" style="display:none;" placeholder="search user"></span></div><div class="search-results" style="display: none;"></div><div class="pm-messages"></div></div></div>');
+var pmModal = $('<div class="pm-msgs-modal" style="z-index:1000; display:none;"><div class="pm-close"></div><div class="modal-body cm-scroll"><div class="pm-title">Private Messages</div><div class="pm-search cm-clearafter"><span class="pm-btn pm-add-btn"><input class="pm-add-input" style="display:none;" placeholder="add new user"><span class="pm-clear-search"></span></span><span class="pm-btn pm-search-btn"><span class="pm-clear-search"></span><input class="pm-search-input" style="display:none;" placeholder="search user"></span></div><div class="pm-results-cont" style="display: none;"><div class="search-results"></div></div><div class="pm-messages"></div></div></div>');
 var pmMessage = $('<div class="pm-message"><div class="pm-head cm-clearafter"><div class="pm-name"></div><div class="pm-date"></div></div><div class="pm-body"><div class="pm-text"><span class="pm-msgowner"></span></div><div class="pm-not"></div></div>')[0];
 msgbtn.click(function() {
     showPmModal();
@@ -1171,7 +1171,7 @@ function showPmModal() {
 }
 function hidePmModal() {
     pmModal.fadeOut(40);
-    collapsePmBtn($('.pm-btn'));
+    clearPmSearch($('.pm-btn'));
 }
 
 function expandPmBtn(buttons) {
@@ -1202,18 +1202,30 @@ function collapsePmBtn(buttons) {
 
 function clearPmSearch(pmbtn) {
     collapsePmBtn(pmbtn);
+    $('.pm-results-cont').slideUp('fast');
 }
 
 $(document).on('keyup', '.pm-add-input', function() {
     var query = $(this).val();
-    if (query.length < 3) return;
-    $('.search-results').empty();
-    $('.search-resulsts').slideDown();
+    $('.pm-results-cont').slideDown('fast');
+    if (query.length < 3) return $('.search-results').removeClass('nomatches').addClass('tooshort').empty();
 
     socket.emit('search users', query, function(err, userslist) {
-        if (err) return console.log(err);
+        if (err || !userslist) return console.log(err);
+    	$('.search-results').removeClass('nomatches tooshort').empty();
+
+    	if (!userslist.length) $('.search-results').addClass('nomatches');
+
+        var htmlmatch = '<span class="sel">'+query+'</span>';
+
         userslist.forEach(listname => {
-            $('.search-results').append('<div class="pm-user-result" style="color:green;">'+listname+'</div>');
+            var htmlListName = listname.replace(query, htmlmatch);
+            var userResult = $('<div class="pm-user-result">'+htmlListName+'</div>');
+            userResult.click(function() {
+                socket.emit('switch pmroom', listname);
+            });
+
+            $('.search-results').append(userResult);
         });
     });
 });
