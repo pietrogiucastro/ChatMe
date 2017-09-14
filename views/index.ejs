@@ -645,6 +645,7 @@
       width: 90%;
       left: 5%;
       top: 35px;
+      z-index: 10;
     }
     #cm-not {
       margin: auto;
@@ -1226,17 +1227,17 @@
       background-color: white;
       box-shadow: 0px 3px 4px #555;
     }
-    .pm-msgs-modal .modal-body:after {
+    .pm-msgs-modal .pm-messages:after {
       display: block;
       padding: 12px 0;
       text-align: center;
       font-size: 14px;
       color: #aaa;
     }
-    .pm-msgs-modal .modal-body.msgs:after {
+    .pm-msgs-modal .pm-messages.msgs:after {
       content: "End of messages";
     }
-    .pm-msgs-modal .modal-body.nomsg:after {
+    .pm-msgs-modal .pm-messages.nomsg:after {
       content: "No message found";
     }
     .modal-body .pm-title {
@@ -1246,7 +1247,57 @@
       color: rgb(50,80,100);
     }
     .modal-body .pm-search {
+      padding: 0 20px;
+      padding-bottom: 12px;
+      color: rgb(40,40,40);
+      display: flex;
+      align-items: center;
+      height: 30px;
+    }
+    .pm-search .pm-btn {
+      cursor: pointer;
+      padding: 2px;
+    }
+    .pm-search .pm-btn:hover {
+      color: #555;
+    }
+    .pm-search-btn:after {
+      font-family: fontawesome;
+      content: "\f002";
+    }
+    .pm-add-btn:before {
+      font-family: fontawesome;
+      content: "\f234";
+    }
+    .pm-search .pm-search-btn {
+      margin-left: auto;
+    }
+    .pm-search .pm-add-btn {
+      margin-right: auto;
       
+    }
+    .pm-btn input {
+      border: 0;
+      outline: none;
+      font-family: Montserrat;
+    }
+    .pm-btn .pm-clear-search {
+      display: none;
+      margin: 0 5px;
+    }
+    .pm-clear-search:before {
+      font-family: fontawesome;
+      content: "\f00d";
+      color: rgb(100,100,100);
+    }
+    .pm-clear-search:hover:before {
+      color: darkred !important;      
+    }
+    .pm-btn.pm-show .pm-clear-search {
+      display: initial;
+    }
+    .pm-btn.pm-show:before, .pm-btn.pm-show:after {
+      color: skyblue;
     }
     .modal-body .pm-messages:before {
       display: block;
@@ -1276,6 +1327,7 @@
       float: left;
       font-weight: bold;
       color: darkgreen;
+      font-size: 13px;
     }
     .pm-head > .pm-date {
       float: right;
@@ -1296,7 +1348,7 @@
       font-weight: bold;
       display: inline-block;
       margin-right: 5px;
-      font-size: 13px;
+      color: #325929;
     }
     .pm-msgowner:after {
       display: inline;

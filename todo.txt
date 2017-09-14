@@ -51,6 +51,7 @@
 - possibility to delete messages (check if they are mine before);
 - enter to submit/select everywhere
 - search rooms via db
+- retrieve all active rooms for socket via db
 - google analytics
 - right message time (yesterday ecc..)
 - audio size limit
@@ -81,3 +82,9 @@ lato client:
  - Appena aperta una conversazione, verrà creata la stanza se non ancora creata nel db;
  	altrimenti verrà presa dal db e inserita nell'oggetto rooms
  - Appena inviato un messaggio alla stanza, esso verrà salvato sul db aggiungendo 1 allo stato di unseen dei messaggi dell'altro utente. Appena arrivato il messaggio all'altro utente nella chat (questo vuol dire che è online), verrà riazzerato il suo stato di unseen sul db.
+
+
+
+
+ padding: 6px;
+ width: show;

@@ -59,14 +59,14 @@ messagemodal.find('.modal-close').click(function() {
     $(this).parents('.cm-message-modal:first').hide();
     hideOpts();
 });
-var pmModal = $('<div class="pm-msgs-modal" style="z-index:1000; display:none;"><div class="pm-close"></div><div class="modal-body cm-scroll"><div class="pm-title">Private Messages</div><div class="pm-search"></div><div class="pm-messages"></div></div></div>');
+var pmModal = $('<div class="pm-msgs-modal" style="z-index:1000; display:none;"><div class="pm-close"></div><div class="modal-body cm-scroll"><div class="pm-title">Private Messages</div><div class="pm-search cm-clearafter"><span class="pm-btn pm-add-btn"><input class="pm-add-input" style="display:none;" placeholder="add new user"><span class="pm-clear-search"></span></span><span class="pm-btn pm-search-btn"><span class="pm-clear-search"></span><input class="pm-search-input" style="display:none;" placeholder="search user"></span></div><div class="search-results" style="display: none;"></div><div class="pm-messages"></div></div></div>');
 var pmMessage = $('<div class="pm-message"><div class="pm-head cm-clearafter"><div class="pm-name"></div><div class="pm-date"></div></div><div class="pm-body"><div class="pm-text"><span class="pm-msgowner"></span></div><div class="pm-not"></div></div>')[0];
 msgbtn.click(function() {
     showPmModal();
 });
 pmModal.click(function(e) {
     if (e.target != this && $(e.target).is(':not(.pm-close)')) return;
-    $(this).hide();
+    hidePmModal();
 });
 
 // if user is running mozilla then use it's built-in WebSocket
@@ -135,6 +135,11 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
             message = createTextMessage(msg);
         } else if (msg.type == 'user_audio') { //audio
             message = createAudioMessage(msg);
+        }
+        else {
+            showModalMessage("Internal error. Try again later.");
+            console.log("unknown message type for msg: " + JSON.stringify(msg));
+            return;
         }
         if (currentusers.indexOf(msg.ownername) < 0) { //offline user
             message.find('.cm-message-name').addClass('user-offline');
@@ -660,6 +665,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
         });
         socket.on('set room', function(room) {
             hideOpts();
+            hidePmModal();
 
             chats[room.name] = {
                 volume: true
@@ -850,7 +856,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
                 '<option class="settings-option">orange</option>' +
                 '<option class="settings-option">skyblue</option>' +
                 '</select></div>' +
-                '<div class="settings-bottom"><button class="cm-button cm-right" onclick="chatOptions.submitUserSettings()">Confirm</button><button class="cm-button cm-secondary cm-right" onclick="chatOptions.initDis()">Cancel</button></div>' +
+                '<div class="settings-bottom"><button class="cm-button cm-confirm cm-right">Confirm</button><button class="cm-button cm-cancel cm-secondary cm-right">Cancel</button></div>' +
                 '</div>',
 
             displaySettings: '<div class="settings"><div class="settings-row"><span class="settings-text">Window size:</span><select id="select-size" class="settings-select">' +
@@ -878,6 +884,8 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
         userSettingsDis: function() {
             spinner.hide();
             chatOptions.container.html(chatOptions.display.userSettings);
+            chatOptions.container.find('.cm-confirm').click(chatOptions.submitUserSettings);
+            chatOptions.container.find('.cm-cancel').click(chatOptions.initDis);
         },
         displaySettingsDis: function() {
             spinner.hide();
@@ -905,7 +913,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
             });
         },
         submitUserSettings: function() {
-            usersettings = {};
+            var usersettings = {};
             var color = chatOptions.container.find('#select-color').val();
             usersettings.color = color;
             socket.emit('change_userset', usersettings);
@@ -992,7 +1000,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
             /* searchbtn */
             buttons.searchbtn.object = $(buttons.searchbtn.element[0].cloneNode(true));
             buttons.searchbtn.object.click(function() {
-                options.show();
+                showOpts();
                 chatOptions.searchChatDis();
             });
             /* addchbtn */
@@ -1002,13 +1010,13 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
             /* addchbtn */
             buttons.addbtn.object = $(buttons.addbtn.element[0].cloneNode(true));
             buttons.addbtn.object.click(function() {
-                options.show();
+                showOpts();
                 chatOptions.addChatDis();
             });
             /* optsbtn */
             buttons.optsbtn.object = $(buttons.optsbtn.element[0].cloneNode(true));
             buttons.optsbtn.object.click(function() {
-                options.show();
+                showOpts();
                 chatOptions.initDis();
             });
             /* minbtn */
@@ -1075,11 +1083,14 @@ function removeTab(el) {
     leaveChat($(el).parent());
 }
 
-function leaveChat(tab, callback) {
-    callback = callback || function() {}
-    prevTab = tab.prev();
+function leaveChat(tab) {
+    if (tab.is('.sel')) {
+        prevTab = tab.prev();
+        switchchat(prevTab);
+    }
+    
     tab.remove();
-    switchchat(prevTab);
+    // here to leave the socket b-e active room will be implemented
 }
 
 function checkTyping() {
@@ -1123,21 +1134,24 @@ $(document).on('click', '.chat-tab', function(e) {
     else if ($(this).is(':not(.sel)')) switchchat(this);
 });
 
+function showOpts() {
+    options.fadeIn(60);
+}
+
 function hideOpts() {
-    options.hide();
+    options.fadeOut(60);
 }
 
 function showPmModal() {
 	var pmMessages = pmModal.find('.pm-messages');
 	pmMessages.empty();
-    pmModal.removeClass('nomsg msgs');
-    pmModal.show();
+    pmModal.find('.pm-messages').removeClass('nomsg msgs');
+    pmModal.fadeIn(100);
     socket.emit('get pmlist', null, function(err, pmlist) {
-    	if ((!pmlist).length) pmModal.addClass('nomsg');
-    	else pmModal.addClass('msgs');
+    	if (!pmlist.length) pmModal.find('.pm-messages').addClass('nomsg');
+    	else pmModal.find('.pm-messages').addClass('msgs');
 
         pmlist.forEach(pmrow => {
-            console.log(pmrow);
             var domRow = $(pmMessage.cloneNode(true));
             var msgtime = new Date(pmrow.lastmsg.time).toLocaleString().split(', ')[1].slice(0, -3);
 
@@ -1147,13 +1161,71 @@ function showPmModal() {
             domRow.find('.pm-text').append(pmrow.lastmsg.text);
 
             if (pmrow.unseen) domRow.addClass('pm-unseen').find('.pm-not').html(pmrow.unseen);
-            pmMessages.append(domRow);
+            domRow.click(function() {
+                socket.emit('switch pmroom', pmrow.recipientnamefor);
+            });
+
+            pmMessages.prepend(domRow);
         });
     });
 }
 function hidePmModal() {
-    pmModal.hide();
+    pmModal.fadeOut(40);
+    collapsePmBtn($('.pm-btn'));
 }
+
+function expandPmBtn(buttons) {
+    $(buttons).each(function() {
+        if ($(this).is('.pm-show')) return;
+        $(this).addClass('pm-show').stop().animate({'padding-right': '6px'}, 'fast')
+        .css('border-bottom', '1px solid skyblue')
+        .find('input').stop().animate({
+            padding: '6px',
+            width: 'show'
+        }, 'fast')
+        .focus();
+    })
+}
+function collapsePmBtn(buttons) {
+    $(buttons).each(function() {
+        if ($(this).is(':not(.pm-show)')) return;
+        $(this).removeClass('pm-show').stop().animate({'padding-right': '2px'}, 'fast')
+        .css('border', '')
+        .find('input').stop().animate({
+            padding: '0px',
+            width: 'hide'
+        }, 'fast', function() {
+            $(this).removeClass('pm-show');
+        });
+    });
+}
+
+function clearPmSearch(pmbtn) {
+    collapsePmBtn(pmbtn);
+}
+
+$(document).on('keyup', '.pm-add-input', function() {
+    var query = $(this).val();
+    if (query.length < 3) return;
+    $('.search-results').empty();
+    $('.search-resulsts').slideDown();
+
+    socket.emit('search users', query, function(err, userslist) {
+        if (err) return console.log(err);
+        userslist.forEach(listname => {
+            $('.search-results').append('<div class="pm-user-result" style="color:green;">'+listname+'</div>');
+        });
+    });
+});
+
+$(document).on('click', '.pm-btn', function(e) {
+    if ($(e.target).is('.pm-clear-search')) return clearPmSearch(this); 
+
+    if (e.target != this) return;
+    
+    collapsePmBtn($('.pm-btn'));
+    expandPmBtn(this);
+});
 
 $(document).on('mouseenter', '.option', function() {
     $(this).css({
@@ -1255,6 +1327,6 @@ $(document).on('keyup', '#cm-message-input', checkTyping);
 $(document).on('keydown', function(e) {
     if (e.keyCode === 27) {
         hideOpts();
-        $(pmModal).hide();
+        hidePmModal();
     }
 });

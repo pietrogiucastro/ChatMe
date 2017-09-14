@@ -246,6 +246,13 @@ module.exports = {
             callback(null, user);
         });
     },
+    queryUserNamesMatches: function(userquery, callback) {
+    	userquery = new RegExp(userquery, 'i');
+    	var userslist = User.aggregate([ {$match: {name: userquery}}, {$group: {_id: '$name'}}, {$limit: 50 } ], function(err, userslist) {
+    		if (err || !userslist) callback(err, userslist);
+    		callback(null, userslist.map(el => {return el._id}));
+    	})
+    },
     updateUserData: function(id, userdata, callback) {
         User.update({
             _id: id
@@ -322,7 +329,6 @@ module.exports = {
 
 			var pmlist = user.pmlist;
 			pmlist.forEach(pmroom => {
-				console.log(pmroom);
 				var recipientname = pmroom.recipientnamefor[userid.toString()];
 
 				pmroom.unseen = pmroom.unseen[userid.toString()];
@@ -413,8 +419,15 @@ module.exports = {
 
         PmRoom.findOne({
             name: roomdata.name
-        }).populate('history').exec(function(err, room) {
-            if (err || room) return callback(err, room); //return room if already exists
+        }).populate('history').exec(function(err, pmroom) {
+            if (err || pmroom) return callback(err, {
+            	history: pmroom.history,
+            	iscustom: false,
+            	users: {},
+            	userslist: [],
+            	recipientnamefor: pmroom.recipientnamefor,
+            	unseen: pmroom.unseen
+            }); //return pmroom if already exists
 
             var unseendata = {};
             unseendata[roomdata.ids[0]] = 0;
@@ -426,7 +439,14 @@ module.exports = {
                 unseen: unseendata
             });
             connection.collection('pmrooms').insert(newpmroom, err => {
-                callback(err, newpmroom);
+                callback(err, {
+                	history: [],
+	            	iscustom: false,
+	            	users: {},
+	            	userslist: [],
+	            	recipientnamefor: newpmroom.recipientnamefor,
+	            	unseen: newpmroom.unseen
+                });
             });
 
         });

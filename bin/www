@@ -449,7 +449,7 @@ var startChatMe = function(socket) {
                 customrooms.forEach(function(thisroom) { //change with db call
                     if (thisroom.match(roomquery) && thisroom != 'global') {
                         var haspass = !!rooms[thisroom].password;
-                        var users = 3;
+                        var users = Object.keys(rooms[thisroom].users).length;
                         result.rooms.push({
                             name: thisroom,
                             haspass: haspass,
@@ -459,6 +459,35 @@ var startChatMe = function(socket) {
                 });
 
                 socket.emit('rooms result', result);
+
+            });
+
+            socket.on('search users', function(userquery, callback) {
+            	if (typeof userquery != 'string') return console.log('invalid userquery datatype');
+
+                if (userquery.length < 3) {
+                    console.log('ERROR! userquery query too short');
+                    Jsonwarn(socket, 'stdwarn', 'user query too short');
+                    return;
+                }
+
+                var result = {
+                    query: userquery,
+                    rooms: []
+                };
+
+                db.queryUserNamesMatches(userquery, function(err, userslist) {
+                	if (err) {
+                		console.log(err);
+                		return Jsonerror(err);
+                	}
+
+                	var myindex = userslist.indexOf(socket.user.name);
+                	if (myindex != -1) userslist.splice(myindex, 1);
+
+                	if (typeof callback == 'function') callback(null, userslist);
+                });
+
 
             });
 
@@ -472,7 +501,7 @@ var startChatMe = function(socket) {
             			console.log("Error! No user found for id " + socket.user.id);
             			return Jsonerror(socket);
             		}
-            		callback(null, pmlist);
+            		if (typeof callback == 'function') callback(null, pmlist);
             	});
             });
 
@@ -584,7 +613,6 @@ var startChatMe = function(socket) {
     }
 
     function sendPmMessage(room, msgobj) {
-        console.log(msgobj);
         io.sockets.in(room).emit('new message', msgobj);
 
         var recipientid = getRecipientId(socket.user.id.toString(), room);
@@ -657,7 +685,7 @@ var startChatMe = function(socket) {
                     type: 'pm',
                     html: clientroom
                 });
-            }
+            };
 
             if (!roomexists(roomname)) {
 
@@ -671,21 +699,14 @@ var startChatMe = function(socket) {
                     recipientnamefor: recipientnamefor
                 }, function(dbroom) {
 
-                    rooms[roomname] = {
-                        history: dbroom.history,
-                        iscustom: false,
-                        users: {},
-                        userslist: [],
-                        recipientnamefor: dbroom.recipientnamefor,
-                        unseen: dbroom.unseen
-                    }
-
+                    rooms[roomname] = dbroom
                     joinroom(socket, roomname, afterjoin, joinroomdata);
 
                 });
             } else {
                 joinroom(socket, roomname, afterjoin, joinroomdata);
             }
+
         });
 
     }
@@ -736,10 +757,6 @@ var startChatMe = function(socket) {
     function joinroom(socket, roomname, callback, data) {
         function nowjoin() {
 
-            if (rooms[roomname].userslist.indexOf(socket.user.name) == -1) { // if user is not connected to the room yet, send connection msg
-
-            }
-
             socket.join(roomname, function() {
                 var userdata = {
                     name: socket.user.name,
@@ -751,7 +768,7 @@ var startChatMe = function(socket) {
 
                 rooms[roomname].users[socket.user.name] = userdata;
                 rooms[roomname].userslist.push(socket.user.name);
-                var room = roomname.startsWith('site://') ? 'site' : (roomname.startsWith('pm://') ? 'pm:' + data.pmRecipient : roomname);
+                var room = roomname.startsWith('site://') ? 'site' : (roomname.startsWith('pm://') ? data.pmRecipient : roomname);
                 socket.emit('history_users', {
                     history: rooms[roomname].history,
                     users: rooms[roomname].users,
