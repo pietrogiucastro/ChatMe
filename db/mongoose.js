@@ -345,6 +345,16 @@ module.exports = {
 			callback(null, pmlist);
     	});
     },
+    clearPmUnseenForId: function(roomname, userid, callback) {
+    	var setquery = {};
+    	setquery['unseen.' + userid] = 0;
+    	PmRoom.update({name: roomname}, {
+    		$set: setquery
+    	}, function(err, result) {
+    		if (err) callback(err);
+    		if (!result.nModified) callback("ERROR! can't find roomname, or userid does not belong to room. roomname: " + roomname + " userid: " + userid);
+    	});
+    },
     deleteMessageById: function(messageid, callback) {
         Message.find({
             _id: messageid

@@ -59,6 +59,9 @@
 - fix pm modal click bug when re-login
 - start npm with "infinite" on the server
 - insert enter + shift to wrap message text
+- collapse tabs when too much option (already implemented a bit)
+- test server users online number limit
+- set ownercolor in pm (think it is already sent in obj)
 
 _create pmchat
 _images

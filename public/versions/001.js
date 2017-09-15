@@ -60,6 +60,7 @@ messagemodal.find('.modal-close').click(function() {
     hideOpts();
 });
 var pmModal = $('<div class="pm-msgs-modal" style="z-index:1000; display:none;"><div class="pm-close"></div><div class="modal-body cm-scroll"><div class="pm-title">Private Messages</div><div class="pm-search cm-clearafter"><span class="pm-btn pm-add-btn"><input class="pm-add-input" style="display:none;" placeholder="add new user"><span class="pm-clear-search"></span></span><span class="pm-btn pm-search-btn"><span class="pm-clear-search"></span><input class="pm-search-input" style="display:none;" placeholder="search user"></span></div><div class="pm-results-cont" style="display: none;"><div class="search-results"></div></div><div class="pm-messages"></div></div></div>');
+var pmnot = 0;
 var pmMessage = $('<div class="pm-message"><div class="pm-head cm-clearafter"><div class="pm-name"></div><div class="pm-date"></div></div><div class="pm-body"><div class="pm-text"><span class="pm-msgowner"></span></div><div class="pm-not"></div></div>')[0];
 msgbtn.click(function() {
     showPmModal();
@@ -174,7 +175,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
             return textline;
         } else {
             var newtextmessage = $('<div class="cm-message cm-textmessage cm-clearafter" data-owner="user-' + msg.ownername + '" style="display:none;"></div>');
-            newtextmessage.html('<div class="cm-message-body"><div class="cm-message-head cm-clearafter"><span class="cm-message-name user-' + user_message + ' floatleft" style="color: ' + usercolor + ';">' + user_message + '</span><span class=cm-message-date>' + time + '</span></div><span class=cm-message-text>' + msg.text + '</span></div>');
+            newtextmessage.html('<div class="cm-message-body"><div class="cm-message-head cm-clearafter"><span class="cm-message-name user-' + user_message + ' floatleft" style="color: ' + usercolor + ';" data-name="'+msg.ownername+'">' + user_message + '</span><span class=cm-message-date>' + time + '</span></div><span class=cm-message-text>' + msg.text + '</span></div>');
             if (user_message == 'You') newtextmessage.find('.cm-message-body').addClass('user-You textright');
             $('#cm-chat-list').append(newtextmessage);
             return newtextmessage;
@@ -201,7 +202,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
 
 
         var newaudiomessage = $('<div class="cm-message cm-audiomessage cm-clearafter" data-owner="user-' + msg.ownername + '" style="display:none;"></div>');
-        newaudiomessage.html('<div class="cm-message-body cm-audio-body"><div class="cm-message-head cm-clearafter"><span class="cm-message-name user-' + user_message + ' floatleft" style="color: ' + usercolor + ';">' + user_message + '</span><span class=cm-message-date>' + time + '</span></div><div class=cm-message-audio></div></div>')
+        newaudiomessage.html('<div class="cm-message-body cm-audio-body"><div class="cm-message-head cm-clearafter"><span class="cm-message-name user-' + user_message + ' floatleft" style="color: ' + usercolor + ';" data-name="'+msg.ownername+'">' + user_message + '</span><span class=cm-message-date>' + time + '</span></div><div class=cm-message-audio></div></div>')
             .find('.cm-message-audio')
             .append(playbutton)
             .append(audiobar)
@@ -444,7 +445,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
         var status = user.status;
         var typingclass = user.istyping ? ' typing' : '';
         status.classname += typingclass;
-        $('#cm-online-list').prepend('<li class="cm-message-name cm-online-name" id="user-' + user.name + '" style="color:' + user.color + ';"><div class="username">' + user.name + '</div><div class="cm-message-status ' + status.classname + '">' + status.message + '</div></li>');
+        $('#cm-online-list').prepend('<li class="cm-message-name cm-online-name" id="user-' + user.name + '" style="color:' + user.color + ';" data-name="' + user.name + '"><div class="username">' + user.name + '</div><div class="cm-message-status ' + status.classname + '">' + status.message + '</div></li>');
         currentusers.push(user.name);
     }
 
@@ -618,6 +619,31 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
         socket.on('init', function(data) {
             switchchat($('.global-tab')); //change with cookie last chat
             sess_user = data.name;
+
+            socket.emit('get pmlist', null, function(err, pmlist) {
+                if (!pmlist.length) pmModal.find('.pm-messages').addClass('nomsg');
+                else pmModal.find('.pm-messages').addClass('msgs');
+                pmlist.forEach(pmrow => {
+                    var domRow = $(pmMessage.cloneNode(true));
+                    var msgtime = new Date(pmrow.lastmsg.time).toLocaleString().split(', ')[1].slice(0, -3);
+
+                    domRow.attr('data-recipient', pmrow.recipientnamefor);
+                    domRow.find('.pm-name').html(pmrow.recipientnamefor);
+                    domRow.find('.pm-date').html(msgtime);
+                    domRow.find('.pm-msgowner').html(sess_user == pmrow.lastmsg.ownername? 'You' : pmrow.lastmsg.ownername);
+                    domRow.find('.pm-text').append(pmrow.lastmsg.text);
+
+                    if (pmrow.unseen) domRow.addClass('pm-unseen').find('.pm-not').html(pmrow.unseen);
+                    domRow.click(function() {
+                        socket.emit('switch pmroom', pmrow.recipientnamefor);
+                    });
+
+                    pmModal.find('.pm-messages').prepend(domRow);
+
+                    pmnot += pmrow.unseen;
+                    if (pmnot) $('.pm-msgs-nots').show().html(pmnot);
+                });
+            });
         });
         socket.on('response audio', setAudioMessage);
         socket.on('new message', function(message) {
@@ -706,7 +732,47 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
         });
         socket.on('settings_saved', function() {
             hideOpts();
-        })
+        });
+        socket.on('pm-clearunseen', function(pmMsg) {
+            console.log(pmMsg);
+            var time = new Date(pmMsg.time).toLocaleString().split(', ')[1].slice(0, -3);
+
+            var domMsg = pmModal.find('.pm-message[data-recipient=' + pmMsg.recipientnamefor + ']');
+            if (domMsg.length) { //msg already exists
+                domMsg.removeClass('pm-unseen').find('.pm-not').empty().hide();;
+                domMsg.find('.pm-name').html(pmMsg.recipientnamefor);
+                domMsg.find('.pm-date').html(time);
+                domMsg.find('.pm-text').html('<span class="pm-msgowner">'+pmMsg.ownername+'</span>' + pmMsg.text);
+            } else { //create new message
+                domMsg = $(pmMessage.cloneNode(true));
+                domMsg.removeClass('pm-unseen');
+                domMsg.find('.pm-name').html(pmMsg.recipientnamefor);
+                domMsg.find('.pm-date').html(time);
+                domMsg.find('.pm-text').html('<span class="pm-msgowner">'+pmMsg.ownername+'</span>' + pmMsg.text);
+                pmModal.find('.pm-messages').prepend(domMsg);
+            }
+        });
+        socket.on('pm-addunseen', function(pmMsg) {
+            var time = new Date(pmMsg.time).toLocaleString().split(', ')[1].slice(0, -3);
+
+            var domMsg = pmModal.find('.pm-message[data-recipient=' + pmMsg.recipientnamefor + ']');
+            if (domMsg.length) { //msg already exists
+                var notnum = (domMsg.find('.pm-not').html() || 0) + 1;
+                domMsg.addClass('pm-unseen').find('.pm-not').html(notnum).show();;
+                domMsg.find('.pm-name').html(pmMsg.recipientnamefor);
+                domMsg.find('.pm-date').html(time);
+                domMsg.find('.pm-text').html('<span class="pm-msgowner">'+pmMsg.ownername+'</span>' + pmMsg.text);
+            } else { //create new message
+                domMsg = $(pmMessage.cloneNode(true));
+                domMsg.addClass('pm-unseen').find('.pm-not').html(1).show();;
+                domMsg.find('.pm-name').html(pmMsg.recipientnamefor);
+                domMsg.find('.pm-date').html(time);
+                domMsg.find('.pm-text').html('<span class="pm-msgowner">'+pmMsg.ownername+'</span>' + pmMsg.text);
+                pmModal.find('.pm-messages').prepend(domMsg);
+            }
+        });
+
+
         socket.on('jsonerror', function(error) {
             switch (error.type) {
                 case 'stderror':
@@ -824,7 +890,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
         postParentMessage('successload');
 
         /*css*/
-        $('head').append('<style type=text/css>body {margin: 0;} #chat-me {position:relative; overflow:hidden; height:100vh; border-radius:3px;} #chat-me-cont {box-sizing:border-box; padding:5px; padding-top:28px; width:100%; height:100%; background-color:rgba(50,80,100,1.0); font-family:tahoma !important;} #cm-inline-btns {position:absolute; box-sizing:border-box; width:100%; height:15px; margin-bottom:6px;} #cm-message-panel {position: absolute; bottom:0; height:25px; width:100%;} .cm-label {display:inline-block; color:rgb(230,230,230); font-weight:bold; margin:10px; width: 25%;} .cm-button {position:absolute; overflow:hidden; color:white; text-align:center; width:60px; font-size:10px; background-color:rgb(10,200,50); border:0px; box-shadow:none !important; cursor:pointer; height:100%; border-radius: 2px;} .cm-button:not(.recording):hover {background-color:rgb(20,220,60);} .message-input-cont {box-sizing:border-box; width: 100%; height:100%; padding-right:45px;} .cm-input {box-sizing:border-box; background-color:rgb(240,240,240)!important; border:0px; font-size:12px!important; font-family:\'Montserrat\', sans-serif; width:230px; border:0px; border-radius:2px; padding-left:5px;} #cm-error-cont {color:rgb(220,0,0); font-size:12px; margin-left:8px; margin-top:10px; max-width:200px} #cm-error-cont.success {color: rgb(10,200,50);} #cm-chat {font-family:\'Montserrat\', sans-serif; width:100%; height:100%; background-color:rgb(240,240,240); border-radius:2px;} #cm-chat-list {margin:0; padding:3px 0; font-size:11px;} .cm-message:first-child {margin-top:0 !important}.cm-message:last-child {border:0;} .cm-message {padding: 3px 5px; padding-top:2px;} .cm-message-head {margin-bottom:4px;} .cm-message-body {display: inline-block; max-width:85%; margin: 3px; margin-bottom: 0; border-radius: 5px; background: #d3e4f1; box-shadow: 1px 1px 1px #ccc; padding: 5px 6px;} .cm-clearafter:after {content:\'\'; display:block; clear: both;} .cm-message:hover,.cm-online-name:hover {background-color: rgba(230,230,230,0.4);} .cm-message-name:hover {text-decoration:underline;} .cm-message-name {font-family:\'Montserrat\', sans-serif; font-weight:bold; color:rgb(0,80,0); font-size:9px; cursor: pointer; margin-right: 23px;} .cm-online-name {padding-left:4px; margin-right:0;} .cm-online-name:hover {text-decoration:none;} .cm-message-name:hover .username {text-decoration:underline;} .cm-message-status {font-family:\'Montserrat\', sans-serif; color:grey; font-size: 8px;} .cm-message-text {display:block; margin-left: 3px; margin-right:10px; max-width:310px; word-wrap:break-word; color:#07324e;} .cm-message-date {float:right; color:grey; font-size:9px;} #cm-display-panel {display:flex; box-sizing:border-box; padding-top:20px; padding-bottom:30px; height: 100%; } #cm-online-panel {margin-right:5px; width:90px;} #cm-online {height:100%; background-color:rgb(240,240,240); border-radius:2px;} #cm-online-list {margin:0; padding:5px 0; font-size:11px;} #cm-record {box-sizing:border-box; display:flex; align-items:center; width: 40px;} .micico {position: absolute; font-size: 165%; top: 0%; right: 15px; padding-top: 5px;}</style>');
+        $('head').append('<style type=text/css>body {margin: 0;} #chat-me {position:relative; overflow:hidden; height:100vh; border-radius:3px;} #chat-me-cont {box-sizing:border-box; padding:5px; padding-top:28px; width:100%; height:100%; background-color:rgba(50,80,100,1.0); font-family:tahoma !important;} #cm-inline-btns {position:absolute; box-sizing:border-box; width:100%; height:15px; margin-bottom:6px;} #cm-message-panel {position: absolute; bottom:0; height:25px; width:100%;} .cm-label {display:inline-block; color:rgb(230,230,230); font-weight:bold; margin:10px; width: 25%;} .cm-button {position:absolute; overflow:hidden; color:white; text-align:center; width:60px; font-size:10px; background-color:rgb(10,200,50); border:0px; box-shadow:none !important; cursor:pointer; height:100%; border-radius: 2px;} .cm-button:not(.recording):hover {background-color:rgb(20,220,60);} .message-input-cont {box-sizing:border-box; width: 100%; height:100%; padding-right:45px;} .cm-input {box-sizing:border-box; background-color:rgb(240,240,240)!important; border:0px; font-size:12px!important; font-family:\'Montserrat\', sans-serif; width:230px; border:0px; border-radius:2px; padding-left:5px;} #cm-error-cont {color:rgb(220,0,0); font-size:12px; margin-left:8px; margin-top:10px; max-width:200px} #cm-error-cont.success {color: rgb(10,200,50);} #cm-chat {font-family:\'Montserrat\', sans-serif; width:100%; height:100%; background-color:rgb(240,240,240); border-radius:2px;} #cm-chat-list {margin:0; padding:3px 0; font-size:11px;} .cm-message:first-child {margin-top:0 !important}.cm-message:last-child {border:0;} .cm-message {padding: 3px 5px; padding-top:2px;} .cm-message-head {margin-bottom:4px;} .cm-message-body {display: inline-block; max-width:85%; margin: 3px; margin-bottom: 0; border-radius: 5px; background: #d3e4f1; box-shadow: 1px 1px 1px #ccc; padding: 5px 6px;} .cm-clearafter:after {content:\'\'; display:block; clear: both;} .cm-message:hover,.cm-online-name:hover {background-color: rgba(230,230,230,0.4);} .cm-message-name:hover {text-decoration:underline;} .cm-message-name {font-family:\'Montserrat\', sans-serif; font-weight:bold; color:rgb(0,80,0); font-size:9px; cursor: pointer; margin-right: 23px;} .cm-online-name {padding-left:4px; margin-right:0;} .cm-online-name:hover {text-decoration:none;} .cm-message-name:hover .username {text-decoration:underline;} .cm-message-status {font-family:\'Montserrat\', sans-serif; color:grey; font-size: 8px;} .cm-message-text {display:block; margin: 0 4px; max-width:310px; word-wrap:break-word; color:#07324e;} .cm-message-date {float:right; color:grey; font-size:9px;} #cm-display-panel {display:flex; box-sizing:border-box; padding-top:20px; padding-bottom:30px; height: 100%; } #cm-online-panel {margin-right:5px; width:90px;} #cm-online {height:100%; background-color:rgb(240,240,240); border-radius:2px;} #cm-online-list {margin:0; padding:5px 0; font-size:11px;} #cm-record {box-sizing:border-box; display:flex; align-items:center; width: 40px;} .micico {position: absolute; font-size: 165%; top: 0%; right: 15px; padding-top: 5px;}</style>');
         if (!$('#chat-me-cont').length) return;
 
         if (!sess_token) InitDisplay();
@@ -1144,34 +1210,13 @@ function hideOpts() {
 
 function showPmModal() {
 	var pmMessages = pmModal.find('.pm-messages');
-	pmMessages.empty();
-    pmModal.find('.pm-messages').removeClass('nomsg msgs');
+    pmMessages.removeClass('nomsg msgs');
     pmModal.fadeIn(100);
-    socket.emit('get pmlist', null, function(err, pmlist) {
-    	if (!pmlist.length) pmModal.find('.pm-messages').addClass('nomsg');
-    	else pmModal.find('.pm-messages').addClass('msgs');
-
-        pmlist.forEach(pmrow => {
-            var domRow = $(pmMessage.cloneNode(true));
-            var msgtime = new Date(pmrow.lastmsg.time).toLocaleString().split(', ')[1].slice(0, -3);
-
-            domRow.find('.pm-name').html(pmrow.recipientnamefor);
-            domRow.find('.pm-date').html(msgtime);
-            domRow.find('.pm-msgowner').html(sess_user == pmrow.lastmsg.ownername? 'You' : pmrow.lastmsg.ownername);
-            domRow.find('.pm-text').append(pmrow.lastmsg.text);
-
-            if (pmrow.unseen) domRow.addClass('pm-unseen').find('.pm-not').html(pmrow.unseen);
-            domRow.click(function() {
-                socket.emit('switch pmroom', pmrow.recipientnamefor);
-            });
-
-            pmMessages.prepend(domRow);
-        });
-    });
 }
 function hidePmModal() {
-    pmModal.fadeOut(40);
-    clearPmSearch($('.pm-btn'));
+    pmModal.fadeOut(40, function() {
+        clearPmSearch($('.pm-btn'));
+    });
 }
 
 function expandPmBtn(buttons) {
@@ -1189,20 +1234,26 @@ function expandPmBtn(buttons) {
 function collapsePmBtn(buttons) {
     $(buttons).each(function() {
         if ($(this).is(':not(.pm-show)')) return;
-        $(this).removeClass('pm-show').stop().animate({'padding-right': '2px'}, 'fast')
-        .css('border', '')
+        $(this).removeClass('pm-show').stop().animate({'padding-right': '2px'}, 'fast', function() {
+            $(this).css('border', '');
+        })
         .find('input').stop().animate({
             padding: '0px',
             width: 'hide'
         }, 'fast', function() {
-            $(this).removeClass('pm-show');
-        });
+            $(this).removeClass('pm-show').val('');
+        })
     });
 }
 
+function deleteMsgsFilter() {
+    $('.pm-messages .pm-message').show();
+}
+
 function clearPmSearch(pmbtn) {
-    collapsePmBtn(pmbtn);
+    if (pmbtn) collapsePmBtn(pmbtn);
     $('.pm-results-cont').slideUp('fast');
+    deleteMsgsFilter();
 }
 
 $(document).on('keyup', '.pm-add-input', function() {
@@ -1230,7 +1281,23 @@ $(document).on('keyup', '.pm-add-input', function() {
     });
 });
 
+$(document).on('keyup', '.pm-search-input', function() {
+    var query = $(this).val();
+
+    if (!query) return deleteMsgsFilter();
+
+    $('.pm-messages .pm-message').each(function() {
+        var msgRecipient = $(this).data('recipient');
+        if (msgRecipient.match(query)) {
+            $(this).show();
+        } else {
+            $(this).hide();
+        }
+    });
+});
+
 $(document).on('click', '.pm-btn', function(e) {
+    clearPmSearch();
     if ($(e.target).is('.pm-clear-search')) return clearPmSearch(this); 
 
     if (e.target != this) return;
@@ -1272,6 +1339,13 @@ $(document).on('keyup', '.search-chat-input', function() {
         $('.search-body').empty();
     }
 });
+
+$(document).on('click', '.cm-message-name:not(.user-You)', function() {
+    var username = $(this).data('name');
+    if (username == sess_user) return;
+    console.log(username);
+    socket.emit('switch pmroom', username);
+})
 
 function showOptsWait(typeclass = 'full') { //typeclass can be 'full' or 'light'
     spinner.removeClass('full light').addClass(typeclass).show();

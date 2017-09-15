@@ -108,7 +108,7 @@ function onListening() {
     console.log('Listening on ' + bind + ' mode: ' + process.env.NODE_ENV);
 }
 
-var connections = [];
+var connectedSockets = {};
 var history = {};
 var io = require('socket.io').listen(server);
 var ss = require('socket.io-stream');
@@ -177,9 +177,6 @@ var startChatMe = function(socket) {
 
     // init connection //
 
-    connections.push(socket);
-
-    console.log('a user connected. Online users: ' + connections.length);
     //send history to user
 
     // =============== //
@@ -187,13 +184,15 @@ var startChatMe = function(socket) {
     //     events      //
 
     socket.on('disconnect', function() {
-        connections.splice(connections.indexOf(socket), 1);
 
-        if (socket.user && socket.user.lastroom) {
-            leaveroom(socket, socket.user.lastroom);
-        }
+    	if (socket.user) {
+        	if (socket.user.lastroom) leaveroom(socket, socket.user.lastroom);
+        	connectedSockets[socket.user.id].splice(connectedSockets[socket.user.id].indexOf(socket.id), 1);
+			if (!connectedSockets[socket.user.id].length) delete connectedSockets[socket.user.id];
 
-        console.log('user disconnected. Online users: ' + connections.length);
+        	console.log('user disconnected. Online users: ' + Object.keys(connectedSockets).length);
+    	}
+
     });
 
     socket.on('define user', function(token) {
@@ -225,6 +224,11 @@ var startChatMe = function(socket) {
             }
 
             user = undefined;
+
+            if (!connectedSockets[socket.user.id]) connectedSockets[socket.user.id] = [];
+           	connectedSockets[socket.user.id].push(socket.id);
+    		console.log('a user connected. Online users: ' + Object.keys(connectedSockets).length);
+
 
             socket.emit('init', {
                 name: socket.user.name
@@ -613,7 +617,9 @@ var startChatMe = function(socket) {
     }
 
     function sendPmMessage(room, msgobj) {
-        io.sockets.in(room).emit('new message', msgobj);
+
+
+        socket.emit('new message', msgobj);
 
         var recipientid = getRecipientId(socket.user.id.toString(), room);
         if (!recipientid) return console.log("ERROR! Userid is not in roomname! room: " + room + " | userid: " + socket.user.id);
@@ -621,10 +627,37 @@ var startChatMe = function(socket) {
         rooms[room].unseen[recipientid]++;
         rooms[room].lastmsg = msgobj;
 
+        var clearunseen = false;
+        var pmMsgobj = Object.assign({}, msgobj, {recipientnamefor: socket.user.name});
+        var recipientSocketsIds = connectedSockets[recipientid];
+
+        if (recipientSocketsIds) { //recipient is connected
+        	recipientSocketsIds.forEach(recipSockId => {
+	        	var recipientSocket = io.sockets.connected[recipSockId];
+
+	        	var recipientroomname = getsocketroom(recipientSocket);
+	        	if (recipientroomname == room) { // recipient user is in pm room
+	        		recipientSocket.emit('new message', msgobj);
+	        		clearunseen = true;
+	            	recipientSocket.emit('pm-clearunseen', pmMsgobj);
+	        	} else {
+	        		recipientSocket.emit('pm-addunseen', pmMsgobj);
+	        	}
+        	});
+        }
+
         db.createPmMessageAndUpdate(socket.user.id.toString(), recipientid, room, msgobj, function(err, users) {
-            if (err) console.log(err);
-            else if (!users.length) console.log("ERROR! No user found for id " + socket.user.id + " or id " + recipientid);
+            if (err) return console.log(err);
+            if (!users.length) return console.log("ERROR! No user found for id " + socket.user.id + " or id " + recipientid);
+
+	        if (clearunseen) {
+	        	db.clearPmUnseenForId(room, recipientid, err => {
+	            	if (err) {console.log(err); Jsonwarn(socket);}
+	            });
+	        }
         });
+
+
     }
 
     function getRecipientId(userid, roomname) {
@@ -701,10 +734,16 @@ var startChatMe = function(socket) {
 
                     rooms[roomname] = dbroom
                     joinroom(socket, roomname, afterjoin, joinroomdata);
+                    db.clearPmUnseenForId(roomname, socketid, err => {
+                    	if (err) {console.log(err); Jsonwarn(socket);}
+                    });
 
                 });
             } else {
                 joinroom(socket, roomname, afterjoin, joinroomdata);
+                db.clearPmUnseenForId(roomname, socketid, err => {
+                	if (err) {console.log(err); Jsonwarn(socket);}
+                });
             }
 
         });
