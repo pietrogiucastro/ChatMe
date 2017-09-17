@@ -1,69 +1,47 @@
 - take window screenshots and send
-- custom settings
+- create css themes
 - remove rooms if not used anymore
-- overflow-x scroll in tabs
 - substitute tab data-name and data-pass with just token
 - save user open chats on db and send them on login
-- chats in cookies
-- users, rooms and messages in db
 - sort rooms result by relevance
 - query rooms from db
-- change font
-- keep rooms even when switching page
-- max 5 chat per user
-- modal for generic error handling
 - fix multi tabs name disappear bug
 - fix resizable
 - auto select chat size and theme from cookies
 - cookie switch chat on last used chat on logged display
 - fix time display also with days
-- remove selection possibility on buttons
 - remove youtube/whatsapp match return
 - true HTTPSSSS!
 - resize animation on hover option
 - right spinner everywere (user fa spinners and animations)
-- pm users
-- empty chat placeholder
-- Settings: add user color
-- fix resize bug when minified
+- fix user color
 - my messages history with arrows up and down
 - from jquery to vanilla js on tampermonkey
-- get user colors from db
-- auto select colors from db
 - auto select btns settings (mute and show/hide users) from cookies
-- audio notes
 - change not sound
-- show('slide') for both full message and text?
 - remove server = localhost line when everything done
-- bug fix, append last message to last container only if no system msgs between
-- bug fix, color change doesn't work properly
 - custom backrgound
-- mute for spam
-- length limit in global and site chats
-- delete your msgs possibility
+- auto mute for spam
+- message / audio length limit
 - prevent socket to be global
-- username can't contain spaces
+- fix register display
 - no connection error handling
 - description popover on hover for tabs and buttons
-- db password!
+- add password for mongodb login!
 - compress media quality
 - insert email check on signup
 - possibility to delete messages (check if they are mine before);
 - enter to submit/select everywhere
 - search rooms via db
-- retrieve all active rooms for socket via db
 - google analytics
-- right message time (yesterday ecc..)
-- audio size limit
 - audio download button (don't auto download)
-- fix pm modal click bug when re-login
 - start npm with "infinite" on the server
 - insert enter + shift to wrap message text
 - collapse tabs when too much option (already implemented a bit)
 - test server users online number limit
-- set ownercolor in pm (think it is already sent in obj)
+- set ownercolor in pm
 
-_create pmchat
+
 _images
 
 
@@ -86,8 +64,3 @@ lato client:
  	altrimenti verrà presa dal db e inserita nell'oggetto rooms
  - Appena inviato un messaggio alla stanza, esso verrà salvato sul db aggiungendo 1 allo stato di unseen dei messaggi dell'altro utente. Appena arrivato il messaggio all'altro utente nella chat (questo vuol dire che è online), verrà riazzerato il suo stato di unseen sul db.
 
-
-
-
- padding: 6px;
- width: show;

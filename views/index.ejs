@@ -131,7 +131,7 @@
       padding: 4px 7px;
       background-color: #ddd;
       color: #333;
-      max-width: 20%;
+      max-width: 30%;
       vertical-align: middle;
       padding-left: 19px !important;
     }
@@ -142,12 +142,17 @@
       padding: 1px;
       padding-top: 5px;
     }
+
     .vol-true {
-      color: green;
+      color: #0365bf;
+    }
+    .pm .vol-true {
+      color: #157100 !important;
     }
     .vol-false {
       color: darkred;
     }
+
     .volume-icon.vol-true:before {
       font-family: fontawesome;
       content: "\f028";
@@ -244,7 +249,10 @@
       background: -webkit-linear-gradient(bottom, #eee, #fff);
       background: -o-linear-gradient(bottom, #eee, #fff);
       background: linear-gradient(to top, #eee, #fff);
-      color: #0e508d !important;
+      color: #0365bf !important;
+    }
+    .chat-tab.pm.sel {
+      color: #157100 !important;
     }
     .opts-chat-btn {
       float: right;
@@ -1285,7 +1293,7 @@
     }
     .pm-btn .pm-clear-search {
       display: none;
-      margin: 0 5px;
+      padding: 0 5px;
     }
     .pm-clear-search:before {
       font-family: fontawesome;

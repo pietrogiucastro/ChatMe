@@ -639,7 +639,7 @@ var startChatMe = function(socket) {
 	        	if (recipientroomname == room) { // recipient user is in pm room
 	        		recipientSocket.emit('new message', msgobj);
 	        		clearunseen = true;
-	            	recipientSocket.emit('pm-clearunseen', pmMsgobj);
+	            	recipientSocket.emit('pm-addseen', pmMsgobj);
 	        	} else {
 	        		recipientSocket.emit('pm-addunseen', pmMsgobj);
 	        	}
@@ -718,6 +718,7 @@ var startChatMe = function(socket) {
                     type: 'pm',
                     html: clientroom
                 });
+                socket.emit('pm-setseen', username);
             };
 
             if (!roomexists(roomname)) {
