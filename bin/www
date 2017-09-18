@@ -186,11 +186,16 @@ var startChatMe = function(socket) {
     socket.on('disconnect', function() {
 
     	if (socket.user) {
-        	if (socket.user.lastroom) leaveroom(socket, socket.user.lastroom);
+        	if (socket.user.lastroom) {
+        		rooms[socket.user.lastroom].users[socket.user.name].typing = false;
+        		leaveroom(socket, socket.user.lastroom);
+        	}
         	connectedSockets[socket.user.id].splice(connectedSockets[socket.user.id].indexOf(socket.id), 1);
-			if (!connectedSockets[socket.user.id].length) delete connectedSockets[socket.user.id];
+			if (!connectedSockets[socket.user.id].length) {
+				delete connectedSockets[socket.user.id];
+        		console.log('user disconnected. Online users: ' + Object.keys(connectedSockets).length);
+			}
 
-        	console.log('user disconnected. Online users: ' + Object.keys(connectedSockets).length);
     	}
 
     });
@@ -225,9 +230,11 @@ var startChatMe = function(socket) {
 
             user = undefined;
 
-            if (!connectedSockets[socket.user.id]) connectedSockets[socket.user.id] = [];
+            if (!connectedSockets[socket.user.id]) {
+            	connectedSockets[socket.user.id] = [];
+    			console.log('a user connected. Online users: ' + Object.keys(connectedSockets).length);
+            }
            	connectedSockets[socket.user.id].push(socket.id);
-    		console.log('a user connected. Online users: ' + Object.keys(connectedSockets).length);
 
 
             socket.emit('init', {
@@ -333,15 +340,15 @@ var startChatMe = function(socket) {
 
             ss(socket).on('file', function(stream) {
                 console.log(stream);
-                return;
+                
                 var uploadpath = process.cwd() + '/uploads/ciao.jpg';
 
-                // try {
-                stream.pipe(fs.createWriteStream(uploadpath));
-                /*} catch(e) {
-                  console.log(e);
-                  return Jsonerror(socket);
-                }*/
+                try {
+            		stream.pipe(fs.createWriteStream(uploadpath));
+                } catch(e) {
+	              console.log(e);
+	              return Jsonerror(socket);
+                }
             });
 
             socket.on('change_status', function(value) {

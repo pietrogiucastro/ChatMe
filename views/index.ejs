@@ -126,7 +126,7 @@
       height: 100%;
       overflow: hidden;
       border-right: 1px solid #aaa;
-      cursor: pointer;
+      cursor: default;
       font-size: 11px;
       padding: 4px 7px;
       background-color: #ddd;
@@ -141,6 +141,7 @@
       top: 100%;
       padding: 1px;
       padding-top: 5px;
+      cursor: pointer;
     }
 
     .vol-true {
@@ -194,6 +195,7 @@
       font-size: 9px;
       padding: 3px;
       padding-right: 0px;
+      cursor: pointer;
     }
     .chat-tab .remove-tab:hover {
       color: red;
@@ -1445,6 +1447,54 @@
       width: auto !important;
       z-index: 1;
     }*/
+  </style>
+
+  <style type="text/css">
+    #pending-img {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background: rgba(90, 90, 90, 0.6);
+    }
+
+    #pending-img img {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      margin: auto;
+      object-fit: contain;
+      box-sizing: border-box;
+      max-width: 100%;
+      max-height: 100%;
+      padding: 8px;
+      border-radius: 5px;
+      background: white;
+    }
+
+    #pending-img .cancel-img {
+      position: absolute;
+      top: 2px; right: 2px;
+      line-height: 19px;
+      padding: 0 1px;
+      width: 19px;
+      border-radius: 4px;
+      background: #9e261a;
+      color: white;
+      text-align: center;
+      font-size: 18px;
+      box-shadow: 1px 1px 2px #555;
+    }
+
+    .cancel-img:before {
+      font-family: fontawesome;
+      content: "\f00d";
+    }
+
+    .cancel-img:hover {
+      cursor: pointer;
+      color: #9e261a !important;
+      background: #eee !important;
+    }
+
   </style>
 </head>
 <body>
