@@ -492,6 +492,7 @@ module.exports = {
             connection.collection('rooms').insert(newroom);
         });
         Message.find().remove().exec();
+        PmRoom.find().remove().exec();
         console.log('reset executed.');
     }
 };

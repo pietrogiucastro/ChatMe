@@ -1495,6 +1495,59 @@
       background: #eee !important;
     }
 
+
+    .cm-image-body {
+      width: 70%;
+      max-width: 250px !important;
+      position: relative;
+    }
+
+    .cm-message-image {
+      width: 100%;
+      margin: 7px 0;
+      background-size: 100%;
+      background-position: center;
+      background-size: cover;
+      display: flex;
+      border-radius: 5px;
+    }
+
+    .cm-message-image.notloaded {
+      display: flex;
+      align-items: center;
+    }
+
+    .cm-message-image .img-square {
+      margin-top: 100%;
+    }
+
+    .cm-message-image.notloaded {
+      align-items: center;
+      background: rgba(250,255,250, 0.53);
+      border-radius: 5px;
+      cursor: pointer;
+      /*color: #3b5463;*/
+      color: #657b88;
+    }
+
+    .cm-message-image.notloaded:hover {
+      background: rgba(255,255,255, 0.53);
+      color: #3d86b2;
+    }
+
+    .cm-message-image.notloaded:after {
+      display: block;
+      width: 100%;
+      font-family: fontawesome;
+      content: "\f01a";
+      text-align: center;
+      font-size: 40px;
+    }
+
+    .cm-message-image.notloaded img {
+      display: none;
+    }
+
   </style>
 </head>
 <body>

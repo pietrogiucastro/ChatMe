@@ -1,5 +1,5 @@
+var pendingimg;
 $(function() {
-    var pendingimg;
 
     showPendingImg = function(urldata) {
         $('#pending-img img').attr('src', urldata)
@@ -9,41 +9,60 @@ $(function() {
                     bottom: '0%'
                 });
             });
-    }
+    };
 
     window.cancelPendingImg = function() {
         $('#pending-img img').animate({
             bottom: '-100%'
         }, 'fast', function() {
-            $(this).attr('src', '') // FIX THIS
-            .parent().fadeOut();
+            $(this).removeAttr('src')
+                .parent().fadeOut();
+            attachinput.val('');
         });
 
-        pendingimg = '';
+        pendingimg = undefined;
+    };
+
+    window.imgIsPending = function() {
+        return !!pendingimg;
+    };
+
+    window.sendImg = function() {
+        var msg = {
+            type: 'image',
+            buffer: pendingimg,
+            text: input.val()
+        };
+
+        cancelPendingImg();
+
+        socket.emit('send media', msg);
     }
 
-    function prepareFile(data) {
+    prepareFile = function(data) {
         var bufferReader = new FileReader();
+        var dataUrlreader = new FileReader();
+
         bufferReader.onload = function() {
             pendingimg = this.result;
+            dataUrlreader.readAsDataURL(data);
         };
-        bufferReader.readAsArrayBuffer(data);
 
-        var dataUrlreader = new FileReader();
         dataUrlreader.onload = function() {
             showPendingImg(this.result);
         };
-        dataUrlreader.readAsDataURL(data);
-    }
 
-    function bufferToBase64(buf) {
+        bufferReader.readAsArrayBuffer(data);
+    };
+
+    window.bufferToBase64 = function(buf) {
         var binstr = Array.prototype.map.call(buf, function(ch) {
             return String.fromCharCode(ch);
         }).join('');
         return btoa(binstr);
     }
 
-    $(attachinput).change(function() {
+    attachinput.change(function() {
         var data = this.files[0];
         prepareFile(data);
 

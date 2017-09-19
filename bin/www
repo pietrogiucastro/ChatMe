@@ -271,35 +271,59 @@ var startChatMe = function(socket) {
                 }
             });
 
-            socket.on('send audio', function(audio) {
-                if (typeof audio != "object") {
-                    console.log("ERROR! Wrong audio datatype: " + typeof audio);
+            socket.on('send media', function(mediaobject) {
+                if (typeof mediaobject != "object") {
+                    console.log("ERROR! Wrong media datatype: " + typeof audio);
                     return Jsonerror(socket);
                 }
+
+            	var typeobj = {};
+
+                if (mediaobject.type == 'audio') {
+                	if (!(mediaobject.buffer instanceof Buffer)) {
+                		console.log("ERROR! Audio buffer is not a Blob.");
+                		return Jsonerror(socket);
+                	}
+
+                	typeobj.duration = mediaobject.duration;
+                }
+                else if (mediaobject.type == 'image') {
+                	if (!(mediaobject.buffer instanceof Buffer)) {
+                		console.log("ERROR! Image buffer is not an ArrayBuffer.");
+                		return Jsonerror(socket);
+                	}
+
+                	typeobj.text = mediaobject.text;
+                } else {
+                	console.log("ERROR! Wrong media type: " + mediaobject.type);
+                	return Jsonerror(socket);
+                }
+
                 var roomname = getsocketroom(socket);
                 if (!roomname) return Jsonerror(socket);
 
                 var messageid = db.getNewId();
 
                 db.createMedia(roomname, {
-                    buffer: audio.buffer,
-                    type: 'audio',
+                    buffer: mediaobject.buffer,
+                    type: mediaobject.type,
                     messageid: messageid
                 }, function(err, media) {
                     if (err) {
                         console.log(err);
-                        Jsonerror(socket);
-                        return;
+                        return Jsonerror(socket);
                     }
 
                     var msgobj = {
                         _id: messageid,
-                        type: 'user_audio',
-                        duration: audio.duration,
+                        type: mediaobject.type,
                         time: new Date(),
                         ownername: socket.user.name,
                         ownercolor: socket.user.color
                     };
+
+                    msgobj = Object.assign({}, msgobj, typeobj);
+
                     if (roomname.startsWith('pm://')) {
                         sendPmMessage(roomname, msgobj);
                     } else {
@@ -310,7 +334,7 @@ var startChatMe = function(socket) {
 
             });
 
-            socket.on('get audio', function(messageid) {
+            socket.on('get media', function(messageid, callback) {
                 var roomname = getsocketroom(socket);
                 if (!roomname) return Jsonerror(socket);
 
@@ -330,10 +354,11 @@ var startChatMe = function(socket) {
                         });
                         return;
                     }
-                    socket.emit('response audio', {
-                        id: messageid,
-                        buffer: media.buffer
-                    });
+                    if (typeof callback == 'function')
+                    	callback({
+	                        id: messageid,
+	                        buffer: media.buffer
+	                    });
                 });
 
             });

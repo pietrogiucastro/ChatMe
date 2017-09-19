@@ -23,7 +23,7 @@ var recorder = {
             }, recorder.chunkstime);
             mediaRecorder.onstop = function(e) {
                 var blob = new Blob(this.chunks, { 'type' : 'audio/ogg; codecs=opus' });
-                socket.emit('send audio', {buffer: blob, duration: recorder.elapsedtime});
+                socket.emit('send media', {type: 'audio', buffer: blob, duration: recorder.elapsedtime});
                 mediaRecorder.delete();
             };
             mediaRecorder.delete = function() {
