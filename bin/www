@@ -346,7 +346,8 @@ var startChatMe = function(socket) {
                             mediaobject.buffer = sharpbuffer;
 
                             sharp(mediaobject.buffer)
-                                .resize(10,10)
+                                .resize(150,150)
+                                .jpeg({quality: 1})
                                 .toBuffer()
                                 .then(previewBuffer => {
                                     mediaobject.preview = previewBuffer;
@@ -374,13 +375,13 @@ var startChatMe = function(socket) {
                 db.getMediaPreview({
                     roomname: roomname,
                     messageid: messageid
-                }, function(err, preview) {
+                }, function(err, media) {
                     if (err) {
                         console.log(err);
                         Jsonerror(socket);
                         return;
                     }
-                    if (!preview) {
+                    if (!media) {
                         console.log('ERROR! No media found for id ' + messageid);
                         Jsonerror(socket, 'nomediafound', 'error loading the media', {
                             id: messageid
@@ -390,7 +391,7 @@ var startChatMe = function(socket) {
                     if (typeof callback == 'function')
                         callback({
                             id: messageid,
-                            preview: preview,
+                            preview: media.preview
                         });
                 });
             });

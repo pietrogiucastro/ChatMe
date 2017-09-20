@@ -1526,11 +1526,12 @@
     .cm-message-image {
       width: 100%;
       margin: 7px 0;
-      background-size: 100%;
       background-position: center;
       background-size: cover;
       display: flex;
       border-radius: 5px;
+      background-repeat: no-repeat !important;
+      overflow: hidden;
     }
 
     .cm-message-image:not(.loading) {
@@ -1542,8 +1543,9 @@
     }
 
     .cm-message-image.notloaded {
-      -webkit-filter: blur(3px);
-      filter: blur(3px);
+      -webkit-filter: blur(8px);
+      filter: blur(8px);
+      background-size: 100% !important;
     }
 
     .cm-message-image.notloaded, .cm-message-image.loading {
