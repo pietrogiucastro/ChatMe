@@ -47,6 +47,27 @@
       box-shadow: 0px 2px 2px #aaa;
     }
 
+    #full-image {
+      position: fixed;
+      display: none;
+      background-position: center;
+      background-size: cover;
+      border-radius: 5px;
+      z-index: 20;
+      background-repeat: no-repeat;
+    }
+
+    #full-image-cover {
+      display: none;
+      position: fixed;
+      background-color: rgba(80,80,80,0.5);
+      width: 100%;
+      height: 100%;
+      z-index: 20;
+      top: 0;
+      left: 0;
+    }
+
     #chat-me.init #cm-inline-btns {
       padding: 5px;
       height: 26px;
@@ -1512,9 +1533,8 @@
       border-radius: 5px;
     }
 
-    .cm-message-image.notloaded {
-      display: flex;
-      align-items: center;
+    .cm-message-image:not(.loading) {
+      cursor: pointer;
     }
 
     .cm-message-image .img-square {
@@ -1522,11 +1542,16 @@
     }
 
     .cm-message-image.notloaded {
+      -webkit-filter: blur(3px);
+      filter: blur(3px);
+    }
+
+    .cm-message-image.notloaded, .cm-message-image.loading {
+      display: flex;
       align-items: center;
       background: rgba(250,255,250, 0.53);
       border-radius: 5px;
       cursor: pointer;
-      /*color: #3b5463;*/
       color: #657b88;
     }
 
@@ -1541,11 +1566,63 @@
       font-family: fontawesome;
       content: "\f01a";
       text-align: center;
-      font-size: 40px;
+      font-size: 30px;
     }
 
-    .cm-message-image.notloaded img {
+    .cm-message-image.loading:after {
+      animation: fa-spin 2s infinite linear;
+    }
+    .cm-message-image.loading:after {
+      display: block;
+      width: 100%;
+      font-family: fontawesome;
+      content: "\f1ce";
+      text-align: center;
+      font-size: 30px;
+    }
+
+    #full-image-btns {
+      position: fixed;
       display: none;
+      width: 100%;
+      top: 0;
+      left: 0;
+      z-index: 25;
+    }
+
+    #full-image-btns span {
+      position: absolute;
+      top: 5px;
+      font-size: 14px;
+      color: #eee;
+      cursor: pointer;
+      padding: 9px;
+      border-radius: 5px;
+      background: rgba(255,255,255,0.75);
+      color: #444;
+    }
+    .fullimg-down:hover {
+      background: white !important;
+      color: skyblue !important;
+    }
+    .fullimg-close:hover {
+      background: white !important;
+      color: darkred !important;
+    }
+
+    .fullimg-down {
+      left: 10px;
+    }
+    .fullimg-down:before {
+      font-family: fontawesome;
+      content: "\f019";
+    }
+    .fullimg-close {
+      right: 10px;
+    }
+    .fullimg-close:before {
+      font-family: fontawesome;
+      content: "\f00d";
     }
 
   </style>

@@ -9,6 +9,7 @@ var https = require('https');
 var anchorme = require('anchorme').default;
 var guid = require('uuid').v4;
 var CryptoJS = require("crypto-js");
+var sharp = require("sharp");
 
 /* 
 // Encrypt 
@@ -185,18 +186,18 @@ var startChatMe = function(socket) {
 
     socket.on('disconnect', function() {
 
-    	if (socket.user) {
-        	if (socket.user.lastroom) {
-        		rooms[socket.user.lastroom].users[socket.user.name].typing = false;
-        		leaveroom(socket, socket.user.lastroom);
-        	}
-        	connectedSockets[socket.user.id].splice(connectedSockets[socket.user.id].indexOf(socket.id), 1);
-			if (!connectedSockets[socket.user.id].length) {
-				delete connectedSockets[socket.user.id];
-        		console.log('user disconnected. Online users: ' + Object.keys(connectedSockets).length);
-			}
+        if (socket.user) {
+            if (socket.user.lastroom) {
+                rooms[socket.user.lastroom].users[socket.user.name].typing = false;
+                leaveroom(socket, socket.user.lastroom);
+            }
+            connectedSockets[socket.user.id].splice(connectedSockets[socket.user.id].indexOf(socket.id), 1);
+            if (!connectedSockets[socket.user.id].length) {
+                delete connectedSockets[socket.user.id];
+                console.log('user disconnected. Online users: ' + Object.keys(connectedSockets).length);
+            }
 
-    	}
+        }
 
     });
 
@@ -225,16 +226,17 @@ var startChatMe = function(socket) {
                 created: user.created,
                 istyping: false,
                 isrecording: false,
-                lastroom: undefined
+                lastroom: undefined,
+                pmRecipient: undefined
             }
 
             user = undefined;
 
             if (!connectedSockets[socket.user.id]) {
-            	connectedSockets[socket.user.id] = [];
-    			console.log('a user connected. Online users: ' + Object.keys(connectedSockets).length);
+                connectedSockets[socket.user.id] = [];
+                console.log('a user connected. Online users: ' + Object.keys(connectedSockets).length);
             }
-           	connectedSockets[socket.user.id].push(socket.id);
+            connectedSockets[socket.user.id].push(socket.id);
 
 
             socket.emit('init', {
@@ -277,26 +279,25 @@ var startChatMe = function(socket) {
                     return Jsonerror(socket);
                 }
 
-            	var typeobj = {};
+                var typeobj = {};
 
                 if (mediaobject.type == 'audio') {
-                	if (!(mediaobject.buffer instanceof Buffer)) {
-                		console.log("ERROR! Audio buffer is not a Blob.");
-                		return Jsonerror(socket);
-                	}
+                    if (!(mediaobject.buffer instanceof Buffer)) {
+                        console.log("ERROR! Audio buffer is not a Blob.");
+                        return Jsonerror(socket);
+                    }
 
-                	typeobj.duration = mediaobject.duration;
-                }
-                else if (mediaobject.type == 'image') {
-                	if (!(mediaobject.buffer instanceof Buffer)) {
-                		console.log("ERROR! Image buffer is not an ArrayBuffer.");
-                		return Jsonerror(socket);
-                	}
+                    typeobj.duration = mediaobject.duration;
+                } else if (mediaobject.type == 'image') {
+                    if (!(mediaobject.buffer instanceof Buffer)) {
+                        console.log("ERROR! Image buffer is not an ArrayBuffer.");
+                        return Jsonerror(socket);
+                    }
 
-                	typeobj.text = mediaobject.text;
+                    typeobj.text = mediaobject.text;
                 } else {
-                	console.log("ERROR! Wrong media type: " + mediaobject.type);
-                	return Jsonerror(socket);
+                    console.log("ERROR! Wrong media type: " + mediaobject.type);
+                    return Jsonerror(socket);
                 }
 
                 var roomname = getsocketroom(socket);
@@ -304,34 +305,94 @@ var startChatMe = function(socket) {
 
                 var messageid = db.getNewId();
 
-                db.createMedia(roomname, {
-                    buffer: mediaobject.buffer,
-                    type: mediaobject.type,
+                function bufferDone() {
+                    db.createMedia(roomname, {
+                        buffer: mediaobject.buffer,
+                        preview: mediaobject.preview,
+                        type: mediaobject.type,
+                        messageid: messageid
+                    }, function(err, media) {
+                        if (err) {
+                            console.log(err);
+                            return Jsonerror(socket);
+                        }
+
+                        var msgobj = {
+                            _id: messageid,
+                            type: mediaobject.type,
+                            time: new Date(),
+                            ownername: socket.user.name,
+                            ownercolor: socket.user.color
+                        };
+
+                        msgobj = Object.assign({}, msgobj, typeobj);
+
+                        if (roomname.startsWith('pm://')) {
+                            sendPmMessage(roomname, msgobj);
+                        } else {
+                            sendMessage(roomname, msgobj);
+                            sliceMsgs(roomname);
+                        }
+                    });
+                }
+
+                if (mediaobject.type == 'audio') {
+                    bufferDone();
+                } else if (mediaobject.type == 'image') {
+                    sharp(mediaobject.buffer) //FIX THIS IN ONE ROW
+                        .resize(500)
+                        .toBuffer()
+                        .then(sharpbuffer => {
+                            mediaobject.buffer = sharpbuffer;
+
+                            sharp(mediaobject.buffer)
+                                .resize(10,10)
+                                .toBuffer()
+                                .then(previewBuffer => {
+                                    mediaobject.preview = previewBuffer;
+                                    bufferDone();
+                                })
+                                .catch(err => {
+                                    console.log(err);
+                                    Jsonerror(socket);
+                                })
+
+
+                        })
+                        .catch(err => {
+                            console.log(err);
+                            Jsonerror(socket);
+                        })
+                }
+
+            });
+
+            socket.on('get mediapre', function(messageid, callback) {
+                var roomname = getsocketroom(socket);
+                if (!roomname) return Jsonerror(socket);
+
+                db.getMediaPreview({
+                    roomname: roomname,
                     messageid: messageid
-                }, function(err, media) {
+                }, function(err, preview) {
                     if (err) {
                         console.log(err);
-                        return Jsonerror(socket);
+                        Jsonerror(socket);
+                        return;
                     }
-
-                    var msgobj = {
-                        _id: messageid,
-                        type: mediaobject.type,
-                        time: new Date(),
-                        ownername: socket.user.name,
-                        ownercolor: socket.user.color
-                    };
-
-                    msgobj = Object.assign({}, msgobj, typeobj);
-
-                    if (roomname.startsWith('pm://')) {
-                        sendPmMessage(roomname, msgobj);
-                    } else {
-                        sendMessage(roomname, msgobj);
-                        sliceMsgs(roomname);
+                    if (!preview) {
+                        console.log('ERROR! No media found for id ' + messageid);
+                        Jsonerror(socket, 'nomediafound', 'error loading the media', {
+                            id: messageid
+                        });
+                        return;
                     }
+                    if (typeof callback == 'function')
+                        callback({
+                            id: messageid,
+                            preview: preview,
+                        });
                 });
-
             });
 
             socket.on('get media', function(messageid, callback) {
@@ -355,24 +416,24 @@ var startChatMe = function(socket) {
                         return;
                     }
                     if (typeof callback == 'function')
-                    	callback({
-	                        id: messageid,
-	                        buffer: media.buffer
-	                    });
+                        callback({
+                            id: messageid,
+                            buffer: media.buffer,
+                        });
                 });
 
             });
 
             ss(socket).on('file', function(stream) {
                 console.log(stream);
-                
+
                 var uploadpath = process.cwd() + '/uploads/ciao.jpg';
 
                 try {
-            		stream.pipe(fs.createWriteStream(uploadpath));
-                } catch(e) {
-	              console.log(e);
-	              return Jsonerror(socket);
+                    stream.pipe(fs.createWriteStream(uploadpath));
+                } catch (e) {
+                    console.log(e);
+                    return Jsonerror(socket);
                 }
             });
 
@@ -499,7 +560,7 @@ var startChatMe = function(socket) {
             });
 
             socket.on('search users', function(userquery, callback) {
-            	if (typeof userquery != 'string') return console.log('invalid userquery datatype');
+                if (typeof userquery != 'string') return console.log('invalid userquery datatype');
 
                 if (userquery.length < 3) {
                     console.log('ERROR! userquery query too short');
@@ -513,32 +574,32 @@ var startChatMe = function(socket) {
                 };
 
                 db.queryUserNamesMatches(userquery, function(err, userslist) {
-                	if (err) {
-                		console.log(err);
-                		return Jsonerror(err);
-                	}
+                    if (err) {
+                        console.log(err);
+                        return Jsonerror(err);
+                    }
 
-                	var myindex = userslist.indexOf(socket.user.name);
-                	if (myindex != -1) userslist.splice(myindex, 1);
+                    var myindex = userslist.indexOf(socket.user.name);
+                    if (myindex != -1) userslist.splice(myindex, 1);
 
-                	if (typeof callback == 'function') callback(null, userslist);
+                    if (typeof callback == 'function') callback(null, userslist);
                 });
 
 
             });
 
             socket.on('get pmlist', function(data, callback) {
-            	db.getPmList(socket.user.id, function(err, pmlist) {
-            		if (err) {
-            			console.log(err);
-            			return Jsonerror(socket);
-            		}
-            		if (!pmlist) {
-            			console.log("Error! No user found for id " + socket.user.id);
-            			return Jsonerror(socket);
-            		}
-            		if (typeof callback == 'function') callback(null, pmlist);
-            	});
+                db.getPmList(socket.user.id, function(err, pmlist) {
+                    if (err) {
+                        console.log(err);
+                        return Jsonerror(socket);
+                    }
+                    if (!pmlist) {
+                        console.log("Error! No user found for id " + socket.user.id);
+                        return Jsonerror(socket);
+                    }
+                    if (typeof callback == 'function') callback(null, pmlist);
+                });
             });
 
             socket.on('switch room', function(room) {
@@ -660,33 +721,42 @@ var startChatMe = function(socket) {
         rooms[room].lastmsg = msgobj;
 
         var clearunseen = false;
-        var pmMsgobj = Object.assign({}, msgobj, {recipientnamefor: socket.user.name});
+        var pmMsgobj = Object.assign({}, msgobj, {
+            recipientnamefor: socket.user.name
+        });
+        socket.emit('pm-addseen', Object.assign({}, msgobj, {
+            recipientnamefor: socket.user.pmRecipient
+        }));
+
         var recipientSocketsIds = connectedSockets[recipientid];
 
         if (recipientSocketsIds) { //recipient is connected
-        	recipientSocketsIds.forEach(recipSockId => {
-	        	var recipientSocket = io.sockets.connected[recipSockId];
+            recipientSocketsIds.forEach(recipSockId => {
+                var recipientSocket = io.sockets.connected[recipSockId];
 
-	        	var recipientroomname = getsocketroom(recipientSocket);
-	        	if (recipientroomname == room) { // recipient user is in pm room
-	        		recipientSocket.emit('new message', msgobj);
-	        		clearunseen = true;
-	            	recipientSocket.emit('pm-addseen', pmMsgobj);
-	        	} else {
-	        		recipientSocket.emit('pm-addunseen', pmMsgobj);
-	        	}
-        	});
+                var recipientroomname = getsocketroom(recipientSocket);
+                if (recipientroomname == room) { // recipient user is in pm room
+                    recipientSocket.emit('new message', msgobj);
+                    clearunseen = true;
+                    recipientSocket.emit('pm-addseen', pmMsgobj);
+                } else {
+                    recipientSocket.emit('pm-addunseen', pmMsgobj);
+                }
+            });
         }
 
         db.createPmMessageAndUpdate(socket.user.id.toString(), recipientid, room, msgobj, function(err, users) {
             if (err) return console.log(err);
             if (!users.length) return console.log("ERROR! No user found for id " + socket.user.id + " or id " + recipientid);
 
-	        if (clearunseen) {
-	        	db.clearPmUnseenForId(room, recipientid, err => {
-	            	if (err) {console.log(err); Jsonwarn(socket);}
-	            });
-	        }
+            if (clearunseen) {
+                db.clearPmUnseenForId(room, recipientid, err => {
+                    if (err) {
+                        console.log(err);
+                        Jsonwarn(socket);
+                    }
+                });
+            }
         });
 
 
@@ -751,13 +821,14 @@ var startChatMe = function(socket) {
                     html: clientroom
                 });
                 socket.emit('pm-setseen', username);
+                socket.user.pmRecipient = username;
             };
 
             if (!roomexists(roomname)) {
 
-            	var recipientnamefor = {};
-            	recipientnamefor[socketid] = username;
-            	recipientnamefor[userid] = socket.user.name;
+                var recipientnamefor = {};
+                recipientnamefor[socketid] = username;
+                recipientnamefor[userid] = socket.user.name;
 
                 createGetDbPmRoom(socket, {
                     name: roomname,
@@ -768,14 +839,20 @@ var startChatMe = function(socket) {
                     rooms[roomname] = dbroom
                     joinroom(socket, roomname, afterjoin, joinroomdata);
                     db.clearPmUnseenForId(roomname, socketid, err => {
-                    	if (err) {console.log(err); Jsonwarn(socket);}
+                        if (err) {
+                            console.log(err);
+                            Jsonwarn(socket);
+                        }
                     });
 
                 });
             } else {
                 joinroom(socket, roomname, afterjoin, joinroomdata);
                 db.clearPmUnseenForId(roomname, socketid, err => {
-                	if (err) {console.log(err); Jsonwarn(socket);}
+                    if (err) {
+                        console.log(err);
+                        Jsonwarn(socket);
+                    }
                 });
             }
 
@@ -847,6 +924,7 @@ var startChatMe = function(socket) {
                     roomname: room
                 });
                 socket.user.lastroom = roomname;
+                socket.user.pmRecipient = undefined;
 
                 if (callback) callback(room);
             });

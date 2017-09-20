@@ -29,6 +29,10 @@ var attachinput = $('<input class="hidden" type="file" id="cm-attach" accept="im
 var micbtn = $('<span style="position:absolute; top:0; right:0;" id=cm-record class=cm-button><i class="fa fa-microphone micico"></i> <span class="rec-btns"> <span class="recbtn rec-accept"></span><span class="recbtn rec-cancel"></span> </span></span>');
 var mictime = $('<span class="record-time" style="display:none;">00:00</span>');
 
+var fullImageCover = $('<div id="full-image-cover"></div>');
+var fullImageBtns = $('<div id="full-image-btns"><span class="fullimg-down fa-fw"></span><span class="fullimg-close fa-fw"></span></div>');
+var fullImage = $('<div id="full-image"></div>');
+
 var msgnotSound = new Audio('/sounds/not1.mp3');
 var pmnotSound = new Audio('/sounds/pmnot.mp3');
 
@@ -56,10 +60,6 @@ var msgnots = msgbtn.find('.pm-msgs-nots');
 tabs.find('#pm-msgs').append(msgbtn);
 var roomresultModel = $('<div class="chat-row"><span class="chat-name"></span> <span class="chat-online"><i class="fa fa-user" style="margin-right:4px;"></i><span class="online-num"></span></span></div>')[0];
 var messagemodal = $('<div class="cm-message-modal"><div class="modal-layout"><div class="modal-close"></div><div class="message-modal-body"></div></div></div>');
-messagemodal.find('.modal-close').click(function() {
-    $(this).parents('.cm-message-modal:first').hide();
-    hideOpts();
-});
 var pmModal = $('<div class="pm-msgs-modal" style="z-index:1000; display:none;"><div class="pm-close"></div><div class="modal-body cm-scroll"><div class="pm-title">Private Messages</div><div class="pm-search cm-clearafter"><span class="pm-btn pm-add-btn"><input class="pm-add-input" style="display:none;" placeholder="add new user"><span class="pm-clear-search"></span></span><span class="pm-btn pm-search-btn"><span class="pm-clear-search"></span><input class="pm-search-input" style="display:none;" placeholder="search user"></span></div><div class="pm-results-cont" style="display: none;"><div class="search-results"></div></div><div class="pm-messages"></div></div></div>');
 var pmnot = 0;
 var pmMessage = $('<div class="pm-message"><div class="pm-head cm-clearafter"><div class="pm-name"></div><div class="pm-date"></div></div><div class="pm-body"><div class="pm-text"><span class="pm-msgowner"></span></div><div class="pm-not"></div></div>')[0];
@@ -290,17 +290,30 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
         newimagemessage.html('<div class="cm-message-body cm-image-body"><div class="cm-message-head cm-clearafter"><span class="cm-message-name user-' + user_message + ' floatleft" style="color: ' + usercolor + ';" data-name="' + msg.ownername + '">' + user_message + '</span><span class=cm-message-date>' + time + '</span></div><div class="cm-message-image notloaded"><div class="img-square"></div></div><span class="cm-message-text">' + msg.text + '</span></div>');
         if (user_message == 'You') newimagemessage.find('.cm-message-body').addClass('user-You textright');
 
+        socket.emit('get mediapre', msg._id, function(image) {
+            var blob = new Blob([image.preview], {
+                'type': 'image/jpeg'
+            });
+            var imgurl = window.URL.createObjectURL(blob);
+            newimagemessage.find('.cm-message-image.notloaded').css('background-image', 'url('+imgurl+')');
+        });
+
         newimagemessage.find('.cm-message-image.notloaded').one('click', function() {
             var that = $(this);
+            that.removeClass('notloaded').addClass('loading');
             socket.emit('get media', msg._id, function(image) {
-                that.removeClass('notloaded loading');
+                that.removeClass('loading');
 
                 var blob = new Blob([image.buffer], {
                     'type': 'image/jpeg'
                 });
-                that.css('background-image', 'url('+window.URL.createObjectURL(blob)+')');
 
-                //$(this).children('img').attr('src', bufferToBase64(image.buffer));
+                var imgurl = window.URL.createObjectURL(blob);
+
+                that.css('background-image', 'url('+imgurl+')').attr('data-src', imgurl);
+                that.click(function() {
+                    showFullImg(that);
+                });
             });
         });
 
@@ -552,6 +565,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
         sess_token = '';
         sess_user = '';
         $.removeCookie('sess_token');
+
         $('#chat-me').find(tabs).remove();
         $('#chat-me').prepend(inlinebtns.container);
         $('#chat-me-cont').html('');
@@ -653,6 +667,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
             switchchat($('.global-tab')); //change with cookie last chat
             sess_user = data.name;
 
+            pmModal.find('.pm-messages').empty().removeClass('nomsg msgs');
             socket.emit('get pmlist', null, function(err, pmlist) {
                 if (!pmlist.length) pmModal.find('.pm-messages').addClass('nomsg');
                 else pmModal.find('.pm-messages').addClass('msgs');
@@ -674,9 +689,9 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
 
                     pmModal.find('.pm-messages').prepend(domRow);
 
-                    pmnot += pmrow.unseen;
-                    if (pmnot) $('.pm-msgs-nots').show().html(pmnot);
                 });
+
+                refreshMsgsNot();
             });
         });
         socket.on('new message', function(message) {
@@ -771,11 +786,13 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
         });
         socket.on('pm-addseen', function(pmMsg) {
 
+            console.log(pmMsg);
+
             var time = new Date(pmMsg.time).toLocaleString().split(', ')[1].slice(0, -3);
 
             var domMsg = pmModal.find('.pm-message[data-recipient=' + pmMsg.recipientnamefor + ']');
             if (domMsg.length) { //msg already exists
-                domMsg.data('unseen', 0).removeClass('pm-unseen').find('.pm-not').empty().hide();;
+                domMsg.data('unseen', 0).removeClass('pm-unseen').find('.pm-not').empty();
                 domMsg.find('.pm-name').html(pmMsg.recipientnamefor);
                 domMsg.find('.pm-date').html(time);
                 domMsg.find('.pm-text').html('<span class="pm-msgowner">' + pmMsg.ownername + '</span>' + pmMsg.text);
@@ -786,13 +803,16 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
 
                 domMsg = $(pmMessage.cloneNode(true));
 
-                domMsg.attr('data-recipient', pmrow.recipientnamefor)
-                    .attr('data-unseen', pmrow.unseen);
+                domMsg.attr('data-recipient', pmMsg.recipientnamefor)
+                    .attr('data-unseen', 0);
 
-                domMsg.find('.pm-name').html(pmMsg.recipientnamefor);
                 domMsg.find('.pm-name').html(pmMsg.recipientnamefor);
                 domMsg.find('.pm-date').html(time);
                 domMsg.find('.pm-text').html('<span class="pm-msgowner">' + pmMsg.ownername + '</span>' + pmMsg.text);
+
+                domMsg.click(function() {
+                    socket.emit('switch pmroom', pmMsg.recipientnamefor);
+                });
 
                 pmModal.find('.pm-messages').prepend(domMsg);
 
@@ -800,21 +820,28 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
         });
         socket.on('pm-addunseen', function(pmMsg) {
 
+            console.log(pmMsg);
+
             var time = new Date(pmMsg.time).toLocaleString().split(', ')[1].slice(0, -3);
 
             var domMsg = pmModal.find('.pm-message[data-recipient=' + pmMsg.recipientnamefor + ']');
             if (domMsg.length) { //msg already exists
                 var notnum = (parseInt(domMsg.data('unseen')) || 0) + 1;
-                domMsg.addClass('pm-unseen').data('unseen', notnum).find('.pm-not').html(notnum).show();;
+                domMsg.addClass('pm-unseen').data('unseen', notnum).find('.pm-not').html(notnum);
                 domMsg.find('.pm-name').html(pmMsg.recipientnamefor);
                 domMsg.find('.pm-date').html(time);
                 domMsg.find('.pm-text').html('<span class="pm-msgowner">' + pmMsg.ownername + '</span>' + pmMsg.text);
             } else { //create new message
                 domMsg = $(pmMessage.cloneNode(true));
-                domMsg.addClass('pm-unseen').data('unseen', 1).find('.pm-not').html(1).show();;
+                domMsg.addClass('pm-unseen').attr('data-recipient', pmMsg.recipientnamefor).attr('data-unseen', 1).find('.pm-not').html(1);
                 domMsg.find('.pm-name').html(pmMsg.recipientnamefor);
                 domMsg.find('.pm-date').html(time);
                 domMsg.find('.pm-text').html('<span class="pm-msgowner">' + pmMsg.ownername + '</span>' + pmMsg.text);
+
+                domMsg.click(function() {
+                    socket.emit('switch pmroom', pmMsg.recipientnamefor);
+                });
+
                 pmModal.find('.pm-messages').prepend(domMsg);
             }
 
@@ -894,6 +921,25 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
         $('#chat-me').prepend(tabs);
 
         $('#chat-me-cont').html('');
+        $('#chat-me-cont').append(fullImageCover);
+        $('#chat-me-cont').append(fullImageBtns);
+        $('#chat-me-cont').append(fullImage);
+        $('#chat-me-cont').append('<a id="fullimg-downloader" download style="display:none;"></a>')
+
+        fullImageBtns.children('.fullimg-close').click(function() {
+            hideFullImg();
+        });
+
+        fullImageBtns.children('.fullimg-down').click(function() {
+            $('#fullimg-downloader').attr('href', fullImage.attr('data-src'));
+            $('#fullimg-downloader')[0].click();
+        });
+
+        fullImageCover.click(function(e) {
+            if (e.target != this) return;
+            hideFullImg();
+        });
+
         $('#chat-me-cont').append('<div id="chat-me-label"></div>');
         $('#chat-me-label').append(inlinebtns.container)
             .append('<div id="cm-display-panel"><div id="cm-display"></div></div>')
@@ -921,6 +967,11 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
         });
         pmModal.click(function(e) {
             if (e.target != this && $(e.target).is(':not(.pm-close)')) return;
+            hidePmModal();
+        });
+        messagemodal.find('.modal-close').click(function() {
+            $(this).parents('.cm-message-modal:first').hide();
+            hideOpts();
             hidePmModal();
         });
 
@@ -1513,5 +1564,14 @@ $(document).on('keydown', function(e) {
         hideOpts();
         cancelPendingImg();
         hidePmModal();
+        hideFullImg();
     }
+});
+
+$(document).mouseleave(function() {
+    if (fullImage.is(':visible'))
+        fullImageBtns.stop(true, true).fadeOut();
+}).mouseenter(function() {
+    if (fullImage.is(':visible'))
+        fullImageBtns.stop(true, true).fadeIn(100);
 });

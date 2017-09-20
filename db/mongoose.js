@@ -49,6 +49,7 @@ var messageSchema = new Schema({ //Message schema
 
 var mediaSchema = new Schema({ //Media schema
     buffer: Buffer,
+    preview: Buffer,
     type: String,
     roomname: String,
     messageid: {
@@ -475,6 +476,9 @@ module.exports = {
     },
     findMedia: function(mediadata, callback) {
         Media.findOne(mediadata, callback);
+    },
+    getMediaPreview: function(mediadata, callback){
+        Media.findOne(mediadata, 'preview', callback);
     },
     deleteMedia: function(mediadata, callback) {
         Media.findOne(mediadata).remove(callback);
