@@ -40,6 +40,7 @@
 - collapse tabs when too much option (already implemented a bit)
 - test server users online number limit
 - set ownercolor in pm
+- emoji!
 
 
 _images

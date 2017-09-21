@@ -96,7 +96,7 @@ $(function() {
                     top: posy,
                     'background-image': 'url('+src+')'
                 }).show()
-                .animate({
+                .stop().animate({
                     width: neww,
                     height: newh,
                     left: imgl,
@@ -104,8 +104,8 @@ $(function() {
                     'border-radius': '0px'
                 }, 'fast');
 
-            fullImageCover.fadeIn('fast');
-            fullImageBtns.fadeIn('fast');
+            fullImageCover.stop(true, true).fadeIn('fast');
+            fullImageBtns.stop(true, true).fadeIn('fast');
 
             fullImage.attr('data-src', tmpimg.src);
 
@@ -114,7 +114,7 @@ $(function() {
     };
 
     window.hideFullImg = function() {
-        fullImage.animate({
+        fullImage.stop().animate({
             width: width,
             height: height,
             left: posx,
@@ -124,8 +124,8 @@ $(function() {
             $(this).hide().css('background-image', '');
         });
 
-        fullImageCover.fadeOut('fast');
-        fullImageBtns.fadeOut('fast');
+        fullImageCover.stop(true, true).fadeOut('fast');
+        fullImageBtns.stop(true, true).fadeOut('fast');
         $('#fullimg-downloader').removeAttr('href');
     }
 
