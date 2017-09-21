@@ -62,10 +62,10 @@ $(function() {
         height = image.height();
         posx = image.offset().left;
         posy = image.offset().top;
-        var background = image.css('background-image');
+        var src = image.attr('src');
 
         var tmpimg = new Image();
-        tmpimg.src = image.data('src');
+        tmpimg.src = image.attr('src');
 
         $(tmpimg).one('load', function() {
             var orgw = tmpimg.width;
@@ -94,7 +94,7 @@ $(function() {
                     height: height,
                     left: posx,
                     top: posy,
-                    'background-image': background
+                    'background-image': 'url('+src+')'
                 }).show()
                 .animate({
                     width: neww,

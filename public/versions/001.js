@@ -287,15 +287,11 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
         var usercolor = msg.ownercolor;
 
         var newimagemessage = $('<div class="cm-message cm-imagemessage cm-clearafter" data-owner="user-' + msg.ownername + '" style="display:none;"></div>');
-        newimagemessage.html('<div class="cm-message-body cm-image-body"><div class="cm-message-head cm-clearafter"><span class="cm-message-name user-' + user_message + ' floatleft" style="color: ' + usercolor + ';" data-name="' + msg.ownername + '">' + user_message + '</span><span class=cm-message-date>' + time + '</span></div><div class="cm-message-image notloaded"><div class="img-square"></div></div><span class="cm-message-text">' + msg.text + '</span></div>');
+        newimagemessage.html('<div class="cm-message-body cm-image-body"><div class="cm-message-head cm-clearafter"><span class="cm-message-name user-' + user_message + ' floatleft" style="color: ' + usercolor + ';" data-name="' + msg.ownername + '">' + user_message + '</span><span class=cm-message-date>' + time + '</span></div><div class="cm-message-image notloaded"><div class="img-square"></div><img></div><span class="cm-message-text">' + msg.text + '</span></div>');
         if (user_message == 'You') newimagemessage.find('.cm-message-body').addClass('user-You textright');
 
         socket.emit('get mediapre', msg._id, function(image) {
-            var blob = new Blob([image.preview], {
-                'type': 'image/jpeg'
-            });
-            var imgurl = window.URL.createObjectURL(blob);
-            newimagemessage.find('.cm-message-image.notloaded').css('background-image', 'url('+imgurl+')');
+            newimagemessage.find('.cm-message-image.notloaded img').attr('src', image.preview);
         });
 
         newimagemessage.find('.cm-message-image.notloaded').one('click', function() {
@@ -310,9 +306,9 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
 
                 var imgurl = window.URL.createObjectURL(blob);
 
-                that.css('background-image', 'url('+imgurl+')').attr('data-src', imgurl);
+                that.children('img').attr('src', imgurl);
                 that.click(function() {
-                    showFullImg(that);
+                    showFullImg(that.children('img'));
                 });
             });
         });
@@ -465,12 +461,26 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
         pmnotSound.play();
     }
 
-    function showChatNot(roomname) {
+    function showChatNot(roomname, msgtype) {
+        if ($('#cm-not').is(':visible') && $('#cm-not').is('.error')) return;
+        
         $('#cm-not').stop().hide();
-        $('#cm-not').html('Joined room ' + roomname).fadeIn(200, function() {
+
+        var chatnotmsg =
+            roomname.startsWith('pm:') ?
+            'Joined user chat for ' + roomname.split('pm:')[1]:
+            'Joined chat ' + roomname;
+
+        if (msgtype == 'error') {
+            $('#cm-not').addClass('error');
+            chatnotmsg = roomname;            
+        }
+        else $('#cm-not').removeClass('error');
+
+        $('#cm-not').html(chatnotmsg).fadeIn(200, function() {
             setTimeout(function() {
-                $('#cm-not').fadeOut('slow');
-            }, 200);
+                $('#cm-not').fadeOut('slow', function() {$(this).removeClass('error')});
+            }, 500);
         });
     }
 
@@ -764,7 +774,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
             hideOptsWait();
             $('.search-body').html('');
             if (!result.rooms.length) {
-                $('.search-body').append('<center style="color:darkgrey; font-weight:bold; margin-top:25px;"><i>no results found</i></center>');
+                $('.search-body').append('<center style="color:#444; font-weight:bold; margin-top:25px;"><i>no results found</i></center>');
                 return;
             }
             result.rooms.forEach(function(room) {
@@ -880,7 +890,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
                     break;
                 case 'roomdoesnotexist':
                     console.log(error.message);
-                    showModalMessage(error.message);
+                    showChatNot(error.message, 'error');
                     var tab = $('.chat-tab[name="' + error.data.name + '"][data-type="' + error.data.type + '"]');
                     leaveChat(tab);
                     break;

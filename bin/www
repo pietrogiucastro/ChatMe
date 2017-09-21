@@ -341,16 +341,17 @@ var startChatMe = function(socket) {
                 } else if (mediaobject.type == 'image') {
                     sharp(mediaobject.buffer) //FIX THIS IN ONE ROW
                         .resize(500)
+                        .jpeg()
                         .toBuffer()
                         .then(sharpbuffer => {
                             mediaobject.buffer = sharpbuffer;
 
                             sharp(mediaobject.buffer)
-                                .resize(150,150)
+                                .resize(120,120)
                                 .jpeg({quality: 1})
                                 .toBuffer()
                                 .then(previewBuffer => {
-                                    mediaobject.preview = previewBuffer;
+                                    mediaobject.preview = toBase64(previewBuffer);
                                     bufferDone();
                                 })
                                 .catch(err => {
@@ -918,7 +919,7 @@ var startChatMe = function(socket) {
 
                 rooms[roomname].users[socket.user.name] = userdata;
                 rooms[roomname].userslist.push(socket.user.name);
-                var room = roomname.startsWith('site://') ? 'site' : (roomname.startsWith('pm://') ? data.pmRecipient : roomname);
+                var room = roomname.startsWith('site://') ? 'site' : (roomname.startsWith('pm://') ? 'pm:'+data.pmRecipient : roomname);
                 socket.emit('history_users', {
                     history: rooms[roomname].history,
                     users: rooms[roomname].users,
@@ -1086,6 +1087,10 @@ var startChatMe = function(socket) {
             callback(room);
         });
     }
+
+    function toBase64(data) {
+      return 'data:image/jpeg;base64,' + data.toString('base64');
+    };
 
     function Jsonerror(socket, type = 'stderror', message = 'Internal error. Try again later.', data = {}) {
         socket.emit('jsonerror', {

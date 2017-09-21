@@ -49,7 +49,7 @@ var messageSchema = new Schema({ //Message schema
 
 var mediaSchema = new Schema({ //Media schema
     buffer: Buffer,
-    preview: Buffer,
+    preview: String,
     type: String,
     roomname: String,
     messageid: {

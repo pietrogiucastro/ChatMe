@@ -232,7 +232,7 @@
       height: 100%;
       z-index: 99999999;
       border: 1px solid #aaa;
-      background-color: rgba(200,200,200, 0.9);
+      background-color: rgba(170,170,170, 0.9);
       color: #444;
       font-family: Montserrat, sans-serif;
     }
@@ -688,6 +688,9 @@
       font-size: 12px;
       background: rgba(9,154,70,0.9);
       border-radius: 9px;
+    }
+    #cm-not.error {
+      background: rgba(220,0,0, 0.9);
     }
     #unseen-icon {
       width: 30px;
@@ -1271,7 +1274,7 @@
       content: "End of messages";
     }
     .pm-msgs-modal .pm-messages.nomsg:after {
-      content: "No message found";
+      content: "No messages found";
     }
     .modal-body .pm-title {
       font-size: 15px;
@@ -1360,7 +1363,7 @@
     }
 
     .search-results.nomatches:before {
-      content: "No matches found";
+      content: "No users found";
     }
 
     .search-results .pm-user-result {
@@ -1476,6 +1479,7 @@
       width: 100%;
       height: 100%;
       background: rgba(90, 90, 90, 0.6);
+      z-index: 1;
     }
 
     #pending-img img {
@@ -1524,14 +1528,19 @@
     }
 
     .cm-message-image {
+      position: relative;
       width: 100%;
       margin: 7px 0;
-      background-position: center;
-      background-size: cover;
       display: flex;
       border-radius: 5px;
-      background-repeat: no-repeat !important;
       overflow: hidden;
+    }
+
+    .cm-message-image img {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
 
     .cm-message-image:not(.loading) {
@@ -1543,9 +1552,13 @@
     }
 
     .cm-message-image.notloaded {
-      -webkit-filter: blur(8px);
-      filter: blur(8px);
       background-size: 100% !important;
+    }
+
+    .cm-message-image.notloaded img, .cm-message-image.loading img {
+      -webkit-filter: blur(7px);
+      -o-filter: blur(7px);
+      filter: blur(7px);
     }
 
     .cm-message-image.notloaded, .cm-message-image.loading {
@@ -1554,12 +1567,12 @@
       background: rgba(250,255,250, 0.53);
       border-radius: 5px;
       cursor: pointer;
-      color: #657b88;
+      color: #ddd;
     }
 
     .cm-message-image.notloaded:hover {
       background: rgba(255,255,255, 0.53);
-      color: #3d86b2;
+      color: #fff;
     }
 
     .cm-message-image.notloaded:after {
@@ -1568,7 +1581,10 @@
       font-family: fontawesome;
       content: "\f01a";
       text-align: center;
-      font-size: 30px;
+      font-size: 25px;
+      z-index: 1;
+      background: rgba(0,0,0,0.12);
+      padding: 5px;
     }
 
     .cm-message-image.loading:after {
@@ -1580,7 +1596,7 @@
       font-family: fontawesome;
       content: "\f1ce";
       text-align: center;
-      font-size: 30px;
+      font-size: 25px;
     }
 
     #full-image-btns {
