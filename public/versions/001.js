@@ -1148,6 +1148,10 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
                 element: $('<span class="noselect btn opts-btn"></span>'),
                 display: 'logged'
             },
+            fullscreenbtn: {
+                element: $('<span class="noselect btn fullscreeen-btn"></span>'),
+                display: 'init,logged,register'
+            },
             statusbtn: {
                 element: $('<span class="noselect btn status-btn modal-toggle"><div class="modal status-modal"><div class="modal-body"></div></div></span>'),
                 display: 'logged'
@@ -1234,6 +1238,11 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
             buttons.minbtn.object = $(buttons.minbtn.element[0].cloneNode(true));
             buttons.minbtn.object.click(function() {
                 postParentMessage('minify');
+            });
+            /* minbtn */
+            buttons.fullscreenbtn.object = $(buttons.fullscreenbtn.element[0].cloneNode(true));
+            buttons.fullscreenbtn.object.click(function() {
+                postParentMessage('togglefs');
             });
             /* status btn */
             buttons.statusbtn.object = $(buttons.statusbtn.element[0].cloneNode(true));

@@ -41,6 +41,7 @@
 - test server users online number limit
 - set ownercolor in pm
 - emoji!
+- fullscreen
 
 
 _images
