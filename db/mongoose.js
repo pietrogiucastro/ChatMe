@@ -353,7 +353,9 @@ module.exports = {
     		$set: setquery
     	}, function(err, result) {
     		if (err) callback(err);
-    		if (!result.nModified) callback("ERROR! can't find roomname, or userid does not belong to room. roomname: " + roomname + " userid: " + userid);
+    		if (!result.nModified) {
+                // this means room does not. Exists. It is normal when a user join a new pm room
+            }
     	});
     },
     deleteMessageById: function(messageid, callback) {

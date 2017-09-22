@@ -16,7 +16,7 @@
 // ==/UserScript==
 var settings_page = 'chat.me';
 var server = '68.66.241.102';
-server = 'localhost';
+//server = 'localhost';
 var version = '001';
 
 var connection;
@@ -63,13 +63,13 @@ if (document.domain == "web.whatsapp.com") return;
 
     $('head').append('<style type=text/css>.chat-me-notloaded {cursor:pointer; display:block !important;} #chat-me-cover { position:absolute; width:100%; height:100%; background-color:rgb(50,80,100); top:0; opacity:0.0; cursor:pointer; } #chat-me-container {position: fixed; z-index:99999999999999999999; bottom:20px; right:20px;} #chat-me-frame {border:0; width:100%; height:100%; overflow:hidden;} </style>');
 
-    $('head').append('<style type=text/css>.xs {width: '+sizes.xs.x+'; height: '+sizes.xs.y+';} .sm {width: '+sizes.sm.x+'; height: '+sizes.sm.y+'} .lg {width: '+sizes.lg.x+'; height: '+sizes.lg.y+';}</style>');
+    $('head').append('<style type=text/css>.xs {width: '+sizes.xs.x+'; height: '+sizes.xs.y+';} .sm {width: '+sizes.sm.x+'; height: '+sizes.sm.y+'} .lg {width: '+sizes.lg.x+'; height: '+sizes.lg.y+';} .fs {width: 100% !important; height: 100% !important; left: 0; top: 0;}</style>');
 
     $('body').append('<div id="chat-me-container"></div>');
     $('#chat-me-container').append('<iframe id="chat-me-frame" src="https://'+server+':60000/"></iframe><div id="chat-me-cover" class="chat-me-notloaded" style="display:none;"></div>');
 
     $(document).on('click', '#chat-me-container:not(.cm-hidden) .chat-me-notloaded', hideChatMe)
-    .on('click', '#chat-me-container.cm-hidden .chat-me-notloaded', showChatMe);
+        .on('click', '#chat-me-container.cm-hidden .chat-me-notloaded', showChatMe);
 
     container = document.getElementById('chat-me-container');
 
@@ -84,11 +84,17 @@ if (document.domain == "web.whatsapp.com") return;
 
         if(cursorX < 120 && cursorY < 120 && $(container).is('.cm-out')) {
             inChatMe();
+            showChatMe();
         }
         else if ((cursorX > 120 || cursorY > 120) && $(container).is(':not(.cm-out)')) {
             outChatMe();
         }
 
+    });
+
+    $(container).mouseleave(function() {
+        hideChatMe();
+        outChatMe();
     });
 
     function setChatMeHidden() {
@@ -159,6 +165,9 @@ if (document.domain == "web.whatsapp.com") return;
                 break;
             case "minify":
                 hideChatMe();
+                break;
+            case "togglefs":
+                $(container).toggleClass('fs');
                 break;
             default:
                 console.log('unhandled event: ' + event.data);

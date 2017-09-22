@@ -820,7 +820,7 @@ var startChatMe = function(socket) {
                 if (setclient) socket.emit('set room', {
                     name: username,
                     type: 'pm',
-                    html: clientroom
+                    html: username
                 });
                 socket.emit('pm-setseen', username);
                 socket.user.pmRecipient = username;
@@ -919,16 +919,16 @@ var startChatMe = function(socket) {
 
                 rooms[roomname].users[socket.user.name] = userdata;
                 rooms[roomname].userslist.push(socket.user.name);
-                var room = roomname.startsWith('site://') ? 'site' : (roomname.startsWith('pm://') ? 'pm:'+data.pmRecipient : roomname);
+                var clientroom = roomname.startsWith('site://') ? 'site' : (roomname.startsWith('pm://') ? 'pm:'+data.pmRecipient : roomname);
                 socket.emit('history_users', {
                     history: rooms[roomname].history,
                     users: rooms[roomname].users,
-                    roomname: room
+                    roomname: clientroom
                 });
                 socket.user.lastroom = roomname;
                 socket.user.pmRecipient = undefined;
 
-                if (callback) callback(room);
+                if (callback) callback(clientroom);
             });
 
         }
