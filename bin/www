@@ -1027,7 +1027,7 @@ var startChatMe = function(socket) {
                 }
             });
 
-            if (lastmsg.type == 'user_audio') {
+            if (lastmsg.type == 'audio' || lastmsg.type == 'image') {
 
                 db.deleteMedia({
                     roomname: roomname,

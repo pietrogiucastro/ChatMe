@@ -338,8 +338,10 @@ module.exports = {
 				pmroom.history = undefined;
 				pmroom.name = undefined;
 
-				if (pmroom.lastmsg.type == 'user_audio')
-					pmroom.lastmsg.text = '<span class="pm-audio-ico">audio</span>';
+				if (pmroom.lastmsg.type == 'audio')
+                    pmroom.lastmsg.text = '<span class="pm-audio-ico">audio</span>';
+                else if (pmroom.lastmsg.type == 'image')
+					pmroom.lastmsg.text = '<span class="pm-image-ico">image</span>';
 				else
 					pmroom.lastmsg.text = pmroom.lastmsg.text.substr(0, 60);
 			});
