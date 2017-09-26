@@ -35,6 +35,7 @@ var fullImage = $('<div id="full-image"></div>');
 
 var msgnotSound = new Audio('/sounds/not1.mp3');
 var pmnotSound = new Audio('/sounds/pmnot.mp3');
+var emojinotSound = new Audio('/sounds/pmnot.mp3');
 
 var mute = false;
 var showusers = true;
@@ -132,28 +133,38 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
         $('#chat-me').removeClass().addClass(type);
     }
 
-    function setEmojis(text) {
-        Object.keys(emojismatcher).some(key => {
+    function setEmojis(text, callback) {
+        var isemoji = Object.keys(emojismatcher).some(key => {
             if (text == key) {
                 text = '<div class="emoji-msg"><img src="/emo/'+emojismatcher[key]+'.png"></div>';
                 return true;
             }
         });
+        callback(isemoji);
         return text;
     }
 
-    function prepareMessage() {
+    function prepareMessage(msg, history) {
         var roomname = $('.chat-tab.sel').attr('name');
         if ($('.empty-chat-msg').length) {
             $('.empty-chat-msg').slideUp(function() {
                 $(this).remove();
             });
         }
-        var chatvolume = chats[roomname].volume;
-        if (chatvolume && !mute) PlayMsgNot();
+
+        msg.text = setEmojis(msg.text, isemoji => {
+            msg.isemoji = isemoji;
+
+            var chatvolume = chats[roomname].volume;
+            if (!history && chatvolume && !mute) {
+                PlayMsgNot(isemoji);
+            }
+        });
+
     }
 
     function setMessage(msg, history, fadein, noslide) {
+        prepareMessage(msg, history);
 
         var message;
         if (msg.type == 'user_msg') { //message
@@ -193,10 +204,8 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
         var time = new Date(msg.time).toLocaleString().split(', ')[1].slice(0, -3);
         var usercolor = msg.ownercolor;
 
-        msg.text = setEmojis(msg.text);
-
         var lastmessage = $('#cm-chat-list').children(':last');
-        if (lastmessage.is('.cm-textmessage') && lastmessage.data('owner') == 'user-' + msg.ownername) {
+        if (!msg.isemoji && lastmessage.is('.cm-textmessage') && lastmessage.data('owner') == 'user-' + msg.ownername) {
             var textline = $('<span class="cm-message-text" style="display:none;">' + msg.text + '</span>');
             lastmessage.find('.cm-message-body').append(textline);
             return textline;
@@ -482,9 +491,10 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
         $('#cm-chat')[0].scrollTop = $('#cm-chat')[0].scrollHeight - $('#cm-chat').height();
     }
 
-    function PlayMsgNot() {
-        msgnotSound.currentTime = 0;
-        msgnotSound.play();
+    function PlayMsgNot(emojinot) {
+        var msgsound = emojinot ? emojinotSound : msgnotSound;
+        msgsound.currentTime = 0;
+        msgsound.play();
     }
 
     function PlayPmNot() {
@@ -739,15 +749,12 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
             input.focus();
             switch (message.type) {
                 case 'user_msg':
-                    prepareMessage();
                     setMessage(message);
                     break;
                 case 'audio':
-                    prepareMessage();
                     setMessage(message);
                     break;
                 case 'image':
-                    prepareMessage();
                     setMessage(message);
                     break;
                 case 'system_msg':
