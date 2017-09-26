@@ -41,6 +41,7 @@
 - test server users online number limit
 - set ownercolor in pm
 - set emoji in cookies and reduce their quality
+- fix runtime pm last message bug for audio and images! (need <icon> + audio / image even when a pm message has been sent)
 
 
 _images
