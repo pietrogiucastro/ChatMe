@@ -80,7 +80,7 @@ var emojismatcher = {
         ':smilexxd:' : {name: 'smileyxxd.png', category: 'images'},
         ':thumb:' : {name: 'thumb.png', category: 'images'},
         ':heart:' : {name: 'heart.png', category: 'images'},
-        ':angelol:': {name: 'angelol.jpg', category: 'images'},
+        ':angelol:': {name: 'angelol.png', category: 'images'},
 
         ':sunglasses_g:' : {name: 'sunglasses.gif', category: 'gifs'}
     },
