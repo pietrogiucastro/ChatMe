@@ -100,14 +100,6 @@ for (var category in emojismatcher.setter) {
     });
 }
 
-emojis.find('.emoji-tab').click(function() {
-    var category = $(this).attr('target');
-    emojis.find('.emoji-tab').removeClass('active');
-    $(this).addClass('active');
-
-    emojis.find('.emoji-category').removeClass('active');
-    emojis.find('.emoji-category.'+category).addClass('active');
-});
 
 // if user is running mozilla then use it's built-in WebSocket
 window.WebSocket = window.WebSocket || window.MozWebSocket;
@@ -640,6 +632,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
         sess_user = '';
         $.removeCookie('sess_token');
 
+        hideEmojis();
         $('#chat-me').find(tabs).remove();
         $('#chat-me').prepend(inlinebtns.container);
         $('#chat-me-cont').html('');
@@ -1029,6 +1022,16 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
                 if ($(this).is('.open')) hideEmojis();
                 else showEmojis();
             });
+
+            
+        emojis.find('.emoji-tab').click(function() {
+            var category = $(this).attr('target');
+            emojis.find('.emoji-tab').removeClass('active');
+            $(this).addClass('active');
+
+            emojis.find('.emoji-category').removeClass('active');
+            emojis.find('.emoji-category.'+category).addClass('active');
+        });
 
         emojis.find('.emoji').click(function() {
             hideEmojis();
