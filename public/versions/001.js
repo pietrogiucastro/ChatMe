@@ -66,26 +66,48 @@ var pmnot = 0;
 var pmMessage = $('<div class="pm-message"><div class="pm-head cm-clearafter"><div class="pm-name"></div><div class="pm-date"></div></div><div class="pm-body"><div class="pm-text"><span class="pm-msgowner"></span></div><div class="pm-not"></div></div>')[0];
 
 var emojismatcher = {
-    ':smsad:' : 'smileysmsad',
-    ':smile:' : 'smileyface',
-    ':smiled:' : 'smileyfaceD',
-    ':kiss:' : 'smileykiss',
-    ':smileo:' : 'smileyO',
-    ':smilep:' : 'smileyP',
-    ':sad:' : 'smileysad',
-    ':ssad:' : 'smileyssad',
-    ':smilew:' : 'smileyw',
-    ':smilexd:' : 'smileyxd',
-    ':smilexxd:' : 'smileyxxd',
-    ':thumb:' : 'thumb',
-    ':heart:' : 'heart'
+    emojis: {
+        ':smsad:' : {name: 'smileysmsad.png', category: 'images'},
+        ':smile:' : {name: 'smileyface.png', category: 'images'},
+        ':smiled:' : {name: 'smileyfaceD.png', category: 'images'},
+        ':kiss:' : {name: 'smileykiss.png', category: 'images'},
+        ':smileo:' : {name: 'smileyO.png', category: 'images'},
+        ':smilep:' : {name: 'smileyP.png', category: 'images'},
+        ':sad:' : {name: 'smileysad.png', category: 'images'},
+        ':ssad:' : {name: 'smileyssad.png', category: 'images'},
+        ':smilew:' : {name: 'smileyw.png', category: 'images'},
+        ':smilexd:' : {name: 'smileyxd.png', category: 'images'},
+        ':smilexxd:' : {name: 'smileyxxd.png', category: 'images'},
+        ':thumb:' : {name: 'thumb.png', category: 'images'},
+        ':heart:' : {name: 'heart.png', category: 'images'},
+        ':sunglasses_g:' : {name: 'sunglasses.gif', category: 'gifs'}
+    },
+    setter: {}
 };
 
-var emojis = $('<div id="emojis" class="cm-scroll noselect"></div>');
-Object.keys(emojismatcher).forEach(key => {
-    emojis.append('<div class="emoji" data-key="'+key+'"><img src="/emo/'+emojismatcher[key]+'.png"></div>');
-});
+for (var key in emojismatcher.emojis) {
+    var category = emojismatcher.emojis[key].category;
+    emojismatcher.setter[category] = emojismatcher.setter[category] || [];
+    emojismatcher.setter[category].push(key);
+}
 
+var emojis = $('<div id="emojis" class="noselect"> <div class="emoji-tabs"> <div class="emoji-tab active" target="images"></div><div class="emoji-tab" target="gifs"></div> </div> <div class="emoji-body"> <div class="emoji-overflow cm-scroll"> <div class="emoji-category cm-clearafter images active"></div> <div class="emoji-category cm-clearafter gifs"></div> </div> </div> </div>');
+
+for (var category in emojismatcher.setter) {
+    emojismatcher.setter[category].forEach(key => {
+        var emojipath = emojismatcher.emojis[key].category + '/' + emojismatcher.emojis[key].name;
+        emojis.find('.emoji-body .'+category).append('<div class="emoji" data-key="'+key+'"><img src="/emo/'+emojipath+'"></div>');
+    });
+}
+
+emojis.find('.emoji-tab').click(function() {
+    var category = $(this).attr('target');
+    emojis.find('.emoji-tab').removeClass('active');
+    $(this).addClass('active');
+
+    emojis.find('.emoji-category').removeClass('active');
+    emojis.find('.emoji-category.'+category).addClass('active');
+});
 
 // if user is running mozilla then use it's built-in WebSocket
 window.WebSocket = window.WebSocket || window.MozWebSocket;
@@ -99,8 +121,8 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     if (document.domain == settings_page) document.write('chat me settings. Under construction..');
 
     if (!window.WebSocket) {
-        content.html($('<p>', {
-            text: 'Sorry, but your browser doesn\'t support WebSocket.'
+        $('body').css('background-color', '#ddd').html($('<center>', {
+            text: 'Sorry, but your browser doesn\'t support WebSocket. Please try with another browser.'
         }));
         //handle disable code
         return;
@@ -136,13 +158,12 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     }
 
     function setEmojis(text, callback) {
-        var isemoji = Object.keys(emojismatcher).some(key => {
-            if (text == key) {
-                text = '<div class="emoji-msg"><img src="/emo/'+emojismatcher[key]+'.png"></div>';
-                return true;
-            }
-        });
-        callback(isemoji);
+        var emoji = emojismatcher.emojis[text];
+        if (emoji) {
+            var emojipath = emoji.category+'/'+emoji.name;
+            text = '<div class="emoji-msg"><img src="/emo/'+emojipath+'"></div>';
+        }
+        callback(!!emoji);
         return text;
     }
 
@@ -1009,7 +1030,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
                 else showEmojis();
             });
 
-        emojis.children('.emoji').click(function() {
+        emojis.find('.emoji').click(function() {
             hideEmojis();
             socket.emit('send message', $(this).data('key'));
         });
@@ -1407,12 +1428,12 @@ $(document).on('click', '.chat-tab', function(e) {
 
 function showEmojis() {
     $('.emojis-btn').addClass('open');
-    emojis.show();
+    emojis.slideDown('fast');
 }
 
 function hideEmojis() {
     $('.emojis-btn').removeClass('open');
-    emojis.hide();
+    emojis.slideUp('fast');
 }
 
 function showOpts() {
