@@ -42589,3 +42589,89 @@ joined room global
 [0mGET /sounds/pmnot.mp3 [36m304 [0m0.198 ms - -[0m
 [0mGET /sounds/pmnot.mp3 [32m206 [0m0.345 ms - 21232[0m
 [0mGET /sounds/pmnot.mp3 [32m206 [0m0.375 ms - 37616[0m
+[0mGET / [32m200 [0m2.175 ms - 46200[0m
+[0mGET /javascripts/stream-client.js [32m200 [0m2.029 ms - 3639[0m
+[0mGET /javascripts/media-recorder.js [32m200 [0m0.759 ms - 2441[0m
+[0mGET /versions/001.js [32m200 [0m3.820 ms - 68803[0m
+[0mGET /javascripts/socket.io-stream.js [32m200 [0m2.138 ms - 193668[0m
+[0mGET /emo/images/smileysmsad.png [32m200 [0m0.857 ms - 116195[0m
+[0mGET /emo/images/smileykiss.png [32m200 [0m1.918 ms - 90593[0m
+[0mGET /emo/images/smileyP.png [32m200 [0m2.183 ms - 91857[0m
+[0mGET /emo/images/smileyface.png [32m200 [0m2.265 ms - 138948[0m
+[0mGET /emo/images/smileyfaceD.png [32m200 [0m2.299 ms - 149571[0m
+[0mGET /emo/images/smileyO.png [32m200 [0m2.682 ms - 153296[0m
+[0mGET /emo/images/smileyssad.png [32m200 [0m0.837 ms - 45022[0m
+[0mGET /emo/images/smileysad.png [32m200 [0m0.375 ms - 119430[0m
+[0mGET /emo/images/smileyw.png [32m200 [0m0.316 ms - 36259[0m
+[0mGET /emo/images/thumb.png [32m200 [0m0.383 ms - 28476[0m
+[0mGET /emo/images/smileyxd.png [32m200 [0m5.228 ms - 98020[0m
+[0mGET /emo/images/angelol.png [32m200 [0m0.430 ms - 24397[0m
+[0mGET /emo/images/smileyxxd.png [32m200 [0m0.303 ms - 108251[0m
+[0mGET /emo/images/heart.png [32m200 [0m0.248 ms - 58393[0m
+[0mGET /sounds/not1.mp3 [32m206 [0m0.471 ms - 25004[0m
+[0mGET /sounds/pmnot.mp3 [32m206 [0m0.376 ms - 37616[0m
+[0mGET /sounds/pmnot.mp3 [32m206 [0m0.531 ms - 37616[0m
+[0mGET /emo/gifs/sunglasses.gif [32m200 [0m0.364 ms - 1012712[0m
+[0mGET / [36m304 [0m4.133 ms - -[0m
+[0mGET /javascripts/socket.io-stream.js [36m304 [0m0.280 ms - -[0m
+[0mGET /javascripts/stream-client.js [36m304 [0m0.291 ms - -[0m
+[0mGET /versions/001.js [36m304 [0m0.354 ms - -[0m
+[0mGET /javascripts/media-recorder.js [36m304 [0m0.269 ms - -[0m
+[0mGET /emo/images/smileyface.png [36m304 [0m1.150 ms - -[0m
+[0mGET /emo/images/smileysmsad.png [36m304 [0m1.049 ms - -[0m
+[0mGET /emo/images/smileyfaceD.png [36m304 [0m1.010 ms - -[0m
+[0mGET /emo/images/smileykiss.png [36m304 [0m1.087 ms - -[0m
+[0mGET /emo/images/smileyO.png [36m304 [0m3.046 ms - -[0m
+[0mGET /emo/images/smileyP.png [36m304 [0m3.041 ms - -[0m
+[0mGET /emo/images/smileysad.png [36m304 [0m0.344 ms - -[0m
+[0mGET /emo/images/smileyssad.png [36m304 [0m0.286 ms - -[0m
+[0mGET /emo/images/smileyw.png [36m304 [0m0.160 ms - -[0m
+[0mGET /emo/images/smileyxd.png [36m304 [0m0.518 ms - -[0m
+[0mGET /emo/images/smileyxxd.png [36m304 [0m0.440 ms - -[0m
+[0mGET /emo/images/thumb.png [36m304 [0m0.357 ms - -[0m
+[0mGET /emo/images/heart.png [36m304 [0m0.602 ms - -[0m
+[0mGET /emo/images/angelol.png [36m304 [0m0.516 ms - -[0m
+[0mGET /emo/gifs/sunglasses.gif [36m304 [0m0.457 ms - -[0m
+[0mGET /sounds/not1.mp3 [32m206 [0m1.072 ms - 25004[0m
+[0mGET /sounds/pmnot.mp3 [32m206 [0m0.729 ms - 37616[0m
+[0mGET /sounds/pmnot.mp3 [32m206 [0m0.503 ms - 37616[0m
+[0mGET / [36m304 [0m1.967 ms - -[0m
+[0mGET / [36m304 [0m3.844 ms - -[0m
+[0mGET / [36m304 [0m2.185 ms - -[0m
+[0mGET / [36m304 [0m3.250 ms - -[0m
+[0mGET / [36m304 [0m1.985 ms - -[0m
+
+> chatme@1.1.0 start /srv/ChatMe
+> node ./bin/www
+
+/srv/ChatMe/node_modules/frameguard/index.js:23
+    throw new Error('action must be undefined, "DENY", "ALLOW-FROM", or "SAMEORIGIN".')
+    ^
+
+Error: action must be undefined, "DENY", "ALLOW-FROM", or "SAMEORIGIN".
+    at frameguard (/srv/ChatMe/node_modules/frameguard/index.js:23:11)
+    at Object.<anonymous> (/srv/ChatMe/app.js:30:9)
+    at Module._compile (module.js:569:30)
+    at Object.Module._extensions..js (module.js:580:10)
+    at Module.load (module.js:503:32)
+    at tryModuleLoad (module.js:466:12)
+    at Function.Module._load (module.js:458:3)
+    at Module.require (module.js:513:17)
+    at require (internal/module.js:11:18)
+    at Object.<anonymous> (/srv/ChatMe/bin/www:3:11)
+    at Module._compile (module.js:569:30)
+    at Object.Module._extensions..js (module.js:580:10)
+    at Module.load (module.js:503:32)
+    at tryModuleLoad (module.js:466:12)
+    at Function.Module._load (module.js:458:3)
+    at Function.Module.runMain (module.js:605:10)
+npm ERR! code ELIFECYCLE
+npm ERR! errno 1
+npm ERR! chatme@1.1.0 start: `node ./bin/www`
+npm ERR! Exit status 1
+npm ERR! 
+npm ERR! Failed at the chatme@1.1.0 start script.
+npm ERR! This is probably not a problem with npm. There is likely additional logging output above.
+
+npm ERR! A complete log of this run can be found in:
+npm ERR!     /root/.npm/_logs/2017-10-11T10_33_28_221Z-debug.log
