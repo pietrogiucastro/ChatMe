@@ -34,8 +34,8 @@ app.set('port', port);
  */
 
 var options = {
-    key: fs.readFileSync('key.pem'),
-    cert: fs.readFileSync('cert.pem')
+    key: fs.readFileSync('/etc/letsencrypt/live/chatme.me/privkey.pem'),
+    cert: fs.readFileSync('/etc/letsencrypt/live/chatme.me/fullchain.pem')
 };
 
 var server = https.createServer(options, app);
