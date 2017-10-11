@@ -21,20 +21,21 @@
   },
   "homepage": "https://github.com/pietrogiucastro/ChatMe#readme",
   "dependencies": {
+    "anchorme": "*",
+    "body-parser": "*",
+    "crypto-js": "*",
     "ejs": "~2.5.2",
     "express": "^4.14.1",
-    "body-parser": "*",
-    "morgan": "*",
-    "mysql": "*",
+    "helmet": "^3.8.2",
     "mongodb": "*",
-    "serve-favicon": "^2.4.0",
-    "socket.io": "^2.0.3",
-    "socket.io-stream": "*",
-    "anchorme": "*",
-    "uuid": "*",
-    "crypto-js": "*",
     "mongoose": "*",
     "mongoose-deep-populate": "*",
-    "sharp": "*"
+    "morgan": "*",
+    "mysql": "*",
+    "serve-favicon": "^2.4.0",
+    "sharp": "*",
+    "socket.io": "^2.0.3",
+    "socket.io-stream": "*",
+    "uuid": "*"
   }
 }
