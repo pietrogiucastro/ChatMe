@@ -1,18 +1,14 @@
 var development = {
+    env: 'dev',
 	AES_SECRET: "5BbgQ}tC(V5=pwlQ>iz1/+53f(/wfaXVSY$V^kV7YQD4<y3/9`\"\"bE)h*n:QAcy",
-	SQLHOST : "",
-	SQLDB : "",
-	SQLUSER : "",
-	SQLPASS : ""
+	port: 443,
 };
 
 
 var production = {
+    env: 'prd',
 	AES_SECRET: "5BbgQ}tC(V5=pwlQ>iz1/+53f(/wfaXVSY$V^kV7YQD4<y3/9`\"\"bE)h*n:QAcy",
-	SQLHOST : "",
-	SQLDB : "",
-	SQLUSER : "",
-	SQLPASS : ""
+	port: 3000,
 }
 
 module.exports = function() {

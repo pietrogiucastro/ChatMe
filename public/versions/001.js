@@ -15,6 +15,7 @@ site = 'site://' + url_domain(site);
 var socket;
 var displaytype;
 var selectedsize;
+var collapsetabs = $.cookie('collapsetabs') == 'true';
 var sess_token = $.cookie('sess_token');
 var sess_user;
 var prevtyping = false;
@@ -985,6 +986,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
 
         $('#chat-me').find(tabs).remove();
         $('#chat-me').prepend(tabs);
+        if (collapsetabs) tabs.children('#chat-me-tabs').addClass('collapse');
 
         $('#chat-me-cont').html('');
         $('#chat-me-cont').append(fullImageCover);
@@ -1093,6 +1095,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
                 break;
             case 'selectedsize':
                 selectedsize = event.data.value;
+                $('#chat-me').attr('size', selectedsize);
                 break;
             default:
                 console.log('unhandled event');
@@ -1147,10 +1150,12 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
                 '<div class="settings-bottom"><button class="cm-button cm-confirm cm-right">Confirm</button><button class="cm-button cm-cancel cm-secondary cm-right">Cancel</button></div>' +
                 '</div>',
 
-            displaySettings: '<div class="settings"><div class="settings-row"><span class="settings-text">Window size:</span><select id="select-size" class="settings-select">' +
+            displaySettings: '<div class="settings"><div class="settings-row"><span class="settings-text">Size:</span><select id="select-size" class="settings-select">' +
                 '<option class="settings-option" value="xs">small</option><option class="settings-option" value="sm">medium</option><option class="settings-option" value="lg">large</option><option class="settings-option" value="res">custom (resizable)</option></select></div>' +
                 '<div class="settings-row"><span class="settings-text">Theme:</span><select id="select-theme" class="settings-select">' +
-                '<option class="settings-option">default</option><option class="settings-option">dark</option><option class="settings-option">holo</option></select></div></div>',
+                '<option class="settings-option">default</option><option class="settings-option">dark</option><option class="settings-option">holo</option></select></div>' +
+                '<div class="settings-row"><span class="settings-text text-lg">Collapse tabs:</span><input type="checkbox" id="collapse-input" class="settings-input"></div>' +
+                '</div>',
 
             searchchat: '<div class="search-chat cm-scroll"><div id="type-password-mod" style="display:none"><i class="fa fa-remove hidetypepass" onclick="hideTypePass()"></i><div class="type-password-cont"><div id="type-password-text">password for room <div id="type-password-name"></div></div><input id="type-password" type="password" placeholder="password" autofocus="true"><div id="type-password-message"></div></div></div><center class="cm-cont-input search-chat-cont" style="width: 60%;"><input class="cm-opts-input search-chat-input" placeholder="Search chat" autofocus="true"><span class="search-chat-icon"></span></center><hr class="search-div"><div class="search-body"></div></div>',
 
@@ -1180,6 +1185,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
             chatOptions.container.html(chatOptions.display.displaySettings);
             var selopt = '.settings-option[value=' + selectedsize + ']';
             chatOptions.container.find('#select-size ' + selopt).attr('selected', '');
+            chatOptions.container.find('#collapse-input').attr('checked', collapsetabs);
         },
         searchChatDis: function() {
             spinner.hide();
@@ -1277,17 +1283,34 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
             var buttons = this.btns;
 
             /* showusersbtn */
+            var switchUsersBtn = function() {
+                buttons.showusersbtn.object.removeClass('users-' + !showusers).addClass('users-' + showusers);
+            }
             buttons.showusersbtn.object = $(buttons.showusersbtn.element[0].cloneNode(true));
+
+            showusers = $.cookie('userstab') == 'true';
+            switchUsersBtn();
+            if (!showusers) $('#cm-online-panel').css('display', 'none');
+
             buttons.showusersbtn.object.click(function() {
                 showusers = !showusers;
-                buttons.showusersbtn.object.removeClass('users-' + !showusers).addClass('users-' + showusers);
+                $.cookie('userstab', showusers);
+                switchUsersBtn();
                 toggleUsers(showusers);
             });
             /* mutebtn */
+            var switchMuteBtn = function() {
+                buttons.mutebtn.object.removeClass('mute-' + !mute).addClass('mute-' + mute);
+            }
             buttons.mutebtn.object = $(buttons.mutebtn.element[0].cloneNode(true));
+
+            mute = $.cookie('mute') == 'true';
+            switchMuteBtn();
+
             buttons.mutebtn.object.click(function() {
                 mute = !mute;
-                buttons.mutebtn.object.removeClass('mute-' + !mute).addClass('mute-' + mute);
+                $.cookie('mute', mute);
+                switchMuteBtn();
             });
             /* searchbtn */
             buttons.searchbtn.object = $(buttons.searchbtn.element[0].cloneNode(true));
@@ -1661,6 +1684,17 @@ $(document).on('click', '.chat-row', function() {
 
 $(document).on('change', '#select-size', function() {
     postParentMessage('windowsize', $(this).val());
+});
+
+$(document).on('click', '#collapse-input', function() {
+    collapsetabs = $(this).is(':checked');
+    $.cookie('collapsetabs', collapsetabs);
+
+    if (collapsetabs)
+        $('#chat-me-tabs').addClass('collapse');
+
+    else
+        $('#chat-me-tabs').removeClass('collapse');
 });
 
 $(document).on('keyup', '#cm-message-input', checkTyping);

@@ -11,6 +11,8 @@ var guid = require('uuid').v4;
 var CryptoJS = require("crypto-js");
 var sharp = require("sharp");
 
+var environment = require('../environment')();
+
 /* 
 // Encrypt 
 var ciphertext = CryptoJS.AES.encrypt('my message', 'secret key 123');
@@ -26,33 +28,41 @@ var db = require('../db/mongoose.js');
  * Get port from environment and store in Express.
  */
 
-var port = normalizePort(process.env.PORT || '3000');
-app.set('port', port);
+ var port = normalizePort(environment.port || '3000');
+ app.set('port', port);
 
 /**
  * Create HTTP server.
  */
 
-var options = {
-    key: fs.readFileSync('/etc/letsencrypt/live/chatme.me/privkey.pem'),
-    cert: fs.readFileSync('/etc/letsencrypt/live/chatme.me/fullchain.pem')
-};
+var sslcert = 
 
-var server = https.createServer(options, app);
+    environment.env == 'prd' ?
+    {
+        key: fs.readFileSync('/etc/letsencrypt/live/chatme.me/privkey.pem'),
+        cert: fs.readFileSync('/etc/letsencrypt/live/chatme.me/fullchain.pem')
+    }
+:
+    {
+        key: fs.readFileSync('./devcert/key.pem'),
+        cert: fs.readFileSync('./devcert/cert.pem')
+    };
+
+server = https.createServer(sslcert, app);
 
 /**
  * Listen on provided port, on all network interfaces.
  */
 
-server.listen(port);
-server.on('error', onError);
-server.on('listening', onListening);
+ server.listen(port);
+ server.on('error', onError);
+ server.on('listening', onListening);
 
 /**
  * Normalize a port into a number, string, or false.
  */
 
-function normalizePort(val) {
+ function normalizePort(val) {
     var port = parseInt(val, 10);
 
     if (isNaN(port)) {
@@ -72,27 +82,27 @@ function normalizePort(val) {
  * Event listener for HTTP server "error" event.
  */
 
-function onError(error) {
+ function onError(error) {
     if (error.syscall !== 'listen') {
         throw error;
     }
 
     var bind = typeof port === 'string' ?
-        'Pipe ' + port :
-        'Port ' + port;
+    'Pipe ' + port :
+    'Port ' + port;
 
     // handle specific listen errors with friendly messages
     switch (error.code) {
         case 'EACCES':
-            console.error(bind + ' requires elevated privileges');
-            process.exit(1);
-            break;
+        console.error(bind + ' requires elevated privileges');
+        process.exit(1);
+        break;
         case 'EADDRINUSE':
-            console.error(bind + ' is already in use');
-            process.exit(1);
-            break;
+        console.error(bind + ' is already in use');
+        process.exit(1);
+        break;
         default:
-            throw error;
+        throw error;
     }
 }
 
@@ -100,11 +110,11 @@ function onError(error) {
  * Event listener for HTTP server "listening" event.
  */
 
-function onListening() {
+ function onListening() {
     var addr = server.address();
     var bind = typeof addr === 'string' ?
-        'pipe ' + addr :
-        'port ' + addr.port;
+    'pipe ' + addr :
+    'port ' + addr.port;
     debug('Listening on ' + bind);
     console.log('Listening on ' + bind + ' mode: ' + process.env.NODE_ENV);
 }
@@ -340,31 +350,31 @@ var startChatMe = function(socket) {
                     bufferDone();
                 } else if (mediaobject.type == 'image') {
                     sharp(mediaobject.buffer) //FIX THIS IN ONE ROW
-                        .resize(500)
-                        .jpeg()
+                    .resize(500)
+                    .jpeg()
+                    .toBuffer()
+                    .then(sharpbuffer => {
+                        mediaobject.buffer = sharpbuffer;
+
+                        sharp(mediaobject.buffer)
+                        .resize(120,120)
+                        .jpeg({quality: 1})
                         .toBuffer()
-                        .then(sharpbuffer => {
-                            mediaobject.buffer = sharpbuffer;
-
-                            sharp(mediaobject.buffer)
-                                .resize(120,120)
-                                .jpeg({quality: 1})
-                                .toBuffer()
-                                .then(previewBuffer => {
-                                    mediaobject.preview = toBase64(previewBuffer);
-                                    bufferDone();
-                                })
-                                .catch(err => {
-                                    console.log(err);
-                                    Jsonerror(socket);
-                                })
-
-
+                        .then(previewBuffer => {
+                            mediaobject.preview = toBase64(previewBuffer);
+                            bufferDone();
                         })
                         .catch(err => {
                             console.log(err);
                             Jsonerror(socket);
                         })
+
+
+                    })
+                    .catch(err => {
+                        console.log(err);
+                        Jsonerror(socket);
+                    })
                 }
 
             });
@@ -617,25 +627,25 @@ var startChatMe = function(socket) {
                 switch (room.type) {
 
                     case 'global':
-                        switchroom(socket, 'global');
-                        break;
+                    switchroom(socket, 'global');
+                    break;
 
                     case 'site':
-                        switchsiteroom(socket, room.name);
-                        break;
+                    switchsiteroom(socket, room.name);
+                    break;
 
                     case 'custom': //custom room
-                        switchroom(socket, room.name, room.pass);
-                        break;
+                    switchroom(socket, room.name, room.pass);
+                    break;
 
                     case 'pm': //private message
-                        switchpmroom(room.name, false);
-                        break;
+                    switchpmroom(room.name, false);
+                    break;
 
                     default:
-                        console.log("ERROR! Unknown room type: " + room.type);
-                        Jsonerror(socket);
-                        return;
+                    console.log("ERROR! Unknown room type: " + room.type);
+                    Jsonerror(socket);
+                    return;
                 }
 
             });
@@ -700,37 +710,37 @@ var startChatMe = function(socket) {
             // ================ //  
         });
 
+});
+
+function sendMessage(room, msgobj) {
+    io.sockets.in(room).emit('new message', msgobj);
+    rooms[room].history.push(msgobj);
+    db.createMessage(socket.user.id.toString(), room, msgobj, function(err, result) {
+        if (err) console.log(err);
+        else if (!result.nModified) console.log('ERROR! no room found in db with name ' + room);
     });
+}
 
-    function sendMessage(room, msgobj) {
-        io.sockets.in(room).emit('new message', msgobj);
-        rooms[room].history.push(msgobj);
-        db.createMessage(socket.user.id.toString(), room, msgobj, function(err, result) {
-            if (err) console.log(err);
-            else if (!result.nModified) console.log('ERROR! no room found in db with name ' + room);
-        });
-    }
-
-    function sendPmMessage(room, msgobj) {
+function sendPmMessage(room, msgobj) {
 
 
-        socket.emit('new message', msgobj);
+    socket.emit('new message', msgobj);
 
-        var recipientid = getRecipientId(socket.user.id.toString(), room);
-        if (!recipientid) return console.log("ERROR! Userid is not in roomname! room: " + room + " | userid: " + socket.user.id);
-        rooms[room].history.push(msgobj);
-        rooms[room].unseen[recipientid]++;
-        rooms[room].lastmsg = msgobj;
+    var recipientid = getRecipientId(socket.user.id.toString(), room);
+    if (!recipientid) return console.log("ERROR! Userid is not in roomname! room: " + room + " | userid: " + socket.user.id);
+    rooms[room].history.push(msgobj);
+    rooms[room].unseen[recipientid]++;
+    rooms[room].lastmsg = msgobj;
 
-        var clearunseen = false;
-        var pmMsgobj = Object.assign({}, msgobj, {
-            recipientnamefor: socket.user.name
-        });
-        socket.emit('pm-addseen', Object.assign({}, msgobj, {
-            recipientnamefor: socket.user.pmRecipient
-        }));
+    var clearunseen = false;
+    var pmMsgobj = Object.assign({}, msgobj, {
+        recipientnamefor: socket.user.name
+    });
+    socket.emit('pm-addseen', Object.assign({}, msgobj, {
+        recipientnamefor: socket.user.pmRecipient
+    }));
 
-        var recipientSocketsIds = connectedSockets[recipientid];
+    var recipientSocketsIds = connectedSockets[recipientid];
 
         if (recipientSocketsIds) { //recipient is connected
             recipientSocketsIds.forEach(recipSockId => {
@@ -822,23 +832,33 @@ var startChatMe = function(socket) {
                     type: 'pm',
                     html: username
                 });
-                socket.emit('pm-setseen', username);
-                socket.user.pmRecipient = username;
-            };
+                    socket.emit('pm-setseen', username);
+                    socket.user.pmRecipient = username;
+                };
 
-            if (!roomexists(roomname)) {
+                if (!roomexists(roomname)) {
 
-                var recipientnamefor = {};
-                recipientnamefor[socketid] = username;
-                recipientnamefor[userid] = socket.user.name;
+                    var recipientnamefor = {};
+                    recipientnamefor[socketid] = username;
+                    recipientnamefor[userid] = socket.user.name;
 
-                createGetDbPmRoom(socket, {
-                    name: roomname,
-                    ids: [socketid, userid],
-                    recipientnamefor: recipientnamefor
-                }, function(dbroom) {
+                    createGetDbPmRoom(socket, {
+                        name: roomname,
+                        ids: [socketid, userid],
+                        recipientnamefor: recipientnamefor
+                    }, function(dbroom) {
 
-                    rooms[roomname] = dbroom
+                        rooms[roomname] = dbroom
+                        joinroom(socket, roomname, afterjoin, joinroomdata);
+                        db.clearPmUnseenForId(roomname, socketid, err => {
+                            if (err) {
+                                console.log(err);
+                                Jsonwarn(socket);
+                            }
+                        });
+
+                    });
+                } else {
                     joinroom(socket, roomname, afterjoin, joinroomdata);
                     db.clearPmUnseenForId(roomname, socketid, err => {
                         if (err) {
@@ -846,19 +866,9 @@ var startChatMe = function(socket) {
                             Jsonwarn(socket);
                         }
                     });
+                }
 
-                });
-            } else {
-                joinroom(socket, roomname, afterjoin, joinroomdata);
-                db.clearPmUnseenForId(roomname, socketid, err => {
-                    if (err) {
-                        console.log(err);
-                        Jsonwarn(socket);
-                    }
-                });
-            }
-
-        });
+            });
 
     }
 
@@ -1090,22 +1100,22 @@ var startChatMe = function(socket) {
 
     function toBase64(data) {
       return 'data:image/jpeg;base64,' + data.toString('base64');
-    };
+  };
 
-    function Jsonerror(socket, type = 'stderror', message = 'Internal error. Try again later.', data = {}) {
-        socket.emit('jsonerror', {
-            type: type,
-            message: message,
-            data: data
-        });
-    }
+  function Jsonerror(socket, type = 'stderror', message = 'Internal error. Try again later.', data = {}) {
+    socket.emit('jsonerror', {
+        type: type,
+        message: message,
+        data: data
+    });
+}
 
-    function Jsonwarn(socket, type = 'stdwarn', message = 'Internal error. Try again later.') {
-        socket.emit('jsonwarning', {
-            type: type,
-            message: message
-        });
-    }
+function Jsonwarn(socket, type = 'stdwarn', message = 'Internal error. Try again later.') {
+    socket.emit('jsonwarning', {
+        type: type,
+        message: message
+    });
+}
 
 
 };

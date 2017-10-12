@@ -10,13 +10,12 @@
 // @match        https://*/*
 // @match        http://*/*
 // @require      http://code.jquery.com/jquery-latest.js
-// @require      https://code.jquery.com/ui/1.12.1/jquery-ui.min.js
 // @grant        GM_setValue
 // @grant        GM_getValue
 // ==/UserScript==
 var settings_page = 'chat.me';
 var server = 'chatme.me';
-//server = 'localhost';
+server = 'localhost';
 var version = '001';
 
 var connection;
@@ -27,7 +26,8 @@ var container;
 
 var shw = '404px',shh = '174px',
     hiw = '30px', hih = '30px',
-    hir = '20px', hib = '20px';
+    shr = '10px', shb = '10px',
+    hir = '10px', hib = '10px';
 
 var input;
 
@@ -45,7 +45,7 @@ var sizes = {
         y: '460px'
     },
     res: {
-        x: '200px',
+        x: '300px',
         y: '200px'
     }
 };
@@ -55,18 +55,24 @@ if (document.domain == "www.youtube.com") return;
 if (window.location.href != window.parent.location.href) return; //if it's in iframe, return
 if (document.domain == "web.whatsapp.com") return;
 
+//# sourceMappingURL=jquery-resizable.min.js.map
+!function(e,n){"function"==typeof define&&define.amd?define(["jquery"],e):"object"==typeof module&&"object"==typeof module.exports?module.exports=e(require("jquery")):e(jQuery)}(function(e,n){function t(n,t){return n&&">"===n.trim()[0]?(n=n.trim().replace(/^>\s*/,""),t.find(n)):n?e(n):t}e.fn.resizable||(e.fn.resizable=function(n){var o={handleSelector:null,resizeWidth:!0,resizeHeight:!0,resizeWidthFrom:"right",resizeHeightFrom:"bottom",onDragStart:null,onDragEnd:null,onDrag:null,touchActionNone:!0};return"object"==typeof n&&(o=e.extend(o,n)),this.each(function(){function n(e){e.stopPropagation(),e.preventDefault()}function i(t){t.preventDefault&&t.preventDefault(),s=c(t),s.width=parseInt(d.width(),10),s.height=parseInt(d.height(),10),a=d.css("transition"),d.css("transition","none"),o.onDragStart&&o.onDragStart(t,d,o)===!1||(o.dragFunc=r,e(document).bind("mousemove.rsz",o.dragFunc),e(document).bind("mouseup.rsz",u),(window.Touch||navigator.maxTouchPoints)&&(e(document).bind("touchmove.rsz",o.dragFunc),e(document).bind("touchend.rsz",u)),e(document).bind("selectstart.rsz",n))}function r(e){var n,t,i=c(e);n="left"===o.resizeWidthFrom?s.width-i.x+s.x:s.width+i.x-s.x,t="top"===o.resizeHeightFrom?s.height-i.y+s.y:s.height+i.y-s.y,o.onDrag&&o.onDrag(e,d,n,t,o)===!1||(o.resizeHeight&&d.height(t),o.resizeWidth&&d.width(n))}function u(t){return t.stopPropagation(),t.preventDefault(),e(document).unbind("mousemove.rsz",o.dragFunc),e(document).unbind("mouseup.rsz",u),(window.Touch||navigator.maxTouchPoints)&&(e(document).unbind("touchmove.rsz",o.dragFunc),e(document).unbind("touchend.rsz",u)),e(document).unbind("selectstart.rsz",n),d.css("transition",a),o.onDragEnd&&o.onDragEnd(t,d,o),!1}function c(e){var n={x:0,y:0,width:0,height:0};if("number"==typeof e.clientX)n.x=e.clientX,n.y=e.clientY;else{if(!e.originalEvent.touches)return null;n.x=e.originalEvent.touches[0].clientX,n.y=e.originalEvent.touches[0].clientY}return n}var s,a,d=e(this),h=t(o.handleSelector,d);o.touchActionNone&&h.css("touch-action","none"),d.addClass("resizable"),h.bind("mousedown.rsz touchstart.rsz",i)})})});
+var resizeicosrc = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAUVBMVEUAAACqqqr+/v4vLy/6+vr+/v7+/v4AAABzc3Nvb2////+2trbJycnr6+vPz891dXVzc3OhoaF3d3eioqJ9fX2goKC+vr5/f3/Ly8t8fHz+/v4NyOEeAAAAG3RSTlMAjgtAaEpbR3wQA3dyanYndRN+L4g2mjByeR/NwbV+AAAARklEQVR4XmMgDTAzokqwM7KgybMxockzoctziqLJc/ChynNws6LK87ByEZLnF4DLCwoB5YVFeMECYkB5cQmgfkleKQYiAADT4wJh2XodKgAAAABJRU5ErkJggg==";
+
 (function() {
     'use strict';
 
     if (document.domain == settings_page) return document.write('chat me settings. Under construction..');
     if (document.domain == server) return;
 
-    $('head').append('<style type=text/css>.chat-me-notloaded {cursor:pointer; display:block !important;} #chat-me-cover { position:absolute; width:100%; height:100%; background-color:rgb(50,80,100); top:0; opacity:0.0; cursor:pointer; } #chat-me-container {position: fixed; z-index:99999999999999999999; bottom:20px; right:20px;} #chat-me-frame {border:0; width:100%; height:100%; overflow:hidden;} </style>');
+    $('head').append('<style type=text/css>.chat-me-notloaded {cursor:pointer; display:block !important;} #chat-me-cover { position:absolute; width:100%; height:100%; background-color:rgb(50,80,100); top:0; opacity:0.0; cursor:pointer; } #chat-me-container {position: fixed; z-index:99999999999999999999; bottom:'+shb+'; right:'+shr+';} #chat-me-container.resizable:not(.fs):not(.cm-hidden) {min-width: 300px; min-height: 200px; max-width: 100vw; max-height: 100vh; max-width:calc(100vw - '+shr+' - 30px); max-height:calc(100vh - '+shb+' - 20px);} #chat-me-container.resizable > #chat-me-frame {border-top-left-radius: 10px !important;} #chat-me-container.resizable:not(.cm-hidden) #chat-me-resbtn {display: block !important;} #chat-me-resbtn {display: none; position: absolute; left: 1px; top: 2px; cursor: nwse-resize;} #chat-me-frame {border:0; width:100%; height:100%; overflow:hidden;} #chat-me-frame.dragging {pointer-events: none;} </style>');
 
-    $('head').append('<style type=text/css>.xs {width: '+sizes.xs.x+'; height: '+sizes.xs.y+';} .sm {width: '+sizes.sm.x+'; height: '+sizes.sm.y+'} .lg {width: '+sizes.lg.x+'; height: '+sizes.lg.y+';} .fs {width: 100% !important; height: 100% !important; left: 0; top: 0;} .chatme-fs {overflow: hidden !important;} </style>');
+    $('head').append('<style type=text/css>.xs {width: '+sizes.xs.x+'; height: '+sizes.xs.y+';} .sm {width: '+sizes.sm.x+'; height: '+sizes.sm.y+';} .lg {width: '+sizes.lg.x+'; height: '+sizes.lg.y+';} .fs {width: 100% !important; height: 100% !important; left: 0; top: 0; padding: 0 !important;} .chatme-fs {overflow: hidden !important;} </style>');
 
     $('body').append('<div id="chat-me-container"></div>');
-    $('#chat-me-container').append('<iframe id="chat-me-frame" src="https://'+server+'"></iframe><div id="chat-me-cover" class="chat-me-notloaded" style="display:none;"></div>');
+    $('#chat-me-container')
+        .append('<img id="chat-me-resbtn" src="'+resizeicosrc+'"></img>')
+        .append('<iframe id="chat-me-frame" src="https://'+server+'"></iframe><div id="chat-me-cover" class="chat-me-notloaded" style="display:none;"></div>');
 
     $(document).on('click', '#chat-me-container:not(.cm-hidden) .chat-me-notloaded', hideChatMe)
         .on('click', '#chat-me-container.cm-hidden .chat-me-notloaded', showChatMe);
@@ -113,48 +119,42 @@ if (document.domain == "web.whatsapp.com") return;
         });
     }
     function resizableChatMe() {
-        $(container).resizable({handles: 'n, w, nw', minWith: 150, minHeight: 100});
+        var _res_w = GM_getValue('res_w') || 300;
+        var _res_h = GM_getValue('res_h') || 200;
+        $(container).width(_res_w).height(_res_h).resizable({
+            resizeWidthFrom: 'left',
+            resizeHeightFrom: 'top',
+            handleSelector: '#chat-me-resbtn',
+            onDragStart: function() {
+                $('#chat-me-frame').addClass('dragging');
+            },
+            onDragEnd: function() {
+                console.log('dragend');
+                $('#chat-me-frame').removeClass('dragging');
+                var res_w = $(container).width();
+                var res_h = $(container).height();
+                GM_setValue('res_w', res_w);
+                GM_setValue('res_h', res_h);
+            }
+        });
     }
     window.setWindowSize = function(size) {
         if (!size || !sizes[size]) size = 'sm';
 
-        $(container).removeClass().addClass(size);
+        $(container).width('').height('').removeClass().addClass(size);
         if (size == 'res') resizableChatMe();
-
-        shw = sizes[size].x;
-        shh = sizes[size].y;
+        else {
+            shw = sizes[size].x;
+            shh = sizes[size].y;
+        }
 
         GM_setValue('size', size);
         postChildMessage('selectedsize', size);
     };
 
-    //         worth it?           //
-    var dragging = false;
-    var cover = document.getElementById('chat-me-cover');
-    /*console.log(cover);
-        cover.onmousedown = function() {
-            dragging = true;
-            console.log('asd');
-        };
-        cover.onmouseup = function() {
-            dragging = false;
-        };
-        cover.onmousemove = function(event) {
-            if (!dragging) return;
-            event = event || window.event; // IE-ism
-            var cursorX = (event.pageX-20)+'px';
-            var cursorY = (event.pageY-20)+'px';
-
-            $(container).css('top', cursorY).css('left', cursorX);
-
-            console.log(cursorX + "  " + cursorY);
-        };*/
-
-    // ////////////////////// //
-
-
     window.addEventListener('message', function(event) {
         if (event.data.type != 'cm-event') return;
+
         switch (event.data.key) {
             case 'successload':
                 successLoad();
@@ -204,6 +204,7 @@ function inChatMe() {
     }, {duration: 100, queue: false});
 }
 function hideChatMe() {
+    if ($(container).is('.fs')) return;
     shw = $('#chat-me-container').width();
     shh = $('#chat-me-container').height();
 
@@ -217,7 +218,7 @@ function hideChatMe() {
     }, 200);
     $('#chat-me-container').addClass('cm-hidden').animate({
         width: hiw, height: hih,
-        bottom: '10px', right: '10x'
+        bottom: hib, right: hir
     }, 200, outChatMe);
     GM_setValue('isHidden', '1');
 }
@@ -232,13 +233,11 @@ function showChatMe() {
         'border-radius': '0%'
     }, 200);
 
-    $('#chat-me-container').removeClass('cm-hidden').animate({
+    $('#chat-me-container').animate({
         width: shw, height: shh,
-        bottom: hib, right: hir
+        bottom: shb, right: shr
     }, 200, function() {
-        $(this).css({
-            'width': '',
-            'height': '',
+        $(this).removeClass('cm-hidden').css({
             'bottom': '',
             'right': ''
         });
@@ -310,4 +309,5 @@ function successLoad() {
     // set the initial state (but only if browser supports the Page Visibility API)
     if( document[hidden] !== undefined )
         onchange({type: document[hidden] ? "blur" : "focus"});
+
 })();

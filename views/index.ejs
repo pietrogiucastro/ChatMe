@@ -155,6 +155,12 @@
                 max-width: 30%;
                 vertical-align: middle;
                 padding-left: 19px !important;
+                border-bottom-right-radius: 4px;
+              }
+              #chat-me[size=res] .chat-tab:first-child {
+                margin-left: 19px;
+                border-top-left-radius: 4px;
+                border-bottom-left-radius: 2px;
               }
               .chat-tab .volume-icon {
                 position: absolute;
@@ -288,8 +294,8 @@
               #chat-me-options .close-options {
                 position: absolute;
                 z-index: 100;
-                top: 5px;
-                right: 5px;
+                top: 2px;
+                right: 9px;
                 cursor: pointer;
               }
               .close-options:hover {
@@ -484,7 +490,7 @@
               }
               .settings .settings-text {
                 float: left;
-                width: 40%;
+                width: 50%;
                 padding-right: 30px;
                 font-weight: bold;
                 text-align: right;
@@ -492,10 +498,14 @@
               }
               .settings .settings-select {
                 float: left;
-                width: 60%;
+                width: 50%;
                 border-radius: 3px;
                 padding: 2px 0;
                 font-weight: bold;
+              }
+              .settings .settings-input {
+                float: left;
+                margin: 0;
               }
               .settings .settings-bottom {
                 position: absolute;
@@ -1474,296 +1484,296 @@
     border-left: 7px solid rgb(248,248,250);
   }
 
-/*    .chat-tab { /*collapse option*//*
-      width: 28px;
-    }
-    .chat-tab:hover {
-      width: auto !important;
-      z-index: 1;
-      }*/
-    </style>
-
-    <style type="text/css">
-    #pending-img {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      background: rgba(90, 90, 90, 0.6);
-      z-index: 1;
-    }
-
-    #pending-img img {
-      position: absolute;
-      bottom: 0; left: 0; right: 0;
-      margin: auto;
-      object-fit: contain;
-      box-sizing: border-box;
-      max-width: 100%;
-      max-height: 100%;
-      padding: 8px;
-      border-radius: 5px;
-      background: white;
-    }
-
-    #pending-img .cancel-img {
-      position: absolute;
-      top: 2px; right: 2px;
-      line-height: 19px;
-      padding: 0 1px;
-      width: 19px;
-      border-radius: 4px;
-      background: #9e261a;
-      color: white;
-      text-align: center;
-      font-size: 18px;
-      box-shadow: 1px 1px 2px #555;
-    }
-
-    .cancel-img:before {
-      font-family: fontawesome;
-      content: "\f00d";
-    }
-
-    .cancel-img:hover {
-      cursor: pointer;
-      color: #9e261a !important;
-      background: #eee !important;
-    }
-
-
-    .cm-image-body {
-      width: 70%;
-      max-width: 250px !important;
-      position: relative;
-      padding: 5px !important;
-    }
-
-    .cm-message-image {
-      position: relative;
-      width: 100%;
-      margin: 7px 0;
-      display: flex;
-      border-radius: 5px;
-      overflow: hidden;
-    }
-
-    .cm-message-image img {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .cm-message-image:not(.loading) {
-      cursor: pointer;
-    }
-
-    .cm-message-image .img-square {
-      margin-top: 100%;
-    }
-
-    .cm-message-image.notloaded {
-      background-size: 100% !important;
-    }
-
-    .cm-message-image.notloaded img, .cm-message-image.loading img {
-      -webkit-filter: blur(7px);
-      -o-filter: blur(7px);
-      filter: blur(7px);
-    }
-
-    .cm-message-image.notloaded, .cm-message-image.loading {
-      display: flex;
-      align-items: center;
-      background: rgba(250,255,250, 0.53);
-      border-radius: 5px;
-      cursor: pointer;
-      color: #ddd;
-    }
-
-    .cm-message-image.notloaded:hover {
-      background: rgba(255,255,255, 0.53);
-      color: #fff;
-    }
-
-    .cm-message-image.notloaded:after {
-      display: block;
-      width: 100%;
-      font-family: fontawesome;
-      content: "\f01a";
-      text-align: center;
-      font-size: 25px;
-      z-index: 1;
-      background: rgba(0,0,0,0.12);
-      padding: 5px;
-    }
-
-    .cm-message-image.loading:after {
-      animation: fa-spin 2s infinite linear;
-    }
-    .cm-message-image.loading:after {
-      display: block;
-      width: 100%;
-      font-family: fontawesome;
-      content: "\f1ce";
-      text-align: center;
-      font-size: 25px;
-    }
-
-    #full-image-btns {
-      position: fixed;
-      display: none;
-      width: 100%;
-      top: 0;
-      left: 0;
-      z-index: 25;
-    }
-
-    #full-image-btns span {
-      position: absolute;
-      top: 5px;
-      font-size: 14px;
-      color: #eee;
-      cursor: pointer;
-      padding: 9px;
-      border-radius: 5px;
-      background: rgba(255,255,255,0.75);
-      color: #444;
-    }
-    .fullimg-down:hover {
-      background: white !important;
-      color: skyblue !important;
-    }
-    .fullimg-close:hover {
-      background: white !important;
-      color: darkred !important;
-    }
-
-    .fullimg-down {
-      left: 10px;
-    }
-    .fullimg-down:before {
-      font-family: fontawesome;
-      content: "\f019";
-    }
-    .fullimg-close {
-      right: 10px;
-    }
-    .fullimg-close:before {
-      font-family: fontawesome;
-      content: "\f00d";
-    }
-
-  </style>
-
-  <style type="text/css">
-  .emojis-btn.open {
-    color: orange;
+  #chat-me-tabs.collapse > .chat-tab { /*collapse option*/
+    width: 27px;
   }
-
-  #emojis {
-    position: absolute;
-    display: none;
-    overflow: hidden;
-    z-index: 10;
-    bottom: 30px;
-    right: -20px;
-    border-radius: 3px;
-    background: rgb(253,254,255);
-    width: 200px;
-    height: 200px;
-    box-shadow: 1px 1px 4px #bbb;
-  }
-
-  #emojis .emoji {
-    float: left;
-    box-sizing: border-box;
-    width: 33%;
-    padding: 5px;
-    cursor: pointer;
-    border-radius: 3px;
-    position: relative;
-  }
-
-  .emoji img {
-    width: 100%;
-    height: 100%;
-  }
-
-  .emoji:hover {
-    background: #eee;
-  }
-
-  .emoji-msg {
-    display: inline-block;
-    width: 125px;
-  }
-
-
-  .emoji-msg img {
-    width: 100%;
-    height: 100%;
-  }
-
-  .emoji-tabs {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
+  #chat-me-tabs.collapse > .chat-tab:hover {
+    width: auto !important;
     z-index: 1;
-    background: #daebe0;
   }
+</style>
 
-  .emoji-tab {
-    display: inline-block;
-    line-height: 30px;
-    margin-left: 5px;
-    padding: 0 15px;
-    color: #444;
-    cursor: pointer;
-  }
+<style type="text/css">
+#pending-img {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: rgba(90, 90, 90, 0.6);
+  z-index: 1;
+}
 
-  .emoji-tab.active {
-    color: orange;
-  }
+#pending-img img {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  margin: auto;
+  object-fit: contain;
+  box-sizing: border-box;
+  max-width: 100%;
+  max-height: 100%;
+  padding: 8px;
+  border-radius: 5px;
+  background: white;
+}
 
-  .emoji-tab:not(.active):hover {
-    background: #cbe3d3;
-    color: black;
-  }
+#pending-img .cancel-img {
+  position: absolute;
+  top: 2px; right: 2px;
+  line-height: 19px;
+  padding: 0 1px;
+  width: 19px;
+  border-radius: 4px;
+  background: #9e261a;
+  color: white;
+  text-align: center;
+  font-size: 18px;
+  box-shadow: 1px 1px 2px #555;
+}
 
-  .emoji-tab[target=images]:before {
-    font-family: fontawesome;
-    content: "\f118";
-  }
+.cancel-img:before {
+  font-family: fontawesome;
+  content: "\f00d";
+}
 
-  .emoji-tab[target=gifs]:before {
-    font-family: fontawesome;
-    content: "\f008";
-  }
+.cancel-img:hover {
+  cursor: pointer;
+  color: #9e261a !important;
+  background: #eee !important;
+}
 
-  .emoji-body {
-    height: 100%;
-    padding-top: 33px;
-    box-sizing: border-box;
-  }
 
-  .emoji-overflow {
-    position: relative;
-    height: 100%;
-    box-sizing: border-box;
-    padding: 2px;
-  }
+.cm-image-body {
+  width: 70%;
+  max-width: 250px !important;
+  position: relative;
+  padding: 5px !important;
+}
 
-  .emoji-category {
-    display: none;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-  }
+.cm-message-image {
+  position: relative;
+  width: 100%;
+  margin: 7px 0;
+  display: flex;
+  border-radius: 5px;
+  overflow: hidden;
+}
 
-  .emoji-category.active {
-    display: block;
-  }
+.cm-message-image img {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cm-message-image:not(.loading) {
+  cursor: pointer;
+}
+
+.cm-message-image .img-square {
+  margin-top: 100%;
+}
+
+.cm-message-image.notloaded {
+  background-size: 100% !important;
+}
+
+.cm-message-image.notloaded img, .cm-message-image.loading img {
+  -webkit-filter: blur(7px);
+  -o-filter: blur(7px);
+  filter: blur(7px);
+}
+
+.cm-message-image.notloaded, .cm-message-image.loading {
+  display: flex;
+  align-items: center;
+  background: rgba(250,255,250, 0.53);
+  border-radius: 5px;
+  cursor: pointer;
+  color: #ddd;
+}
+
+.cm-message-image.notloaded:hover {
+  background: rgba(255,255,255, 0.53);
+  color: #fff;
+}
+
+.cm-message-image.notloaded:after {
+  display: block;
+  width: 100%;
+  font-family: fontawesome;
+  content: "\f01a";
+  text-align: center;
+  font-size: 25px;
+  z-index: 1;
+  background: rgba(0,0,0,0.12);
+  padding: 5px;
+}
+
+.cm-message-image.loading:after {
+  animation: fa-spin 2s infinite linear;
+}
+.cm-message-image.loading:after {
+  display: block;
+  width: 100%;
+  font-family: fontawesome;
+  content: "\f1ce";
+  text-align: center;
+  font-size: 25px;
+}
+
+#full-image-btns {
+  position: fixed;
+  display: none;
+  width: 100%;
+  top: 0;
+  left: 0;
+  z-index: 25;
+}
+
+#full-image-btns span {
+  position: absolute;
+  top: 5px;
+  font-size: 14px;
+  color: #eee;
+  cursor: pointer;
+  padding: 9px;
+  border-radius: 5px;
+  background: rgba(255,255,255,0.75);
+  color: #444;
+}
+.fullimg-down:hover {
+  background: white !important;
+  color: skyblue !important;
+}
+.fullimg-close:hover {
+  background: white !important;
+  color: darkred !important;
+}
+
+.fullimg-down {
+  left: 10px;
+}
+.fullimg-down:before {
+  font-family: fontawesome;
+  content: "\f019";
+}
+.fullimg-close {
+  right: 10px;
+}
+.fullimg-close:before {
+  font-family: fontawesome;
+  content: "\f00d";
+}
+
+</style>
+
+<style type="text/css">
+.emojis-btn.open {
+  color: orange;
+}
+
+#emojis {
+  position: absolute;
+  display: none;
+  overflow: hidden;
+  z-index: 10;
+  bottom: 30px;
+  right: -20px;
+  border-radius: 3px;
+  background: rgb(253,254,255);
+  width: 200px;
+  height: 200px;
+  box-shadow: 1px 1px 4px #bbb;
+}
+
+#emojis .emoji {
+  float: left;
+  box-sizing: border-box;
+  width: 33%;
+  padding: 5px;
+  cursor: pointer;
+  border-radius: 3px;
+  position: relative;
+}
+
+.emoji img {
+  width: 100%;
+  height: 100%;
+}
+
+.emoji:hover {
+  background: #eee;
+}
+
+.emoji-msg {
+  display: inline-block;
+  width: 125px;
+}
+
+
+.emoji-msg img {
+  width: 100%;
+  height: 100%;
+}
+
+.emoji-tabs {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1;
+  background: #daebe0;
+}
+
+.emoji-tab {
+  display: inline-block;
+  line-height: 30px;
+  margin-left: 5px;
+  padding: 0 15px;
+  color: #444;
+  cursor: pointer;
+}
+
+.emoji-tab.active {
+  color: orange;
+}
+
+.emoji-tab:not(.active):hover {
+  background: #cbe3d3;
+  color: black;
+}
+
+.emoji-tab[target=images]:before {
+  font-family: fontawesome;
+  content: "\f118";
+}
+
+.emoji-tab[target=gifs]:before {
+  font-family: fontawesome;
+  content: "\f008";
+}
+
+.emoji-body {
+  height: 100%;
+  padding-top: 33px;
+  box-sizing: border-box;
+}
+
+.emoji-overflow {
+  position: relative;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 2px;
+}
+
+.emoji-category {
+  display: none;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+}
+
+.emoji-category.active {
+  display: block;
+}
 
 </style>
 </head>
