@@ -212,7 +212,10 @@
                 content: "\f007";
                 padding-left: 1px;
               }
-              .chat-tab.custom {
+              :not(.collapse) > .chat-tab.custom {
+                padding-right: 15px !important;
+              }
+              .collapse > .chat-tab.custom:hover {
                 padding-right: 15px !important;
               }
               .chat-tab .remove-tab {
@@ -223,6 +226,9 @@
                 padding: 3px;
                 padding-right: 0px;
                 cursor: pointer;
+              }
+              .collapse > .chat-tab:not(:hover) > .remove-tab {
+                display: none;
               }
               .chat-tab .remove-tab:hover {
                 color: red;
@@ -275,9 +281,9 @@
                 background-color: white !important;
               }
               .chat-tab.sel {
-                background: -webkit-linear-gradient(bottom, #eee, #fff);
-                background: -o-linear-gradient(bottom, #eee, #fff);
-                background: linear-gradient(to top, #eee, #fff);
+                background: -webkit-linear-gradient(bottom, #eee, #fff) !important;
+                background: -o-linear-gradient(bottom, #eee, #fff) !important;
+                background: linear-gradient(to top, #eee, #fff) !important;
                 color: #0365bf !important;
               }
               .chat-tab.pm.sel {
@@ -1776,6 +1782,63 @@
 }
 
 </style>
+<style type="text/css"> /*dark*/
+#chat-me[theme=dark] #chat-me-cont, #chat-me[theme=dark] #cm-online {
+  background: #201A23 !important;
+}
+#chat-me[theme=dark] #cm-online {
+  border-right: 1px solid #535353;
+}
+#chat-me[theme=dark] #cm-chat {
+  background: #201A23 !important;
+}
+
+#chat-me[theme=dark] .cm-message-body {
+  box-shadow: none !important;
+}
+
+#chat-me[theme=dark] .cm-scroll::-webkit-scrollbar-track {
+  background: #201A23 !important;
+}
+
+#chat-me[theme=dark] .cm-message-body {
+  background: #9b9b9b !important;
+}
+
+#chat-me[theme=dark] .cm-message:hover {
+  background-color: rgba(64, 69, 73, 0.4) !important;
+}
+
+#chat-me[theme=dark] .cm-message-date, #chat-me[theme=dark] .cm-message-text, #chat-me[theme=dark] .system-text, #chat-me[theme=dark] .emojis-btn {
+  color: white !important;
+}
+
+#chat-me[theme=dark] .triangle-1, #chat-me[theme=dark] .triangle-2 {
+  border-right-color: #9b9b9b !important;
+}
+
+#chat-me[theme=dark] .left, #chat-me[theme=dark] .right {
+  background-color: white !important;
+}
+
+#chat-me[theme=dark] .message-input-cont > input {
+  background: #201A23 !important;
+  border-top: 1px solid #535353;
+  border-bottom: 1px solid #535353;
+}
+
+#chat-me[theme=dark] #chat-me-head {
+  background: #b6b6b6 !important;
+}
+
+#chat-me[theme=dark] #chat-me-tabs .chat-tab:not(:hover):not(.sel) {
+  background: #616161 !important;
+  color: #e5e5e5 !important;
+}
+
+
+</style>
+
 </head>
 <body>
   <div id="chat-me">

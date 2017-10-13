@@ -30,7 +30,9 @@ var userSchema = new Schema({ //User schema
     pmlist: [{
 	    type: Schema.Types.ObjectId,
 	    ref: 'PmRoom'
-    }]
+    }],
+    activerooms: { type: Schema.Types.Mixed, default: {} },
+    joinedroom: { type: String, default: 'global' }
 });
 userSchema.plugin(deepPopulate);
 

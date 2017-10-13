@@ -35,20 +35,20 @@ var db = require('../db/mongoose.js');
  * Create HTTP server.
  */
 
-var sslcert = 
+ var sslcert = 
 
-    environment.env == 'prd' ?
+ environment.env == 'prd' ?
     {
         key: fs.readFileSync('/etc/letsencrypt/live/chatme.me/privkey.pem'),
         cert: fs.readFileSync('/etc/letsencrypt/live/chatme.me/fullchain.pem')
     }
-:
+ :
     {
         key: fs.readFileSync('./devcert/key.pem'),
         cert: fs.readFileSync('./devcert/cert.pem')
     };
 
-server = https.createServer(sslcert, app);
+ server = https.createServer(sslcert, app);
 
 /**
  * Listen on provided port, on all network interfaces.
@@ -198,7 +198,6 @@ var startChatMe = function(socket) {
 
         if (socket.user) {
             if (socket.user.lastroom) {
-                rooms[socket.user.lastroom].users[socket.user.name].typing = false;
                 leaveroom(socket, socket.user.lastroom);
             }
             connectedSockets[socket.user.id].splice(connectedSockets[socket.user.id].indexOf(socket.id), 1);
@@ -236,9 +235,10 @@ var startChatMe = function(socket) {
                 created: user.created,
                 istyping: false,
                 isrecording: false,
-                lastroom: undefined,
+                activerooms: user.activerooms,
+                joinedroom: user.joinedroom,
                 pmRecipient: undefined
-            }
+            };
 
             user = undefined;
 
@@ -250,7 +250,9 @@ var startChatMe = function(socket) {
 
 
             socket.emit('init', {
-                name: socket.user.name
+                name: socket.user.name,
+                activerooms: socket.user.activerooms,
+                joinedroom: socket.user.joinedroom
             });
 
             socket.on('send message', function(msg) {
@@ -661,11 +663,15 @@ var startChatMe = function(socket) {
                     return;
                 }
                 switchroom(socket, room.name, room.pass, function() {
-                    socket.emit('set room', {
+                    var tabroom = {
                         name: room.name,
                         pass: room.pass,
                         html: room.name
-                    });
+                    };
+                    socket.emit('set room', tabroom);
+                    socket.user.activerooms[room.name] = tabroom;
+
+                    updateUserDbActiveRooms();
                 });
             });
 
@@ -689,7 +695,7 @@ var startChatMe = function(socket) {
                     Jsonwarn(socket, 'invalidroomname', 'name is too short!');
                     return;
                 }
-                if (roomname.startsWith('pm://') || roomname.startsWith('site://') || roomname.startsWith('http://') || roomname.startsWith('https://') || roomname.startsWith('www.') || roomname.toLowerCase() == 'global') {
+                if (roomname.startsWith('pm://') || roomname.startsWith('pm:') || roomname.startsWith('site://') || roomname.startsWith('http://') || roomname.startsWith('https://') || roomname.startsWith('www.') || roomname.toLowerCase() == 'global' || roomname.toLowerCase() == 'site') {
                     console.log(roomname + ": ERROR! Invalid name");
                     Jsonwarn(socket, 'invalidroomname', 'invalid name!');
                     return;
@@ -705,6 +711,16 @@ var startChatMe = function(socket) {
 
             socket.on('leave room', function(roomname) {
                 leaveroom(roomname);
+            });
+
+            socket.on('remove active room', function(roomname) {
+                if (typeof roomname != 'string')
+                    return console.log('ERROR! remove active room: type of roomname != string. Got ' + typeof roomname);
+
+                delete socket.user.activerooms[roomname];
+                updateUserDbActiveRooms();
+
+                //TODO !IMPORTANT! REMOVE ROOM AND ITS MESSAGES WHEN NOONE'S ACTIVE ANYMORE
             });
 
             // ================ //  
@@ -827,38 +843,33 @@ function sendPmMessage(room, msgobj) {
             };
             var afterjoin = function(clientroom) {
                 console.log('joined pm room ' + roomname);
-                if (setclient) socket.emit('set room', {
+                var tabroom = {
                     name: username,
                     type: 'pm',
                     html: username
-                });
-                    socket.emit('pm-setseen', username);
-                    socket.user.pmRecipient = username;
                 };
+                if (setclient) {
+                    socket.emit('set room', tabroom);
+                    socket.user.activerooms[username] = tabroom;
+                    updateUserDbActiveRooms();
+                }
+                socket.emit('pm-setseen', username);
+                socket.user.pmRecipient = username;
+            };
 
-                if (!roomexists(roomname)) {
+            if (!roomexists(roomname)) {
 
-                    var recipientnamefor = {};
-                    recipientnamefor[socketid] = username;
-                    recipientnamefor[userid] = socket.user.name;
+                var recipientnamefor = {};
+                recipientnamefor[socketid] = username;
+                recipientnamefor[userid] = socket.user.name;
 
-                    createGetDbPmRoom(socket, {
-                        name: roomname,
-                        ids: [socketid, userid],
-                        recipientnamefor: recipientnamefor
-                    }, function(dbroom) {
+                createGetDbPmRoom(socket, {
+                    name: roomname,
+                    ids: [socketid, userid],
+                    recipientnamefor: recipientnamefor
+                }, function(dbroom) {
 
-                        rooms[roomname] = dbroom
-                        joinroom(socket, roomname, afterjoin, joinroomdata);
-                        db.clearPmUnseenForId(roomname, socketid, err => {
-                            if (err) {
-                                console.log(err);
-                                Jsonwarn(socket);
-                            }
-                        });
-
-                    });
-                } else {
+                    rooms[roomname] = dbroom
                     joinroom(socket, roomname, afterjoin, joinroomdata);
                     db.clearPmUnseenForId(roomname, socketid, err => {
                         if (err) {
@@ -866,9 +877,19 @@ function sendPmMessage(room, msgobj) {
                             Jsonwarn(socket);
                         }
                     });
-                }
 
-            });
+                });
+            } else {
+                joinroom(socket, roomname, afterjoin, joinroomdata);
+                db.clearPmUnseenForId(roomname, socketid, err => {
+                    if (err) {
+                        console.log(err);
+                        Jsonwarn(socket);
+                    }
+                });
+            }
+
+        });
 
     }
 
@@ -906,11 +927,15 @@ function sendPmMessage(room, msgobj) {
         initroom(roomname, roompass, function() {
             console.log('new room created: ' + roomname + ' password: ' + !!roompass);
             switchroom(socket, roomname, roompass, function() {
-                socket.emit('set room', {
+                var tabroom = {
                     name: roomname,
                     pass: roompass,
                     html: roomname
-                });
+                };
+                socket.emit('set room', tabroom);
+                socket.user.activerooms[roomname] = tabroom;
+
+                updateUserDbActiveRooms();
             });
         });
     }
@@ -935,7 +960,11 @@ function sendPmMessage(room, msgobj) {
                     users: rooms[roomname].users,
                     roomname: clientroom
                 });
+
                 socket.user.lastroom = roomname;
+                socket.user.joinedroom = clientroom;
+
+                updateUserData({joinedroom: clientroom}, {});
                 socket.user.pmRecipient = undefined;
 
                 if (callback) callback(clientroom);
@@ -1061,7 +1090,13 @@ function sendPmMessage(room, msgobj) {
                 return Jsonerror(socket);
             }
             Object.assign(socket.user, socketdata);
-            callback();
+            if (callback) callback();
+        });
+    }
+
+    function updateUserDbActiveRooms() {
+        db.updateUserData(socket.user.id, {activerooms: socket.user.activerooms}, function(err) {
+            if (err) console.log("ERROR! Failed to update activerooms for user " + socket.user.name);
         });
     }
 

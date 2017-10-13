@@ -15,7 +15,7 @@
 // ==/UserScript==
 var settings_page = 'chat.me';
 var server = 'chatme.me';
-//server = 'localhost';
+server = 'localhost';
 var version = '001';
 
 var connection;
@@ -121,6 +121,8 @@ var resizeicosrc = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAA
     function resizableChatMe() {
         var _res_w = GM_getValue('res_w') || 300;
         var _res_h = GM_getValue('res_h') || 200;
+        shw = _res_w + 'px';
+        shh = _res_h + 'px';
         $(container).width(_res_w).height(_res_h).resizable({
             resizeWidthFrom: 'left',
             resizeHeightFrom: 'top',
@@ -129,7 +131,6 @@ var resizeicosrc = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAA
                 $('#chat-me-frame').addClass('dragging');
             },
             onDragEnd: function() {
-                console.log('dragend');
                 $('#chat-me-frame').removeClass('dragging');
                 var res_w = $(container).width();
                 var res_h = $(container).height();

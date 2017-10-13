@@ -1,43 +1,67 @@
+MANDATORY
 - create css themes
-- remove rooms if not used anymore
-- substitute tab data-name and data-pass with just token
-- save user open chats on db and send them on login
-- sort rooms result by relevance
 - query rooms from db
-- fix multi tabs name disappear bug
-- auto select chat size and theme from cookies
-- cookie switch chat on last used chat on logged display
 - fix time display also with days
-- remove youtube/whatsapp match return
-- resize animation on hover option
+- transparent chat when mouseleave option
 - right spinner everywere (user fa spinners and animations)
 - fix user color
-- my messages history with arrows up and down
-- auto select btns settings (mute and show/hide users) from cookies
 - change not sound
-- remove server = localhost line when everything done
-- custom backrgound
+- custom background
 - auto mute for spam
 - message / audio length limit
-- prevent socket to be global
 - fix register display
+- google analytics
+- audio download button (don't auto download)
+- fix runtime pm last message bug for audio and images! (need <icon> + audio / image even when a 
+  pm message has been sent)
+
+WHEN MANDATORY'S ARE COMPLETED
+- remove youtube/whatsapp match return
+- remove server = localhost line when everything done
+- start npm with "infinite" on the server
+- test server users online number limit
+
+LESS IMPORTANT
+- remove rooms if not used anymore
+- substitute tab data-name and data-pass with just token
+- sort rooms result by relevance
+- possibility to delete messages (check if they are mine before);
+- fix multi tabs name disappear bug
+- my messages history with arrows up and down
+- prevent socket to be global
 - no connection error handling
 - description popover on hover for tabs and buttons
 - add password for mongodb login!
 - compress media quality
 - insert email check on signup
-- possibility to delete messages (check if they are mine before);
 - enter to submit/select everywhere
 - search rooms via db
-- google analytics
-- audio download button (don't auto download)
-- start npm with "infinite" on the server
 - insert enter + shift to wrap message text
-- collapse tabs when too much option (already implemented a bit)
-- test server users online number limit
 - set ownercolor in pm
 - set emoji in cookies and reduce their quality
-- fix runtime pm last message bug for audio and images! (need <icon> + audio / image even when a pm message has been sent)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 _images
