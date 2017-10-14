@@ -530,12 +530,14 @@
               #cm-inline-btns .btn {
                 position: relative;
                 height: 100%;
-                background-color: #ddd;
+                background: -webkit-linear-gradient(bottom, #ccc, #eee);
+                background: -o-linear-gradient(bottom, #ccc, #eee);
+                background: linear-gradient(to top, #ccc, #eee);
                 margin-left: 5px;
                 float: right;
                 border-radius: 2px;
-                cursor: pointer;
                 font-size: 11px;
+                cursor: default;
               }
               #cm-inline-btns .btn:hover {
                 color: dodgerblue;

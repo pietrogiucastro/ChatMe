@@ -15,7 +15,7 @@
 // ==/UserScript==
 var settings_page = 'chat.me';
 var server = 'chatme.me';
-server = 'localhost';
+server = 'localhost:3000';
 var version = '001';
 
 var connection;

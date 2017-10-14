@@ -219,26 +219,39 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
 
     function createTextMessage(msg) {
     	var user_message = sess_user == msg.ownername ? 'You' : msg.ownername;
-    	var time = new Date(msg.time).toLocaleString().split(', ')[1].slice(0, -3);
+    	var time = timeSince(msg.time);
     	var usercolor = msg.ownercolor;
 
     	var lastmessage = $('#cm-chat-list').children(':last');
-    	if (!msg.isemoji && lastmessage.is('.cm-textmessage') && lastmessage.data('owner') == 'user-' + msg.ownername) {
-    		var textline = $('<span class="cm-message-text" style="display:none;">' + msg.text + '</span>');
-    		lastmessage.find('.cm-message-body').append(textline);
-    		return textline;
-    	} else {
-    		var newtextmessage = $('<div class="cm-message cm-textmessage cm-clearafter" data-owner="user-' + msg.ownername + '" style="display:none;"></div>');
-    		newtextmessage.html('<div class="cm-message-body"><div class="cm-message-head cm-clearafter"><span class="cm-message-name user-' + user_message + ' floatleft" style="color: ' + usercolor + ';" data-name="' + msg.ownername + '">' + user_message + '</span><span class=cm-message-date>' + time + '</span></div><span class=cm-message-text>' + msg.text + '</span></div>');
-    		if (user_message == 'You') newtextmessage.find('.cm-message-body').addClass('user-You textright');
-    		$('#cm-chat-list').append(newtextmessage);
-    		return newtextmessage;
-    	}
+
+        // if (!msg.isemoji && lastmessage.is('.cm-textmessage') && lastmessage.data('owner') == 'user-' + msg.ownername) {
+        //     var textline = $('<span class="cm-message-text" style="display:none;">' + msg.text + '</span>');
+        //     lastmessage.find('.cm-message-body').append(textline);
+        //     return textline;
+        // } else {
+        //     var newtextmessage = $('<div class="cm-message cm-textmessage cm-clearafter" data-owner="user-' + msg.ownername + '" style="display:none;"></div>');
+        //     newtextmessage.html('<div class="cm-message-body"><div class="cm-message-head cm-clearafter"><span class="cm-message-name user-' + user_message + ' floatleft" style="color: ' + usercolor + ';" data-name="' + msg.ownername + '">' + user_message + '</span><span class=cm-message-date>' + time + '</span></div><span class=cm-message-text>' + msg.text + '</span></div>');
+        //     if (user_message == 'You') newtextmessage.find('.cm-message-body').addClass('user-You textright');
+        //     $('#cm-chat-list').append(newtextmessage);
+        //     return newtextmessage;
+        // }
+
+		var newtextmessage = $('<div class="cm-message cm-textmessage cm-clearafter" data-date="'+msg.time+'" data-owner="user-' + msg.ownername + '" style="display:none;"></div>');
+		newtextmessage.html('<div class="cm-message-body"><div class="cm-message-head cm-clearafter"><span class="cm-message-name user-' + user_message + ' floatleft" style="color: ' + usercolor + ';" data-name="' + msg.ownername + '">' + user_message + '</span><span class=cm-message-date>' + time + '</span></div><span class=cm-message-text>' + msg.text + '</span></div>');
+		if (user_message == 'You') newtextmessage.find('.cm-message-body').addClass('user-You textright');
+		$('#cm-chat-list').append(newtextmessage);
+
+        if (lastmessage.data('owner') == 'user-' + msg.ownername) {
+            // newtextmessage.find('.cm-message-name').remove();
+        }
+        
+        return newtextmessage;
+
     }
 
     function createAudioMessage(msg) {
     	var user_message = sess_user == msg.ownername ? 'You' : msg.ownername;
-    	var time = new Date(msg.time).toLocaleString().split(', ')[1].slice(0, -3);
+    	var time = timeSince(msg.time);
     	var usercolor = msg.ownercolor;
 
     	var playbutton = $('<a class="play-button paused" href="#"><div class="left"></div><div class="right"></div><div class="triangle-1"></div><div class="triangle-2"></div></a>')
@@ -255,7 +268,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     	audio.setAttribute('preload', 'auto');
 
 
-    	var newaudiomessage = $('<div class="cm-message cm-audiomessage cm-clearafter" data-owner="user-' + msg.ownername + '" style="display:none;"></div>');
+    	var newaudiomessage = $('<div class="cm-message cm-audiomessage cm-clearafter" data-date="'+msg.time+'" data-owner="user-' + msg.ownername + '" style="display:none;"></div>');
     	newaudiomessage.html('<div class="cm-message-body cm-audio-body"><div class="cm-message-head cm-clearafter"><span class="cm-message-name user-' + user_message + ' floatleft" style="color: ' + usercolor + ';" data-name="' + msg.ownername + '">' + user_message + '</span><span class=cm-message-date>' + time + '</span></div><div class=cm-message-audio></div></div>')
     	.find('.cm-message-audio')
     	.append(playbutton)
@@ -264,6 +277,11 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     	.append(audioduration);
 
     	if (user_message == 'You') newaudiomessage.find('.cm-message-body').addClass('user-You');
+
+        var lastmessage = $('#cm-chat-list').children(':last');
+        if (lastmessage.data('owner') == 'user-' + msg.ownername) {
+            // newaudiomessage.find('.cm-message-name').remove();
+        }
 
     	newaudiomessage.attr('id', msg._id);
     	$('#cm-chat-list').append(newaudiomessage);
@@ -341,10 +359,10 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
 
     function createImageMessage(msg) {
     	var user_message = sess_user == msg.ownername ? 'You' : msg.ownername;
-    	var time = new Date(msg.time).toLocaleString().split(', ')[1].slice(0, -3);
+    	var time = timeSince(msg.time);
     	var usercolor = msg.ownercolor;
 
-    	var newimagemessage = $('<div class="cm-message cm-imagemessage cm-clearafter" data-owner="user-' + msg.ownername + '" style="display:none;"></div>');
+    	var newimagemessage = $('<div class="cm-message cm-imagemessage cm-clearafter" data-date="'+msg.time+'" data-owner="user-' + msg.ownername + '" style="display:none;"></div>');
     	newimagemessage.html('<div class="cm-message-body cm-image-body"><div class="cm-message-head cm-clearafter"><span class="cm-message-name user-' + user_message + ' floatleft" style="color: ' + usercolor + ';" data-name="' + msg.ownername + '">' + user_message + '</span><span class=cm-message-date>' + time + '</span></div><div class="cm-message-image notloaded"><div class="img-square"></div><img></div><span class="cm-message-text">' + msg.text + '</span></div>');
     	if (user_message == 'You') newimagemessage.find('.cm-message-body').addClass('user-You textright');
 
@@ -760,7 +778,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
             	else pmModal.find('.pm-messages').addClass('msgs');
             	pmlist.forEach(pmrow => {
             		var domRow = $(pmMessage.cloneNode(true));
-            		var msgtime = new Date(pmrow.lastmsg.time).toLocaleString().split(', ')[1].slice(0, -3);
+            		var msgtime = timeSince(pmrow.lastmsg.time);
 
             		domRow.attr('data-recipient', pmrow.recipientnamefor)
             		.attr('data-unseen', pmrow.unseen);
@@ -858,9 +876,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     	});
     	socket.on('pm-addseen', function(pmMsg) {
 
-    		console.log(pmMsg);
-
-    		var time = new Date(pmMsg.time).toLocaleString().split(', ')[1].slice(0, -3);
+    		var time = timeSince(pmMsg.time);
 
     		var domMsg = pmModal.find('.pm-message[data-recipient=' + pmMsg.recipientnamefor + ']');
             if (domMsg.length) { //msg already exists
@@ -894,7 +910,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
 
     		console.log(pmMsg);
 
-    		var time = new Date(pmMsg.time).toLocaleString().split(', ')[1].slice(0, -3);
+    		var time = timeSince(pmMsg.time);
 
     		var domMsg = pmModal.find('.pm-message[data-recipient=' + pmMsg.recipientnamefor + ']');
             if (domMsg.length) { //msg already exists
@@ -1695,6 +1711,50 @@ function showModalMessage(message) {
 	.find('.message-modal-body').html(message);
 }
 
+var timeSince = function(date) {
+  if (typeof date !== 'object') {
+    date = new Date(date);
+  }
+
+  var seconds = Math.floor((new Date() - date) / 1000);
+  var intervalType;
+
+  var interval = Math.floor(seconds / 31536000);
+  if (interval >= 1) {
+    intervalType = 'year';
+  } else {
+    interval = Math.floor(seconds / 2592000);
+    if (interval >= 1) {
+      intervalType = 'month';
+    } else {
+      interval = Math.floor(seconds / 86400);
+      if (interval >= 1) {
+        intervalType = 'day';
+      } else {
+        interval = Math.floor(seconds / 3600);
+        if (interval >= 1) {
+          intervalType = 'hour';
+        } else {
+          interval = Math.floor(seconds / 60);
+          if (interval >= 1) {
+            intervalType = 'minute';
+          } else {
+            interval = seconds;
+            intervalType = 'second';
+          }
+        }
+      }
+    }
+  }
+  if (interval <= 4 && intervalType == 'second') return 'now';
+
+  if (interval > 1 || interval === 0) {
+    intervalType += 's';
+  }
+
+  return interval + ' ' + intervalType + ' ago';
+};
+
 $(document).on('click', '.chat-row', function() {
 	roomname = $(this).attr('name');
 	var room = {
@@ -1747,3 +1807,9 @@ $(document).mouseleave(function() {
 	if (fullImage.is(':visible'))
 		fullImageBtns.stop(true, true).fadeIn(100);
 });
+
+setInterval(function() {
+    $('#cm-chat-list').children('.cm-message').each(function() {
+        $(this).find('.cm-message-date').html(timeSince($(this).data('date')));
+    });
+}, 60000);

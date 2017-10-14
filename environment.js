@@ -1,7 +1,7 @@
 var development = {
     env: 'dev',
 	AES_SECRET: "5BbgQ}tC(V5=pwlQ>iz1/+53f(/wfaXVSY$V^kV7YQD4<y3/9`\"\"bE)h*n:QAcy",
-	port: 443,
+	port: 3000,
 };
 
 

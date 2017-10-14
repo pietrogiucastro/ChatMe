@@ -1,7 +1,5 @@
 MANDATORY
 - create css themes
-- query rooms from db
-- fix time display also with days
 - transparent chat when mouseleave option
 - right spinner everywere (user fa spinners and animations)
 - fix user color
@@ -22,6 +20,7 @@ WHEN MANDATORY'S ARE COMPLETED
 - test server users online number limit
 
 LESS IMPORTANT
+- query rooms from db
 - remove rooms if not used anymore
 - substitute tab data-name and data-pass with just token
 - sort rooms result by relevance
