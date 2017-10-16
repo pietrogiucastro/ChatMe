@@ -1857,8 +1857,9 @@
 }
 
 #chat-me[theme=dark] .message-input-cont > input {
-  box-shadow: 0px -2px 2px #222;
+  box-shadow: 0px 0px 2px #222;
   color: #ddd;
+  outline: none;
 }
 
 #chat-me[theme=dark] #chat-me-head {
@@ -1870,7 +1871,8 @@
   color: #e5e5e5 !important;
 }
 
-#chat-me[theme=dark] #chat-me-tabs .chat-tab.sel {
+#chat-me[theme=dark] #chat-me-tabs .chat-tab.sel,
+#chat-me[theme=dark] #chat-me-tabs .chat-tab.sel .volume-icon {
   background: #aaa !important;
   color: orange !important;
 }
@@ -1880,7 +1882,7 @@
 }
 
 #chat-me[theme=dark] .btn, #chat-me[theme=dark] .cm-message-date {
-  color: #ffffee;
+  color: #ffca48;
 }
 
 #chat-me[theme=dark] .mute-true, #chat-me[theme=dark] .users-false {
@@ -1896,7 +1898,7 @@
 }
 
 #chat-me[theme=dark] .mute-false, #chat-me[theme=dark] .users-true {
-  color: #7eff56 !important;
+  color: #ffc100 !important;
 }
 
 #chat-me[theme=dark].logged #cm-inline-btns {
@@ -1934,7 +1936,7 @@
   color: #eff3f3;
 }
 
-#chat-me[theme=dark] .cm-button {
+#chat-me[theme=dark] .cm-button, #chat-me[theme=dark] #cm-not {
   background: #58baba;
 }
 
@@ -1946,11 +1948,35 @@
   color: #0f9f9f;
 }
 
+#chat-me[theme=dark] .modal-body, #chat-me[theme=dark] .pm-message,
+#chat-me[theme=dark] .pm-btn > input {
+  background: #c5c5c5 !important;
+}
+
+#chat-me[theme=dark] .pm-msgs-modal .modal-body {
+  box-shadow: 0px 3px 4px #111;
+}
+
+#chat-me[theme=dark] .pm-btn {
+  color: #17677b;
+}
+
+#chat-me[theme=dark] .pm-msgs-modal .pm-messages:after {
+  color: #445;
+}
+
+#chat-me[theme=dark] .pm-messages:before, #chat-me[theme=dark] .pm-message:after {
+  border-bottom: 1px solid #aaa;
+}
+
+#chat-me[theme=dark] .pm-message:hover {
+  background: #ddd !important;
+}
 </style>
 
 </head>
 <body>
-  <div id="chat-me" theme=dark>
+  <div id="chat-me">
 
     <div id="chat-me-options" style="display:none">
       <i class="fa fa-times close-options" aria-hidden="true" onclick="hideOpts()"></i>
