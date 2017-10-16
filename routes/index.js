@@ -8,19 +8,8 @@ conf = new Config();
 
 var db = require('../db/mongoose.js');
 
-router.use(function(req, res, next) {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-  next();
-});
-
 router.get('/', function(req, res, next) {
   res.render('index', {title: 'chat.me'});
-});
-
-router.get('/client/:version', function(req, res, next) {
-	var version = req.params.version;
-	res.render('clients/'+version);
 });
 
 router.post('/login', function(req, res, next) {
