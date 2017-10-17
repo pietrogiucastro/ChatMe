@@ -1255,6 +1255,11 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     			else bgopts.slideUp();
     		});
 
+            chatOptions.container.find('#background-input').change(function() {
+                var rawbackground = this.files[0];
+                sendBackground(rawbackground);
+            });
+
     		chatOptions.container.find('#refresh-client').click(function() {
     			postParentMessage('reset-client', latestClientVersion);
     		});
@@ -1448,6 +1453,28 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     };
 
 })();
+
+function sendBackground(data) {
+    var bufferReader = new FileReader();
+
+    bufferReader.onload = function() {
+        socket.emit('set background', this.result, function(background) {
+            setBackground(background);
+        });
+    };
+
+    bufferReader.readAsArrayBuffer(data);
+};
+
+function setBackground(buffer) {
+
+    var blob = new Blob([buffer], {
+        'type': 'image/jpeg'
+    });
+    var bufferurl = window.URL.createObjectURL(blob);
+
+    $('#cm-chat').addClass('bg').css('background-image', 'url('+bufferurl+')');
+}
 
 function createTab(room) {
 	chats[room.name] = {

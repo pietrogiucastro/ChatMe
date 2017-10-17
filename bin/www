@@ -291,7 +291,7 @@ var startChatMe = function(socket) {
                     return Jsonerror(socket);
                 }
 
-                sharp(mediaobject.buffer) //TODO FIX THIS IN ONE ROW
+                sharp(background)
                     .resize(300)
                     .jpeg()
                     .toBuffer()
@@ -305,8 +305,10 @@ var startChatMe = function(socket) {
 
             socket.on('get background', function(callback) {
                 db.getUserBackground(socket.user.id, function(err, background) {
-                    if (err) return console.log(err);
-                    if (!user) return console.log("ERROR! No user found for background query with id = " + socket.user.id);
+                    if (err || !user){
+                        console.log(err || "ERROR! No background (or user) found for user with id = " + socket.user.id);
+                        return;
+                    }
 
                     callback(background);
                 });

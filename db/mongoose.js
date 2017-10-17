@@ -210,7 +210,7 @@ module.exports = {
         User.findOne({
             name: username,
             codedp: codedp
-        }, function(err, user) {
+        }, '-background', function(err, user) {
             if (err || !user) {
                 callback(err);
                 return;
@@ -219,10 +219,10 @@ module.exports = {
         });
     },
     getUserBackground: function(userid, callback) {
-        User.findOne({_id: userid}, (err, user) => {
-            if (err || !user) return callback(err);
+        User.findOne({_id: userid}, 'background', (err, background) => {
+            if (err || !background) return callback(err);
 
-            callback(null, user.background);
+            callback(null, background);
         });
     },
     getTokenByCredentials: function(username, password, callback) {
@@ -250,7 +250,7 @@ module.exports = {
     findUserByName: function(username, callback) {
         User.findOne({
             name: username
-        }, function(err, user) {
+        }, '-background', function(err, user) {
             if (err || !user) return callback(err, user);
 
             user.codedp = undefined;
