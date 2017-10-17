@@ -285,6 +285,33 @@ var startChatMe = function(socket) {
                 }
             });
 
+            socket.on('set background', function(background, callback) {
+                if (!(background instanceof Buffer)) {
+                    console.log("ERROR! background is not an ArrayBuffer.");
+                    return Jsonerror(socket);
+                }
+
+                sharp(mediaobject.buffer) //TODO FIX THIS IN ONE ROW
+                    .resize(300)
+                    .jpeg()
+                    .toBuffer()
+                    .then(sharpbg => {
+                        updateUserData({background: sharpbg}, {}, function() {
+                            callback(sharpbg);
+                        });
+                    });
+
+            });
+
+            socket.on('get background', function(callback) {
+                db.getUserBackground(socket.user.id, function(err, background) {
+                    if (err) return console.log(err);
+                    if (!user) return console.log("ERROR! No user found for background query with id = " + socket.user.id);
+
+                    callback(background);
+                });
+            });
+
             socket.on('send media', function(mediaobject) {
                 if (typeof mediaobject != "object") {
                     console.log("ERROR! Wrong media datatype: " + typeof audio);
@@ -351,7 +378,7 @@ var startChatMe = function(socket) {
                 if (mediaobject.type == 'audio') {
                     bufferDone();
                 } else if (mediaobject.type == 'image') {
-                    sharp(mediaobject.buffer) //FIX THIS IN ONE ROW
+                    sharp(mediaobject.buffer) //TODO FIX THIS IN ONE ROW
                     .resize(500)
                     .jpeg()
                     .toBuffer()
@@ -436,19 +463,6 @@ var startChatMe = function(socket) {
                         });
                 });
 
-            });
-
-            ss(socket).on('file', function(stream) {
-                console.log(stream);
-
-                var uploadpath = process.cwd() + '/uploads/ciao.jpg';
-
-                try {
-                    stream.pipe(fs.createWriteStream(uploadpath));
-                } catch (e) {
-                    console.log(e);
-                    return Jsonerror(socket);
-                }
             });
 
             socket.on('change_status', function(value) {

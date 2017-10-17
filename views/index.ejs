@@ -484,12 +484,14 @@
               .settings {
                 box-sizing: border-box;
                 height: 100%;
-                padding: 15px 40px;
+                height: calc(100% - 30px);
+                padding: 15px;
               }
               .settings .settings-row {
                 padding: 10px 0;
                 display: flex;
                 align-items: center;
+                width: 100%;
               }
               .settings .settings-row * {
                 box-sizing: border-box;
@@ -501,6 +503,7 @@
                 font-weight: bold;
                 text-align: right;
                 color: #444;
+                font-size: 14px;
               }
               .settings .settings-select {
                 float: left;
@@ -692,6 +695,11 @@
                 overflow: hidden;
                 position: relative;
                 width: 100%;
+              }
+
+              #cm-chat.bg {
+                background-color: transparent;
+                background-size: 100%;
               }
 
               #cm-chat-not {
@@ -1209,14 +1217,18 @@
     z-index: 100000000;
   }
   .modal-layout {
+    display: table;
     position: absolute;
+    box-sizing: border-box;
+    margin: auto;
     width: 70%;
-    height: 50%;
-    left: 15%;
-    top: 25%;
+    max-width: 400px;
+    max-height: 90%;
+    left: 0; right: 0;
+    top: 0; bottom: 0;
+    padding: 40px 0;
     background: #eee;
     box-shadow: 0 0 5px #777;
-    display: table;
   }
   .modal-close {
     position: absolute;
@@ -1233,7 +1245,6 @@
     color: brown;
   }
   .message-modal-body {
-    display: table-cell;
     vertical-align: middle;
     text-align: center;
     padding: 0 8px;
@@ -1241,6 +1252,7 @@
     font-weight: bold;
     font-size: 13px;
     font-family: Montserrat;
+    word-break: break-word;
   }
   .cm-message.has-error .cm-message-audio:after {
     font-family: fontawesome;
@@ -1813,7 +1825,8 @@
   box-shadow: 3px 3px 2px #222;
 }
 #chat-me[theme=dark] #cm-chat {
-  background: #2b2b2b !important;
+  /*background: #2b2b2b;*/
+  background: #383838;
 }
 
 #chat-me[theme=dark] .cm-message-body {
@@ -1842,9 +1855,9 @@
   color: #222 !important;
 }
 
- #chat-me[theme=dark] .system-text {
+#chat-me[theme=dark] .system-text {
   color: #eee;
- }
+}
 
 #chat-me[theme=dark] .emojis-btn {
   color: #ddd;
@@ -1905,88 +1918,125 @@
 
 /*#chat-me[theme=dark] .mute-false, #chat-me[theme=dark] .users-true {
   color: #ffc100 !important;
-}*/
+  }*/
 
-#chat-me[theme=dark].logged #cm-inline-btns {
-  box-shadow: 0px 2px 2px #222;
-  padding-bottom: 2px;
-  height: 17px;
-}
+  #chat-me[theme=dark].logged #cm-inline-btns {
+    box-shadow: 0px 2px 2px #222;
+    padding-bottom: 2px;
+    height: 17px;
+  }
 
-#chat-me[theme=dark] #emojis {
-  box-shadow: 1px 1px 4px #111;
-}
+  #chat-me[theme=dark] #emojis {
+    box-shadow: 1px 1px 4px #111;
+  }
 
-#chat-me[theme=dark] .emoji-tabs {
-  background: #707070;
-}
+  #chat-me[theme=dark] .emoji-tabs {
+    background: #707070;
+  }
 
-#chat-me[theme=dark] .emoji-body .emoji:hover {
-  background: #616161;
-}
+  #chat-me[theme=dark] .emoji-body .emoji:hover {
+    background: #616161;
+  }
 
-#chat-me[theme=dark] #chat-me-options {
-  background-color: rgba(50,50,50,0.9);
-}
+  #chat-me[theme=dark] #chat-me-options {
+    background-color: rgba(50,50,50,0.9);
+  }
 
-#chat-me[theme=dark] .close-options {
-  color: #eee;
-}
+  #chat-me[theme=dark] .close-options {
+    color: #eee;
+  }
 
-#chat-me[theme=dark] .close-options:hover {
-  color: #d7ffff;
-}
+  #chat-me[theme=dark] .close-options:hover {
+    color: #d7ffff;
+  }
 
-#chat-me[theme=dark] #chat-me-options .option,
-#chat-me[theme=dark] .settings-text {
-  color: #eff3f3;
-}
+  #chat-me[theme=dark] #chat-me-options .option,
+  #chat-me[theme=dark] .settings-text {
+    color: #eff3f3;
+  }
 
-#chat-me[theme=dark] .cm-button, #chat-me[theme=dark] #cm-not,
-#chat-me[theme=dark] #unseen-icon, #chat-me[theme=dark] .pm-not {
-  background: #58baba;
-}
+  #chat-me[theme=dark] .cm-button, #chat-me[theme=dark] #cm-not,
+  #chat-me[theme=dark] #unseen-icon, #chat-me[theme=dark] .pm-not {
+    background: #58baba;
+  }
 
-#chat-me[theme=dark] .cm-button:hover {
-  background: #64d3d3;
-}
+  #chat-me[theme=dark] .cm-button:hover {
+    background: #64d3d3;
+  }
 
-#chat-me[theme=dark] #pm-msgs-btn {
-  color: #0f9f9f;
-}
+  #chat-me[theme=dark] #pm-msgs-btn {
+    color: #0f9f9f;
+  }
 
-#chat-me[theme=dark] .modal-body, #chat-me[theme=dark] .pm-message,
-#chat-me[theme=dark] .pm-btn > input {
-  background: #c5c5c5 !important;
-}
+  #chat-me[theme=dark] .modal-body, #chat-me[theme=dark] .pm-message,
+  #chat-me[theme=dark] .pm-btn > input {
+    background: #c5c5c5 !important;
+  }
 
-#chat-me[theme=dark] .pm-msgs-modal .modal-body {
-  box-shadow: 0px 3px 4px #111;
-}
+  #chat-me[theme=dark] .pm-msgs-modal .modal-body {
+    box-shadow: 0px 3px 4px #111;
+  }
 
-#chat-me[theme=dark] .pm-btn {
-  color: #17677b;
-}
+  #chat-me[theme=dark] .pm-btn {
+    color: #17677b;
+  }
 
-#chat-me[theme=dark] .pm-msgs-modal .pm-messages:after {
-  color: #445;
-}
+  #chat-me[theme=dark] .pm-msgs-modal .pm-messages:after {
+    color: #445;
+  }
 
-#chat-me[theme=dark] .pm-messages:before, #chat-me[theme=dark] .pm-message:after {
-  border-bottom: 1px solid #aaa;
-}
+  #chat-me[theme=dark] .pm-messages:before, #chat-me[theme=dark] .pm-message:after {
+    border-bottom: 1px solid #aaa;
+  }
 
-#chat-me[theme=dark] .pm-not {
-  border-left-color: #c5c5c5;
-}
+  #chat-me[theme=dark] .pm-not {
+    border-left-color: #c5c5c5;
+  }
 
-#chat-me[theme=dark] .pm-message:hover {
-  background: #ddd !important;
-}
+  #chat-me[theme=dark] .pm-message:hover {
+    background: #ddd !important;
+  }
 
-#chat-me[theme=dark] .pm-message:hover .pm-not {
-  border-left-color: #ddd;
-}
+  #chat-me[theme=dark] .pm-message:hover .pm-not {
+    border-left-color: #ddd;
+  }
+
+  #chat-me[theme=dark] .cm-message-modal > .modal-layout {
+    background: #5f5f5f;
+    box-shadow: 0 0 5px #242424;
+  }
+
+  #chat-me[theme=dark] .cm-message-modal .modal-close:before {
+    color: #ccc;
+  }
+
+  #chat-me[theme=dark] .cm-message-modal .message-modal-body {
+    color: #e3dfcf;
+  }
+
+  #chat-me[theme=dark] .user-offline {
+    color: #333 !important;
+  }
+
+  #chat-me[theme=dark] .chat-row .chat-name {
+    color: #36ad3c;
+  }
+
+  #chat-me[theme=dark] .chat-name .sel {
+    color: #0aff76;
+  }
+
+  #chat-me[theme=dark] .chat-row .chat-online {
+    color: #c8c8c8;
+  }
+
+  #chat-me[theme=dark] .chat-row:hover {
+    background: #777;
+  }
+
+  #chat-me[theme=dark] #background-input {
+    color: #aaa;
+  }
 </style>
 
 </head>

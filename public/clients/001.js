@@ -136,6 +136,7 @@ var resizeicosrc = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAA
                 successLoad();
                 var myClientVersion = GM_getValue('client-version') || "0.0.0";
                 postChildMessage('client-version', myClientVersion);
+                if (showversion) postChildMessage('show-client-version');
             break;
             case 'update-client':
                 GM_setValue('client', '');
@@ -147,7 +148,7 @@ var resizeicosrc = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAA
                 window.location.reload();
             break;
             case "windowsize":
-                owSize(event.data.value);
+                setWindowSize(event.data.value);
             break;
                 case "minify":
                 hideChatMe();

@@ -18,6 +18,7 @@ var settings_page = 'chat.me';
 var server = 'chatme.me';
 server = 'localhost:3000';
 var version = '001';
+var showversion = false;
 
 if (document.domain == "www.youtube.com") return;
 if (window.location.href != window.parent.location.href) return; //if it's in iframe, return
@@ -29,15 +30,15 @@ if (client) eval(client);
 else {
     var xhttp = new XMLHttpRequest();
     xhttp.onreadystatechange = function() {
-        if (this.readyState == 4) {
-            if (this.status == 200) {
-                client = this.responseText;
-                GM_setValue('client', client);
-                eval(client);
-            } else {
-                console.log(this);
-                $('body').append('<div style="position: fixed; bottom: 10px; right: 10px; color: red; background: white; z-index:9999999999999999999999999999;">There was a problem loading or updating chat.me in this page. Please try in another page (e.g. <a href="https://www.google.com">www.google.com</a>).<br>If the problem persists, there may be an internal server error: please try again later.</div>');
-            }
+        if (this.readyState == 4 && this.status == 200) {
+            showversion = true;
+            client = this.responseText;
+            GM_setValue('client', client);
+            eval(client);
+        }
+
+        else if (this.readyState == 4) {
+            $('body').append('<div style="position: fixed; bottom: 10px right: 10px; color: red;">There was a problem loading or updating chat me in this page. Please try in another page (e.g. <a href="https://www.google.com">www.google.com</a>)</div>');
         }
     };
     xhttp.open("GET", 'https://'+ server+'/clients/'+version+'.js?_='+new Date().getTime(), true);

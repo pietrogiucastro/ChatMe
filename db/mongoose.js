@@ -32,7 +32,8 @@ var userSchema = new Schema({ //User schema
 	    ref: 'PmRoom'
     }],
     activerooms: { type: Schema.Types.Mixed, default: {} },
-    joinedroom: { type: String, default: 'global' }
+    joinedroom: { type: String, default: 'global' },
+    background: Buffer
 });
 userSchema.plugin(deepPopulate);
 
@@ -215,6 +216,13 @@ module.exports = {
                 return;
             }
             callback(null, user);
+        });
+    },
+    getUserBackground: function(userid, callback) {
+        User.findOne({_id: userid}, (err, user) => {
+            if (err || !user) return callback(err);
+
+            callback(null, user.background);
         });
     },
     getTokenByCredentials: function(username, password, callback) {
