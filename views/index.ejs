@@ -1827,8 +1827,10 @@
 #chat-me[theme=dark] .cm-scroll::-webkit-scrollbar-thumb {
   background: orange !important;
 }
-
 #chat-me[theme=dark] .cm-message-body {
+  background: #868ba1;
+}
+#chat-me[theme=dark] .cm-message-body.user-You {
   background: #9b9b9b !important;
 }
 
@@ -1874,15 +1876,19 @@
 #chat-me[theme=dark] #chat-me-tabs .chat-tab.sel,
 #chat-me[theme=dark] #chat-me-tabs .chat-tab.sel .volume-icon {
   background: #aaa !important;
-  color: orange !important;
+  color: #FCFF8A !important;
 }
 
 #chat-me[theme=dark] #chat-me-tabs .chat-tab .volume-icon {
   color: white !important;
 }
 
-#chat-me[theme=dark] .btn, #chat-me[theme=dark] .cm-message-date {
+#chat-me[theme=dark] .cm-message-date {
   color: #ffca48;
+}
+
+#chat-me[theme=dark] .btn {
+  color: #ffca4d !important;
 }
 
 #chat-me[theme=dark] .mute-true, #chat-me[theme=dark] .users-false {
@@ -1897,9 +1903,9 @@
   background: #ccc;
 }
 
-#chat-me[theme=dark] .mute-false, #chat-me[theme=dark] .users-true {
+/*#chat-me[theme=dark] .mute-false, #chat-me[theme=dark] .users-true {
   color: #ffc100 !important;
-}
+}*/
 
 #chat-me[theme=dark].logged #cm-inline-btns {
   box-shadow: 0px 2px 2px #222;
@@ -1936,7 +1942,8 @@
   color: #eff3f3;
 }
 
-#chat-me[theme=dark] .cm-button, #chat-me[theme=dark] #cm-not {
+#chat-me[theme=dark] .cm-button, #chat-me[theme=dark] #cm-not,
+#chat-me[theme=dark] #unseen-icon, #chat-me[theme=dark] .pm-not {
   background: #58baba;
 }
 
@@ -1969,8 +1976,16 @@
   border-bottom: 1px solid #aaa;
 }
 
+#chat-me[theme=dark] .pm-not {
+  border-left-color: #c5c5c5;
+}
+
 #chat-me[theme=dark] .pm-message:hover {
   background: #ddd !important;
+}
+
+#chat-me[theme=dark] .pm-message:hover .pm-not {
+  border-left-color: #ddd;
 }
 </style>
 

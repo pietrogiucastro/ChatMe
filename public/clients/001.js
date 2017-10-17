@@ -40,7 +40,7 @@ var resizeicosrc = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAA
     if (document.domain == settings_page) return document.write('chat me settings. Under construction..');
     if (document.domain == server) return;
 
-    $('head').append('<style type=text/css>.chat-me-notloaded {cursor:pointer; display:block !important;} #chat-me-cover { position:absolute; width:100%; height:100%; background-color:rgb(50,80,100); top:0; opacity:0.0; cursor:pointer; } #chat-me-container {position: fixed; z-index:99999999999999999999; bottom:'+shb+'; right:'+shr+';} #chat-me-container.cm-hidden > #chat-me-frame {pointer-events: none;}  #chat-me-container.resizable:not(.fs):not(.cm-hidden) {min-width: 300px; min-height: 200px; max-width: 100vw; max-height: 100vh; max-width:calc(100vw - '+shr+' - 30px); max-height:calc(100vh - '+shb+' - 20px);} #chat-me-container.resizable:not(.cm-hidden) > #chat-me-frame {border-top-left-radius: 10px !important;} #chat-me-container.resizable:not(.cm-hidden) #chat-me-resbtn {display: block !important;} #chat-me-resbtn {display: none; position: absolute; left: 1px; top: 2px; cursor: nwse-resize;} #chat-me-frame {border:0; width:100%; height:100%; overflow:hidden; box-shadow: 2px 2px 1px #111; border-radius: 5px;} #chat-me-frame.dragging {pointer-events: none;} </style>');
+    $('head').append('<style type=text/css>.chat-me-notloaded {cursor:pointer; display:block !important;} #chat-me-cover { position:absolute; width:100%; height:100%; background-color:rgb(50,80,100); top:0; opacity:0.0; cursor:pointer; } #chat-me-container {position: fixed; z-index:99999999999999999999; bottom:'+shb+'; right:'+shr+';  border-radius: 5px; } #chat-me-container:not(.cm-hidden) {box-shadow: 2px 2px 1px #111;} #chat-me-container.cm-hidden > #chat-me-frame {pointer-events: none;}  #chat-me-container.resizable:not(.fs):not(.cm-hidden) {min-width: 300px; min-height: 200px; max-width: 100vw; max-height: 100vh; max-width:calc(100vw - '+shr+' - 30px); max-height:calc(100vh - '+shb+' - 20px);} #chat-me-container.resizable:not(.cm-hidden) > #chat-me-frame {border-top-left-radius: 10px !important;} #chat-me-container.resizable:not(.cm-hidden) #chat-me-resbtn {display: block !important;} #chat-me-resbtn {display: none; position: absolute; left: 1px; top: 2px; cursor: nwse-resize;} #chat-me-frame {border:0; width:100%; height:100%; overflow:hidden;} #chat-me-frame.dragging {pointer-events: none;} </style>');
 
     $('head').append('<style type=text/css>.xs {width: '+sizes.xs.x+'; height: '+sizes.xs.y+';} .sm {width: '+sizes.sm.x+'; height: '+sizes.sm.y+';} .lg {width: '+sizes.lg.x+'; height: '+sizes.lg.y+';} .fs {width: 100% !important; height: 100% !important; left: 0; top: 0; padding: 0 !important;} .chatme-fs {overflow: hidden !important;} </style>');
 
@@ -133,27 +133,32 @@ var resizeicosrc = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAA
 
         switch (event.data.key) {
             case 'successload':
-            successLoad();
-            var myClientVersion = GM_getValue('client-version') || "0.0.0";
-            postChildMessage('client-version', myClientVersion);
+                successLoad();
+                var myClientVersion = GM_getValue('client-version') || "0.0.0";
+                postChildMessage('client-version', myClientVersion);
             break;
-            case 'refresh-client':
-            GM_setValue('client', '');
-            GM_setValue('client-version', event.data.value);
+            case 'update-client':
+                GM_setValue('client', '');
+                GM_setValue('client-version', event.data.value);
+            break;
+            case 'reset-client':
+                GM_setValue('client', '');
+                GM_setValue('client-version', event.data.value);
+                window.location.reload();
             break;
             case "windowsize":
-            setWindowSize(event.data.value);
+                owSize(event.data.value);
             break;
-            case "minify":
-            hideChatMe();
+                case "minify":
+                hideChatMe();
             break;
-            case "togglefs":
-            $(container).toggleClass('fs');
-            if ($(container).is('.fs')) $('body').addClass('chatme-fs');
-            else $('body').removeClass('chatme-fs');
+                case "togglefs":
+                $(container).toggleClass('fs');
+                if ($(container).is('.fs')) $('body').addClass('chatme-fs');
+                else $('body').removeClass('chatme-fs');
             break;
             default:
-            console.log('unhandled event: ' + event.data);
+                console.log('unhandled event: ' + event.data);
         }
     });
 
