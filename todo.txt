@@ -38,6 +38,7 @@ LESS IMPORTANT
 - insert enter + shift to wrap message text
 - set ownercolor in pm
 - set emoji in cookies and reduce their quality
+- refresh client button refresh also background and emojis
 
 
 

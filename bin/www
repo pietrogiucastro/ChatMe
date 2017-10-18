@@ -292,7 +292,7 @@ var startChatMe = function(socket) {
                 }
 
                 sharp(background)
-                    .resize(300)
+                    .resize(600)
                     .jpeg()
                     .toBuffer()
                     .then(sharpbg => {
@@ -305,7 +305,7 @@ var startChatMe = function(socket) {
 
             socket.on('get background', function(callback) {
                 db.getUserBackground(socket.user.id, function(err, background) {
-                    if (err || !user){
+                    if (err || !background){
                         console.log(err || "ERROR! No background (or user) found for user with id = " + socket.user.id);
                         return;
                     }

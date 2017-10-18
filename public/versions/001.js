@@ -27,7 +27,7 @@ var prevtyping = false;
 
 var options = $('#chat-me-options');
 var spinner = $('<center id="opts-spinner-cont" style="display:none;"><div class="opts-spinner"></div></center>');
-options.prepend(spinner);
+$('#chat-me').prepend(spinner);
 
 
 var input;
@@ -66,7 +66,7 @@ var msgbtn = $('<div id="pm-msgs-btn"><div class="pm-msgs-nots" style="display:n
 var msgnots = msgbtn.find('.pm-msgs-nots');
 tabs.find('#pm-msgs').append(msgbtn);
 var roomresultModel = $('<div class="chat-row"><span class="chat-name"></span> <span class="chat-online"><i class="fa fa-user" style="margin-right:4px;"></i><span class="online-num"></span></span></div>')[0];
-var messagemodal = $('<div class="cm-message-modal"><div class="modal-layout cm-scroll"><div class="modal-close"></div><div class="message-modal-body"></div></div></div>');
+var messagemodal = $('<div class="cm-message-modal" style="display:none;"><div class="modal-layout cm-scroll"><div class="modal-close"></div><div class="message-modal-body"></div></div></div>');
 var pmModal = $('<div class="pm-msgs-modal" style="z-index:1000; display:none;"><div class="pm-close"></div><div class="modal-body cm-scroll"><div class="pm-title">Private Messages</div><div class="pm-search cm-clearafter"><span class="pm-btn pm-add-btn"><input class="pm-add-input" style="display:none;" placeholder="add new user"><span class="pm-clear-search"></span></span><span class="pm-btn pm-search-btn"><span class="pm-clear-search"></span><input class="pm-search-input" style="display:none;" placeholder="search user"></span></div><div class="pm-results-cont" style="display: none;"><div class="search-results"></div></div><div class="pm-messages"></div></div></div>');
 var pmnot = 0;
 var pmMessage = $('<div class="pm-message"><div class="pm-head cm-clearafter"><div class="pm-name"></div><div class="pm-date"></div></div><div class="pm-body"><div class="pm-text"><span class="pm-msgowner"></span></div><div class="pm-not"></div></div>')[0];
@@ -765,6 +765,13 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     		{name: data.joinedroom.split('pm:')[1], type: 'pm'} :
     		{name: data.joinedroom}
 
+    		/* init background */
+    		var latestUser = localStorage.latestUser;
+    		if (latestUser != sess_user) localStorage.background = '';
+    		if (custombg) loadBackground();
+    		localStorage.latestUser = sess_user;
+    		/* --------------- */
+
     		var delay = 0;
             Object.keys(data.activerooms).forEach(roomname => { // active tabs
             	var room = data.activerooms[roomname];
@@ -1155,7 +1162,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     	$('#chat-me').attr('theme', selectedtheme);
 
     	/*css*/
-    	$('head').append('<style type=text/css>body {margin: 0;} #chat-me {position:relative; overflow:hidden; height:100vh; border-radius:3px;} #chat-me-cont {box-sizing:border-box; padding:5px; padding-top:28px; width:100%; height:100%; background-color:rgba(50,80,100,1.0); font-family:tahoma !important;} #cm-inline-btns {position:absolute; box-sizing:border-box; width:100%; height:15px; z-index: 10;} #cm-message-panel {position: absolute; bottom:0; height:25px; width:100%;} .cm-label {display:inline-block; color:rgb(230,230,230); font-weight:bold; margin:10px; width: 25%;} .cm-button {position:absolute; overflow:hidden; color:white; text-align:center; width:60px; font-size:10px; background-color:rgb(10,200,50); border:0px; box-shadow:none !important; cursor:pointer; height:100%; border-radius: 2px;} .cm-button:not(.recording):hover {background-color:rgb(20,220,60);} .message-input-cont {position: relative; box-sizing:border-box; width: 100%; height:100%; padding-right:45px; } .emojis-btn {position: absolute; top: 4px; right: 50px;} .emojis-btn:before {cursor: pointer;} .cm-input {box-sizing:border-box; background-color:rgb(240,240,240)!important; border:0px; font-size:12px!important; font-family:\'Montserrat\', sans-serif; width:230px; border:0px; border-radius:2px; padding-left:5px;} #cm-error-cont {color:rgb(220,0,0); font-size:12px; margin-left:8px; margin-top:10px; max-width:200px} #cm-error-cont.success {color: rgb(10,200,50);} #cm-chat {font-family:\'Montserrat\', sans-serif; width:100%; height:100%; background-color:rgb(240,240,240); border-radius:2px;} #cm-chat-list {margin:0; padding:3px 0; font-size:11px;} .cm-message:first-child {margin-top:0 !important}.cm-message:last-child {border:0;} .cm-message {padding: 3px 5px; padding-top:2px;} .cm-message-head {margin-bottom:4px;} .cm-message-body {display: inline-block; max-width:85%; margin: 3px 4%; margin-bottom: 0; border-radius: 5px; background: #d3e4f1; box-shadow: 1px 1px 0px #ddd; padding: 5px 6px;} .cm-clearafter:after {content:\'\'; display:block; clear: both;} .cm-message:hover,.cm-online-name:hover {background-color: rgba(230,230,230,0.4);} .cm-message-name:hover {text-decoration:underline;} .cm-message-name {font-family:\'Montserrat\', sans-serif; font-weight:bold; color:rgb(0,80,0); font-size:9px; cursor: pointer; margin-right: 23px;} .cm-online-name {padding-left:4px; margin-right:0;} .cm-online-name:hover {text-decoration:none;} .cm-message-name:hover .username {text-decoration:underline;} .cm-message-status {font-family:\'Montserrat\', sans-serif; color:grey; font-size: 8px;} .cm-message-text {display:block; margin: 0 4px; max-width:310px; word-wrap:break-word; color:#07324e;} .cm-message-date {float:right; color:grey; font-size:9px; min-width:70px;} #cm-display-panel {box-sizing:border-box; padding-top:20px; padding-bottom:30px; height: 100%; } #cm-display {position: relative; overflow: hidden; display:flex; height: 100%;} #cm-online-panel {margin-right:5px; width:90px;} #cm-online {height:100%; background-color:rgb(240,240,240); border-radius:2px;} #cm-online-list {margin:0; padding:5px 0; font-size:11px;} #cm-record {box-sizing:border-box; display:flex; align-items:center; width: 40px;} .micico {position: absolute; font-size: 165%; top: 0%; right: 15px; padding-top: 5px;}</style>');
+    	$('head').append('<style type=text/css>body {margin: 0;} #chat-me {position:relative; overflow:hidden; height:100vh; border-radius:3px;} #chat-me-cont {box-sizing:border-box; padding:5px; padding-top:28px; width:100%; height:100%; background-color:rgba(50,80,100,1.0); font-family:tahoma !important;} #cm-inline-btns {position:absolute; box-sizing:border-box; width:100%; height:15px; z-index: 10;} #cm-message-panel {position: absolute; bottom:0; height:25px; width:100%;} .cm-label {display:inline-block; color:rgb(230,230,230); font-weight:bold; margin:10px; width: 25%;} .cm-button {position:absolute; overflow:hidden; color:white; text-align:center; width:60px; font-size:10px; background-color:rgb(10,200,50); border:0px; box-shadow:none !important; cursor:pointer; height:100%; border-radius: 2px;} .cm-button:not(.recording):hover {background-color:rgb(20,220,60);} .message-input-cont {position: relative; box-sizing:border-box; width: 100%; height:100%; padding-right:45px; } .emojis-btn {position: absolute; top: 4px; right: 50px;} .emojis-btn:before {cursor: pointer;} .cm-input {box-sizing:border-box; background-color:rgb(240,240,240)!important; border:0px; font-size:12px!important; font-family:\'Montserrat\', sans-serif; width:230px; border:0px; border-radius:2px; padding-left:5px;} #cm-error-cont {color:rgb(220,0,0); font-size:12px; margin-left:8px; margin-top:10px; max-width:200px} #cm-error-cont.success {color: rgb(10,200,50);} #cm-chat {font-family:\'Montserrat\', sans-serif; width:100%; height:100%; background-color:rgb(240,240,240); border-radius:2px;} #cm-chat-list {margin:0; padding:3px 0; font-size:11px;} .cm-message:first-child {margin-top:0 !important}.cm-message:last-child {border:0;} .cm-message {padding: 3px 5px; padding-top:2px;} .cm-message-head {margin-bottom:4px;} .cm-message-body {display: inline-block; max-width:85%; margin: 3px 4%; margin-bottom: 0; border-radius: 5px; background: #d3e4f1; box-shadow: 1px 1px 0px #ddd; padding: 5px 6px;} .cm-clearafter:after {content:\'\'; display:block; clear: both;} .cm-message:hover,.cm-online-name:hover {background-color: rgba(220,220,220,0.4);} .cm-message-name:hover {text-decoration:underline;} .cm-message-name {font-family:\'Montserrat\', sans-serif; font-weight:bold; color:rgb(0,80,0); font-size:9px; cursor: pointer; margin-right: 23px;} .cm-online-name {padding-left:4px; margin-right:0;} .cm-online-name:hover {text-decoration:none;} .cm-message-name:hover .username {text-decoration:underline;} .cm-message-status {font-family:\'Montserrat\', sans-serif; color:grey; font-size: 8px;} .cm-message-text {display:block; margin: 0 4px; max-width:310px; word-wrap:break-word; color:#07324e;} .cm-message-date {float:right; text-align:right; color:grey; font-size:9px; min-width:70px;} #cm-display-panel {box-sizing:border-box; padding-top:20px; padding-bottom:30px; height: 100%; } #cm-display {position: relative; overflow: hidden; display:flex; height: 100%;} #cm-online-panel {margin-right:5px; width:90px;} #cm-online {height:100%; background-color:rgb(240,240,240); border-radius:2px;} #cm-online-list {margin:0; padding:5px 0; font-size:11px;} #cm-record {box-sizing:border-box; display:flex; align-items:center; width: 40px;} .micico {position: absolute; font-size: 165%; top: 0%; right: 15px; padding-top: 5px;}</style>');
     	if (!$('#chat-me-cont').length) return;
 
     	if (!sess_token) InitDisplay();
@@ -1198,7 +1205,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     		'<div class="settings-row"><span class="settings-text">Slide chat history:</span><input type="checkbox" id="chat-slide-input" class="settings-input"></div>' +
     		'<div class="settings-row"><span class="settings-text">Custom background:</span><input type="checkbox" id="custom-background" class="settings-input"></div>' +
     		'<div id="custom-background-opts" class="settings-row">' +
-			'<div class="settings-row"><span class="settings-text">Set background:</span><input style="width: 50%;" type="file" accept="image/*" id="background-input"></div>' +
+			'<div class="settings-row child"><span class="settings-text">Update background:</span><input style="width: 50%;" type="file" accept="image/*" id="background-input"></div>' +
     		'</div>' +
     		'<div class="settings-row"><span class="settings-text">Force refresh:</span><button id="refresh-client" class="cm-button" style="float: left; width: 80px; height: 25px; position: relative;">Refresh client</button></div>' +
     		'<div class="settings-bottom"><button class="cm-button cm-cancel cm-secondary cm-right">Cancel</button></div>' +
@@ -1251,8 +1258,14 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     		chatOptions.container.find('#custom-background').attr('checked', custombg).click(function() {
     			custombg = $(this).is(':checked');
     			$.cookie('custombg', custombg);
-    			if (custombg) bgopts.slideDown();
-    			else bgopts.slideUp();
+    			if (custombg) {
+    				bgopts.slideDown('fast');
+    				loadBackground();
+    			}
+    			else {
+    				bgopts.slideUp('fast');
+    				removeBackground();
+    			}
     		});
 
             chatOptions.container.find('#background-input').change(function() {
@@ -1455,25 +1468,66 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
 })();
 
 function sendBackground(data) {
-    var bufferReader = new FileReader();
+	showOptsWait();
+	try {
+	    var bufferReader = new FileReader();
 
-    bufferReader.onload = function() {
-        socket.emit('set background', this.result, function(background) {
-            setBackground(background);
-        });
-    };
-
-    bufferReader.readAsArrayBuffer(data);
+	    bufferReader.onload = function() {
+	        socket.emit('set background', this.result, saveBackground);
+	    };
+	    bufferReader.readAsArrayBuffer(data);
+	} catch(e) {
+		hideOptsWait();
+		showModalMessage("Internal error. Try again later");
+	}
 };
 
-function setBackground(buffer) {
+function setBackground(dataurl, closeopts) {
+	try {
+		fetch(dataurl)
+		.then(res => res.blob())
+		.then(blob => {
+	    	var bufferurl = window.URL.createObjectURL(blob);
+	    	var tmpImg = new Image();
+	    	tmpImg.src = bufferurl;
+	    	tmpImg.onload = function() {
+		    	$('#cm-chat').addClass('bg').css('background-image', 'url('+bufferurl+')');
+		    	hideOptsWait();
+		    	if (closeopts) hideOpts();
+	    	}
+		});
+	} catch(e) {
+		hideOptsWait();
+		console.log(e);
+	}
+}
 
-    var blob = new Blob([buffer], {
-        'type': 'image/jpeg'
-    });
-    var bufferurl = window.URL.createObjectURL(blob);
+function saveBackground(buffer) {
+	console.log(buffer);
+	var bufferReader = new FileReader();
+	bufferReader.onload = function() {
+		localStorage.background = this.result;
+		setBackground(this.result, true);
+	};
+	bufferReader.readAsDataURL(
+		new Blob([buffer], {
+			'type': 'image/jpeg'
+		})
+	);
+}
 
-    $('#cm-chat').addClass('bg').css('background-image', 'url('+bufferurl+')');
+function removeBackground() {
+	$('#cm-chat').removeClass('bg').css('background-image', '');
+}
+
+function loadBackground() {
+	if (localStorage.background) setBackground(localStorage.background);
+	else loadFromServer();
+}
+
+function loadFromServer() {
+	showOptsWait('light');
+	socket.emit('get background', saveBackground);
 }
 
 function createTab(room) {

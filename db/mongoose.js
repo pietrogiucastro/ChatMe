@@ -33,7 +33,7 @@ var userSchema = new Schema({ //User schema
     }],
     activerooms: { type: Schema.Types.Mixed, default: {} },
     joinedroom: { type: String, default: 'global' },
-    background: Buffer
+    background: { type: Buffer, default: new Buffer(0) },
 });
 userSchema.plugin(deepPopulate);
 
@@ -219,10 +219,10 @@ module.exports = {
         });
     },
     getUserBackground: function(userid, callback) {
-        User.findOne({_id: userid}, 'background', (err, background) => {
-            if (err || !background) return callback(err);
+        User.findOne({_id: userid}, 'background', (err, user) => {
+            if (err || !user.background) return callback(err);
 
-            callback(null, background);
+            callback(null, user.background);
         });
     },
     getTokenByCredentials: function(username, password, callback) {
