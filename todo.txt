@@ -1,10 +1,7 @@
 MANDATORY
 - create css themes
-- transparent chat when mouseleave option
-- right spinner everywere (user fa spinners and animations)
 - fix user color
 - change not sound
-- custom background
 - auto mute for spam
 - message / audio length limit
 - fix register display
@@ -12,6 +9,7 @@ MANDATORY
 - audio download button (don't auto download)
 - fix runtime pm last message bug for audio and images! (need <icon> + audio / image even when a 
   pm message has been sent)
+- server: try/catch for every 'emit' method (user hash of methods and loops)
 
 WHEN MANDATORY'S ARE COMPLETED
 - remove youtube/whatsapp match return

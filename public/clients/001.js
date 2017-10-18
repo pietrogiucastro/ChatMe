@@ -1,4 +1,5 @@
 var connection;
+var transparent;
 var sess_token = GM_getValue('sess_token');
 var sess_user = GM_getValue('sess_user');
 
@@ -147,6 +148,10 @@ var resizeicosrc = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAA
                 GM_setValue('client-version', event.data.value);
                 window.location.reload();
             break;
+            case 'transparent':
+                transparent = event.data.value;
+                if (!transparent) $(container).css('opacity', '');
+                break;
             case "windowsize":
                 setWindowSize(event.data.value);
             break;
@@ -161,6 +166,15 @@ var resizeicosrc = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAA
             default:
                 console.log('unhandled event: ' + event.data);
         }
+    });
+
+    $(container).mouseleave(function() {
+        if (!transparent) return;
+        if ($(this).children('#chat-me-frame').is('.dragging')) return;
+        $(this).animate({'opacity': 0.2}, 'fast');
+    }).mouseenter(function() {
+        if (!transparent) return;
+        $(this).animate({'opacity': 1.0}, 'fast');
     });
 
     !function main() {

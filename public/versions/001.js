@@ -1,6 +1,6 @@
 var settings_page = 'chat.me';
 var server = document.domain;
-var latestClientVersion = "1.0.6";
+var latestClientVersion = "1.0.7";
 var myClientVersion;
 
 var site = (window.location != window.parent.location) ? document.referrer : document.location.href;
@@ -21,6 +21,8 @@ var selectedtheme;
 var collapsetabs = $.cookie('collapsetabs') == 'true';
 var chatslide = $.cookie('chatslide') == 'true';
 var custombg = $.cookie('custombg') == 'true';
+var transparent = $.cookie('transparent') == 'true';
+
 var sess_token = $.cookie('sess_token');
 var sess_user;
 var prevtyping = false;
@@ -671,10 +673,12 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     		var user = $('#cm-user').val();
     		var pass = $('#cm-pass').val();
     		$('#cm-error-cont').empty();
+    		showOptsWait();
     		$.post('/login', {
     			user: user,
     			pass: pass
     		}, function(e) {
+    			hideOptsWait();
     			$('#cm-error-cont').html('');
     			console.log(e);
     			if (e.result == 'success') {
@@ -730,12 +734,13 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
         	}
 
             //$('#cm-error-cont').html(wheel);
-
+            showOptsWait();
             $.post('/signup', {
             	user: user,
             	pass: pass,
             	email: email
             }, function(e) {
+            	hideOptsWait();
             	$('#cm-error-cont').removeClass('success').html('');
             	console.log(e);
             	if (e.result == 'success') {
@@ -857,6 +862,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     	});
     	socket.on('set room', function(room) {
     		hideOpts();
+    		hideOptsWait();
     		hidePmModal();
 
     		createTab(room);
@@ -886,6 +892,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     	});
     	socket.on('settings_saved', function() {
     		hideOpts();
+    		hideOptsWait();
     	});
     	socket.on('pm-addseen', function(pmMsg) {
 
@@ -1201,14 +1208,17 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     		'<option class="settings-option" value="xs">small</option><option class="settings-option" value="sm">medium</option><option class="settings-option" value="lg">large</option><option class="settings-option" value="res">custom (resizable)</option></select></div>' +
     		'<div class="settings-row"><span class="settings-text">Theme:</span><select id="select-theme" class="settings-select">' +
     		'<option class="settings-option" value="default">default</option><option class="settings-option" value="dark">dark</option><option class="settings-option" value="holo">holo</option></select></div>' +
-    		'<div class="settings-row"><span class="settings-text">Collapse tabs:</span><input type="checkbox" id="collapse-input" class="settings-input"></div>' +
-    		'<div class="settings-row"><span class="settings-text">Slide chat history:</span><input type="checkbox" id="chat-slide-input" class="settings-input"></div>' +
+
     		'<div class="settings-row"><span class="settings-text">Custom background:</span><input type="checkbox" id="custom-background" class="settings-input"></div>' +
     		'<div id="custom-background-opts" class="settings-row">' +
 			'<div class="settings-row child"><span class="settings-text">Update background:</span><input style="width: 50%;" type="file" accept="image/*" id="background-input"></div>' +
     		'</div>' +
+
+    		'<div class="settings-row"><span class="settings-text">Collapse tabs:</span><input type="checkbox" id="collapse-input" class="settings-input"></div>' +
+    		'<div class="settings-row"><span class="settings-text">Slide chat history:</span><input type="checkbox" id="chat-slide-input" class="settings-input"></div>' +
+    		'<div class="settings-row"><span class="settings-text">Transparent:</span><input type="checkbox" id="transparent" class="settings-input"></div>' +
     		'<div class="settings-row"><span class="settings-text">Force refresh:</span><button id="refresh-client" class="cm-button" style="float: left; width: 80px; height: 25px; position: relative;">Refresh client</button></div>' +
-    		'<div class="settings-bottom"><button class="cm-button cm-cancel cm-secondary cm-right">Cancel</button></div>' +
+    		'<div class="settings-bottom"><button class="cm-button cm-cancel cm-secondary cm-right">Back</button></div>' +
     		'</div>',
 
     		searchchat: '<div class="search-chat cm-scroll"><div id="type-password-mod" style="display:none"><i class="fa fa-remove hidetypepass" onclick="hideTypePass()"></i><div class="type-password-cont"><div id="type-password-text">password for room <div id="type-password-name"></div></div><input id="type-password" type="password" placeholder="password" autofocus="true"><div id="type-password-message"></div></div></div><center class="cm-cont-input search-chat-cont" style="width: 60%;"><input class="cm-opts-input search-chat-input" placeholder="Search chat" autofocus="true"><span class="search-chat-icon"></span></center><hr class="search-div"><div class="search-body"></div></div>',
@@ -1273,7 +1283,14 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
                 sendBackground(rawbackground);
             });
 
+            chatOptions.container.find('#transparent').attr('checked', transparent).click(function() {
+            	transparent = $(this).is(':checked');
+            	$.cookie('transparent', transparent);
+            	postParentMessage('transparent', transparent);
+            });
+
     		chatOptions.container.find('#refresh-client').click(function() {
+    			showOptsWait();
     			postParentMessage('reset-client', latestClientVersion);
     		});
 
