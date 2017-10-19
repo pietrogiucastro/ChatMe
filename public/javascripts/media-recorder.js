@@ -1,10 +1,12 @@
-var recorder = {
+var Recorder = {
     constraints: { audio: true },
     chunkstime: 1000,
     elapsedtime: 0,
     timeInterval: undefined,
+    isrecording: false,
     record: function() {
         socket.emit('recording', true);
+        this.isrecording = true;
         recorder.elapsedtime = 0;
         var mediaRecorder;
         navigator.mediaDevices.getUserMedia(recorder.constraints).then(function(mediaStream) {
@@ -19,6 +21,10 @@ var recorder = {
             };
             recorder.timeInterval = setInterval(function() {
                 recorder.elapsedtime += recorder.chunkstime;
+                if (recorder.elapsedtime >= 120100) {
+                    recorder.elapsedtime = 120100;
+                    mediaRecorder.pause();
+                }
                 mictime.html(recorder.getTimeByMs(recorder.elapsedtime));
             }, recorder.chunkstime);
             mediaRecorder.onstop = function(e) {
@@ -31,6 +37,7 @@ var recorder = {
                 mediaRecorder = undefined;
                 clearInterval(recorder.timeInterval);
                 socket.emit('recording', false);
+                this.isrecording = false;
             };
             recorder.stopAndSendRecord = function() {
                 if (mediaRecorder)
@@ -55,4 +62,6 @@ var recorder = {
 
         return (parseInt(hours) ? hours + ":" : '') + minutes + ":" + seconds;
     }
-}
+},
+
+recorder = new (function() {return Recorder})();

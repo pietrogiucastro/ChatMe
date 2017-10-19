@@ -1,14 +1,8 @@
 MANDATORY
 - create css themes
-- fix user color
 - change not sound
 - auto mute for spam
-- message / audio length limit
-- fix register display
 - google analytics
-- audio download button (don't auto download)
-- fix runtime pm last message bug for audio and images! (need <icon> + audio / image even when a 
-  pm message has been sent)
 - server: try/catch for every 'emit' method (user hash of methods and loops)
 
 WHEN MANDATORY'S ARE COMPLETED
@@ -16,6 +10,7 @@ WHEN MANDATORY'S ARE COMPLETED
 - remove server = localhost line when everything done
 - start npm with "infinite" on the server
 - test server users online number limit
+- set safe server password
 
 LESS IMPORTANT
 - query rooms from db
@@ -29,7 +24,7 @@ LESS IMPORTANT
 - no connection error handling
 - description popover on hover for tabs and buttons
 - add password for mongodb login!
-- compress media quality
+- compress media quality (think just audio)
 - insert email check on signup
 - enter to submit/select everywhere
 - search rooms via db

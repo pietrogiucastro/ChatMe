@@ -17,7 +17,6 @@
 var settings_page = 'chat.me';
 var server = 'chatme.me';
 server = 'localhost:3000';
-var version = '001';
 var showversion = false;
 
 if (document.domain == "www.youtube.com") return;
@@ -41,6 +40,6 @@ else {
             $('body').append('<div style="position: fixed; bottom: 10px right: 10px; color: red;">There was a problem loading or updating chat me in this page. Please try in another page (e.g. <a href="https://www.google.com">www.google.com</a>)</div>');
         }
     };
-    xhttp.open("GET", 'https://'+ server+'/clients/'+version+'.js?_='+new Date().getTime(), true);
+    xhttp.open("GET", 'https://'+ server+'/clients/latest.js?_='+new Date().getTime(), true);
     xhttp.send();
 }

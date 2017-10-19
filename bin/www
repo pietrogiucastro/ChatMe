@@ -260,6 +260,10 @@ var startChatMe = function(socket) {
                     console.log("ERROR! Wrong msg datatype");
                     return Jsonerror(socket);
                 }
+                if (msg.length > 400) {
+                    console.log("ERROR! Message is too long");
+                    return Jsonerror(socket, "chaterror", "Message is too long!");
+                }
                 var roomname = getsocketroom(socket);
 
                 if (!roomexists(roomname)) {
@@ -274,8 +278,7 @@ var startChatMe = function(socket) {
                     type: 'user_msg',
                     text: msg,
                     time: new Date(),
-                    ownername: socket.user.name,
-                    ownercolor: socket.user.color
+                    ownername: socket.user.name
                 };
                 if (roomname.startsWith('pm://')) {
                     sendPmMessage(roomname, msgobj);
@@ -328,6 +331,11 @@ var startChatMe = function(socket) {
                         return Jsonerror(socket);
                     }
 
+                    if (mediaobject.buffer.byteLength > 800000) { // ~2 min
+                        console.log("ERROR! Audio buffer is too long");
+                        return Jsonerror(socket, "chaterror", "Audio is too long!");
+                    }
+
                     typeobj.duration = mediaobject.duration;
                 } else if (mediaobject.type == 'image') {
                     if (!(mediaobject.buffer instanceof Buffer)) {
@@ -362,8 +370,7 @@ var startChatMe = function(socket) {
                             _id: messageid,
                             type: mediaobject.type,
                             time: new Date(),
-                            ownername: socket.user.name,
-                            ownercolor: socket.user.color
+                            ownername: socket.user.name
                         };
 
                         msgobj = Object.assign({}, msgobj, typeobj);
@@ -765,10 +772,13 @@ function sendPmMessage(room, msgobj) {
     rooms[room].lastmsg = msgobj;
 
     var clearunseen = false;
-    var pmMsgobj = Object.assign({}, msgobj, {
-        recipientnamefor: socket.user.name
-    });
-    socket.emit('pm-addseen', Object.assign({}, msgobj, {
+    var pmMsgobj = Object.assign( {}, msgobj, {recipientnamefor: socket.user.name} );
+
+    if (pmMsgobj.type == 'audio') pmMsgobj.text = '<span class="pm-audio-ico">audio</span>';
+    else if (pmMsgobj.type == 'image') pmMsgobj.text = '<span class="pm-image-ico">image</span>';
+    else pmMsgobj.text = pmMsgobj.text.substr(0, 60);
+
+    socket.emit('pm-addseen', Object.assign({}, pmMsgobj, {
         recipientnamefor: socket.user.pmRecipient
     }));
 

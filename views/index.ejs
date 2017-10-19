@@ -68,14 +68,10 @@
                 left: 0;
               }
 
-              #chat-me.init #cm-inline-btns {
+              #chat-me.init #cm-inline-btns, #chat-me.register #cm-inline-btns {
                 padding: 5px;
                 height: 26px;
                 border-bottom: 1px solid white;
-              }
-              #chat-me.register #cm-inline-btns {
-                padding: 5px;
-                height: 25px;
               }
               #chat-me.logged #cm-inline-btns {
                 padding-right: 1px;
@@ -278,7 +274,7 @@
                 border-right: 0 !important;
               }
               .chat-tab:hover {
-                background-color: white !important;
+                background-color: #f3f3f3 !important;
               }
               .chat-tab.sel {
                 background: -webkit-linear-gradient(bottom, #eee, #fff) !important;
@@ -623,6 +619,8 @@
                 font-family: fontawesome;
                 content: "\f0b2";
                 padding: 0 6px;
+                padding-top: 2px;
+                display: block;
               }
 
 
@@ -729,7 +727,7 @@
                 border-radius: 9px;
               }
               #cm-not.error {
-                background: rgba(220,0,0, 0.9);
+                background: rgba(220,0,0, 0.9) !important;
               }
               #unseen-icon {
                 width: 30px;
@@ -1013,7 +1011,7 @@
           position: relative;
           width: 100%;
           height: 14px;
-          margin-left: 14px;
+          margin-left: 9px;
           margin-right: 4px;
           display: flex;
           align-items: center;
@@ -1032,23 +1030,48 @@
           background: rgb(70,130,210);
           pointer-events: none;
         }
-        .play-button {
+        .play-button, .download-button {
           font-size: 19px;
-          width: 24px;
-          margin-left: 9px;
+          text-align: center;
+          margin-left: 2px;
           text-decoration: none;
           color: #555;
         }
 
-        .play-button:before {
+        .play-button:before, .download-button:before {
+          width: 1.18571429em;
+        }
+
+        .download-button {
+          color: #555;
+        }
+
+        .play-button:before, .download-button:before {
           font-family: fontawesome;
           display: block;
           margin-bottom: -1px;
+        }
+
+        .play-button:before {
           content: "\f04c";
         }
 
         .play-button.paused:before {
           content: "\f04b";
+        }
+
+        .download-button:not(.downloading) {
+          cursor:pointer;
+        }
+
+        .download-button:before {
+          content: "\f0ab";
+        }
+        .download-button.downloading {
+          animation: fa-spin 2s infinite linear;
+        }
+        .download-button.downloading:before {
+          content: "\f1ce";
         }
       </style>
       <style type="text/css">
@@ -1430,6 +1453,8 @@
 
     .pm-message.pm-unseen .pm-text {
       font-weight: bold;
+      overflow: hidden;
+      width: calc(100% - 22px);
     }
     .pm-text .pm-audio-ico:before {
       font-family: fontawesome;
@@ -1454,10 +1479,6 @@
       border-radius: 3px;
       background: green;
       color: white;
-      border-left: 7px solid white;
-    }
-    .pm-message.pm-unseen:hover .pm-not {
-      border-left: 7px solid rgb(248,248,250);
     }
 
     #chat-me-tabs.collapse > .chat-tab { /*collapse option*/
@@ -1829,6 +1850,10 @@
   background: #b6b6b6 !important;
 }
 
+#chat-me[theme=dark] #chat-me-tabs .chat-tab {
+  border-right-color: #b6b6b6;
+}
+
 #chat-me[theme=dark] #chat-me-tabs .chat-tab:not(.sel) {
   background: #7c7d82 !important;
   color: #efefef !important;
@@ -1943,16 +1968,8 @@
   border-bottom: 1px solid #aaa;
 }
 
-#chat-me[theme=dark] .pm-not {
-  border-left-color: #c5c5c5;
-}
-
 #chat-me[theme=dark] .pm-message:hover {
   background: #ddd !important;
-}
-
-#chat-me[theme=dark] .pm-message:hover .pm-not {
-  border-left-color: #ddd;
 }
 
 #chat-me[theme=dark] .cm-message-modal > .modal-layout {

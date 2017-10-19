@@ -61,17 +61,19 @@ var currentchat;
 var emptychatmsg = 'Empty chat. Be the first to send a message!';
 
 var currentchat;
-var currentusers = [];
+var currentusers = {};
 
 var tabs = $('<div id="chat-me-head"><div id="chat-me-tabs" class="cm-scroll scroll-x cm-tabs-scroll"><div class="chat-tab base global-tab noselect" name="global" data-type="global"><span class="volume-icon vol-true"></span><div class="tab-text">Global</div></div><div class="chat-tab base site-tab noselect" name="site" data-type="site"><span class="volume-icon vol-true"></span><div class="tab-text">Site</div></div></div><div id="pm-msgs"></div></div>');
 var msgbtn = $('<div id="pm-msgs-btn"><div class="pm-msgs-nots" style="display:none;"></div></div>');
 var msgnots = msgbtn.find('.pm-msgs-nots');
+
 tabs.find('#pm-msgs').append(msgbtn);
+
 var roomresultModel = $('<div class="chat-row"><span class="chat-name"></span> <span class="chat-online"><i class="fa fa-user" style="margin-right:4px;"></i><span class="online-num"></span></span></div>')[0];
 var messagemodal = $('<div class="cm-message-modal" style="display:none;"><div class="modal-layout cm-scroll"><div class="modal-close"></div><div class="message-modal-body"></div></div></div>');
 var pmModal = $('<div class="pm-msgs-modal" style="z-index:1000; display:none;"><div class="pm-close"></div><div class="modal-body cm-scroll"><div class="pm-title">Private Messages</div><div class="pm-search cm-clearafter"><span class="pm-btn pm-add-btn"><input class="pm-add-input" style="display:none;" placeholder="add new user"><span class="pm-clear-search"></span></span><span class="pm-btn pm-search-btn"><span class="pm-clear-search"></span><input class="pm-search-input" style="display:none;" placeholder="search user"></span></div><div class="pm-results-cont" style="display: none;"><div class="search-results"></div></div><div class="pm-messages"></div></div></div>');
 var pmnot = 0;
-var pmMessage = $('<div class="pm-message"><div class="pm-head cm-clearafter"><div class="pm-name"></div><div class="pm-date"></div></div><div class="pm-body"><div class="pm-text"><span class="pm-msgowner"></span></div><div class="pm-not"></div></div>')[0];
+var pmMessage = $('<div class="pm-message"><div class="pm-head cm-clearafter"><div class="pm-name"></div><div class="pm-date update-date"></div></div><div class="pm-body"><div class="pm-text"><span class="pm-msgowner"></span></div><div class="pm-not"></div></div>')[0];
 
 var emojismatcher = {
 	emojis: {
@@ -203,8 +205,12 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
         	console.log("unknown message type for msg: " + JSON.stringify(msg));
         	return;
         }
-        if (currentusers.indexOf(msg.ownername) < 0) { //offline user
+        var onlineOwner = currentusers[msg.ownername];
+        if (!onlineOwner) { //offline user
         	message.find('.cm-message-name').addClass('user-offline');
+        }
+        else {
+        	message.find('.cm-message-name').css('color', onlineOwner.color);
         }
 
         function unseenmsg() {
@@ -227,7 +233,6 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     function createTextMessage(msg) {
     	var user_message = sess_user == msg.ownername ? 'You' : msg.ownername;
     	var time = timeSince(msg.time);
-    	var usercolor = msg.ownercolor;
 
     	var lastmessage = $('#cm-chat-list').children(':last');
 
@@ -244,7 +249,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
         // }
 
         var newtextmessage = $('<div class="cm-message cm-textmessage cm-clearafter" data-date="'+msg.time+'" data-owner="user-' + msg.ownername + '" style="display:none;"></div>');
-        newtextmessage.html('<div class="cm-message-body"><div class="cm-message-head cm-clearafter"><span class="cm-message-name user-' + user_message + ' floatleft" style="color: ' + usercolor + ';" data-name="' + msg.ownername + '">' + user_message + '</span><span class=cm-message-date>' + time + '</span></div><span class=cm-message-text>' + msg.text + '</span></div>');
+        newtextmessage.html('<div class="cm-message-body"><div class="cm-message-head cm-clearafter"><span class="cm-message-name user-' + user_message + ' floatleft" data-name="' + msg.ownername + '">' + user_message + '</span><span class="cm-message-date update-date">' + time + '</span></div><span class=cm-message-text>' + msg.text + '</span></div>');
         if (user_message == 'You') newtextmessage.find('.cm-message-body').addClass('user-You textright');
         $('#cm-chat-list').append(newtextmessage);
 
@@ -259,16 +264,18 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     function createAudioMessage(msg) {
     	var user_message = sess_user == msg.ownername ? 'You' : msg.ownername;
     	var time = timeSince(msg.time);
-    	var usercolor = msg.ownercolor;
 
-    	var playbutton = $('<a class="play-button paused" href="#"><div class="left"></div><div class="right"></div><div class="triangle-1"></div><div class="triangle-2"></div></a>')
-    	.click(toggleAudioByBtn);
     	var progressbar = $('<span class="progress-bar"></span');
     	var audiobar = $('<span class="audionav-body"><input type="range" min="0" max="100" class="audio-track" value="0"></span>');
     	audiobar.append(progressbar);
     	var audioduration = $('<span class="audio-duration">..:..</span>');
     	audioduration.html(recorder.getTimeByMs(msg.duration));
 
+    	var downloadbutton = $('<a class="download-button"></a>')
+    	.one('click', function() {
+    		$(this).addClass('downloading');
+        	socket.emit('get media', msg._id, setAudioMessage);
+        });
 
     	var audio = document.createElement('audio');
     	audio.className = 'main-audio';
@@ -276,9 +283,9 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
 
 
     	var newaudiomessage = $('<div class="cm-message cm-audiomessage cm-clearafter" data-date="'+msg.time+'" data-owner="user-' + msg.ownername + '" style="display:none;"></div>');
-    	newaudiomessage.html('<div class="cm-message-body cm-audio-body"><div class="cm-message-head cm-clearafter"><span class="cm-message-name user-' + user_message + ' floatleft" style="color: ' + usercolor + ';" data-name="' + msg.ownername + '">' + user_message + '</span><span class=cm-message-date>' + time + '</span></div><div class=cm-message-audio></div></div>')
+    	newaudiomessage.html('<div class="cm-message-body cm-audio-body"><div class="cm-message-head cm-clearafter"><span class="cm-message-name user-' + user_message + ' floatleft" data-name="' + msg.ownername + '">' + user_message + '</span><span class="cm-message-date update-date">' + time + '</span></div><div class=cm-message-audio></div></div>')
     	.find('.cm-message-audio')
-    	.append(playbutton)
+    	.append(downloadbutton)
     	.append(audiobar)
     	.append(audio)
     	.append(audioduration);
@@ -292,7 +299,6 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
 
         newaudiomessage.attr('id', msg._id);
         $('#cm-chat-list').append(newaudiomessage);
-        socket.emit('get media', msg._id, setAudioMessage);
 
         return newaudiomessage;
     }
@@ -304,11 +310,15 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     	var audio = audiocont.find('.main-audio')[0];
     	var audioduration = audiocont.find('.audio-duration');
     	var audiobar = audiocont.find('.audionav-body');
+    	var downloadbutton = audiocont.find('.download-button');
+    	var playbutton = $('<a class="play-button paused fa-fw" href="#"></a>')
+    	.click(toggleAudioByBtn);
 
     	var blob = new Blob([msg.buffer], {
     		'type': 'audio/ogg; codecs=opus'
     	});
     	audio.src = window.URL.createObjectURL(blob);
+    	console.log(blob.size);
 
     	audio.currentTime = 999999999999999999999999999999999;
     	audio.play();
@@ -361,16 +371,17 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
         		var newtime = this.value / 1000;
         		audio.currentTime = newtime;
         	});
+
+        	downloadbutton.replaceWith(playbutton);
         });
     }
 
     function createImageMessage(msg) {
     	var user_message = sess_user == msg.ownername ? 'You' : msg.ownername;
     	var time = timeSince(msg.time);
-    	var usercolor = msg.ownercolor;
 
     	var newimagemessage = $('<div class="cm-message cm-imagemessage cm-clearafter" data-date="'+msg.time+'" data-owner="user-' + msg.ownername + '" style="display:none;"></div>');
-    	newimagemessage.html('<div class="cm-message-body cm-image-body"><div class="cm-message-head cm-clearafter"><span class="cm-message-name user-' + user_message + ' floatleft" style="color: ' + usercolor + ';" data-name="' + msg.ownername + '">' + user_message + '</span><span class=cm-message-date>' + time + '</span></div><div class="cm-message-image notloaded"><div class="img-square"></div><img></div><span class="cm-message-text">' + msg.text + '</span></div>');
+    	newimagemessage.html('<div class="cm-message-body cm-image-body"><div class="cm-message-head cm-clearafter"><span class="cm-message-name user-' + user_message + ' floatleft" data-name="' + msg.ownername + '">' + user_message + '</span><span class="cm-message-date update-date">' + time + '</span></div><div class="cm-message-image notloaded"><div class="img-square"></div><img></div><span class="cm-message-text">' + msg.text + '</span></div>');
     	if (user_message == 'You') newimagemessage.find('.cm-message-body').addClass('user-You textright');
 
     	socket.emit('get mediapre', msg._id, function(image) {
@@ -514,7 +525,10 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
 
     function cancelRec() {
     	stopRecording();
-    	recorder.cancelRecord();
+    	try {recorder.cancelRecord();}
+    	catch(e) {
+    		socket.emit('recording', false);
+    	}
     }
 
     function stopRecording() {
@@ -570,7 +584,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
 
     function setUsers(users) {
     	$('#cm-online-list').empty();
-    	currentusers = [];
+    	currentusers = {};
     	for (var username in users) {
     		var user = users[username];
     		appendUser(user);
@@ -582,7 +596,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     	var typingclass = user.istyping ? ' typing' : '';
     	status.classname += typingclass;
     	$('#cm-online-list').prepend('<li class="cm-message-name cm-online-name" id="user-' + user.name + '" style="color:' + user.color + ';" data-name="' + user.name + '"><div class="username">' + user.name + '</div><div class="cm-message-status ' + status.classname + '">' + status.message + '</div></li>');
-    	currentusers.push(user.name);
+    	currentusers[user.name] = {color: user.color};
     }
 
     function refreshUser(user) {
@@ -592,14 +606,16 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
 
     function removeUser(username) {
     	$('#user-' + username).remove();
-    	var listindex = currentusers.indexOf(username);
-    	if (listindex > -1) currentusers.splice(listindex, 1);
+    	delete currentusers[username];
     }
 
     function UserMsgOnOff(username, isOnline) {
-    	$('#cm-chat').find('.cm-message[data-owner=user-' + username + ']').each(function() {
+    	$('#cm-chat-list').children('.cm-message[data-owner=user-' + username + ']').each(function() {
     		var userdom = $(this).find('.cm-message-name');
-    		if (isOnline) userdom.removeClass('user-offline');
+    		if (isOnline) {
+    			userdom.removeClass('user-offline');
+    			refreshMsgsColor(username);
+    		}
     		else userdom.addClass('user-offline');
     	});
     }
@@ -623,6 +639,13 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     	var userOnline = $('#user-' + username);
     	var color = data.color;
     	userOnline.css('color', color);
+    	currentusers[data.name].color = data.color;
+    	refreshMsgsColor(data.name);
+    }
+
+    function refreshMsgsColor(username) {
+    	var usercolor = currentusers[username].color;
+    	$('#cm-chat-list').children('.cm-message[data-owner=user-'+username+']').find('.cm-message-name').css('color', usercolor);
     }
 
     function postMessage() {
@@ -662,12 +685,16 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
 
     	hideEmojis();
     	$('#chat-me').find(tabs).remove();
+    	tabs.find('.chat-tab:not(.base)').remove();
     	$('#chat-me').prepend(inlinebtns.container);
-    	$('#chat-me-cont').html('');
-    	$('#chat-me-cont').append('<label for=cm-user class=cm-label>Username:</label><input type=text id=cm-user class=cm-input placeholder=Username></input><br>');
-    	$('#chat-me-cont').append('<label for=cm-pass class=cm-label>Password:</label><input type=password id=cm-pass class=cm-input placeholder=Password></input><br>');
-    	$('#chat-me-cont').append('<div id=cm-error-cont></div>');
-    	$('#chat-me-cont').append('<div style="position:absolute; bottom:28%; right:6%; width:140px;"><button style="left:0%; height:20px;" id=cm-login class=cm-button>Login</button><button style="right:0%; height:20px; background:transparent; color:white; text-decoration:none;" id=cm-register class=cm-button>Sign up</button></div>');
+
+    	$('#chat-me-cont').html('<div style="font-weight:bold; color:white; padding:5px; padding-bottom:10px; background:#8da4a7; margin: 8px -5px;">Login</div>')
+    	.append('<div style="display:flex; align-items:center;"><label for=cm-user class=cm-label>Username:</label><input style="margin-right:10px;" type=text id=cm-user class=cm-input placeholder=Username></div>')
+    	.append('<div style="display:flex; align-items:center;"><label for=cm-pass class=cm-label>Password:</label><input style="margin-right:10px;" type=password id=cm-pass class=cm-input placeholder=Password></div>')
+    	.append('<br>')
+    	.append('<br>')
+    	.append('<div id=cm-error-cont></div>')
+    	.append('<div style="position:absolute; bottom:30px; right:10px; width:140px;"><button style="left:0%; height:20px;" id=cm-login class=cm-button>Login</button><button style="right:0%; height:20px; background:transparent; color:white; text-decoration:none;" id=cm-register class=cm-button>Sign up</button></div>');
 
     	$('#cm-login').click(function() {
     		var user = $('#cm-user').val();
@@ -680,7 +707,6 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     		}, function(e) {
     			hideOptsWait();
     			$('#cm-error-cont').html('');
-    			console.log(e);
     			if (e.result == 'success') {
     				sess_token = e.token;
     				$.cookie('sess_token', sess_token);
@@ -702,11 +728,18 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     function RegisterDisplay(user, pass) {
     	setDisplayStyle('register');
     	$('#chat-me').find(tabs).remove();
-    	$('#chat-me-cont').html('<div style="font-weight:bold; color:white; margin-bottom:-8px; margin-top:-36px;">Register</div><br>');
-    	$('#chat-me-cont').append('<div class=reg-up width:100%;"><label for=cm-user class=cm-label>Username:</label><input style="width:20%;" type=text id=cm-user class=cm-input placeholder=Username></input>  <label style="width:50px;" for=cm-email class=cm-label>E-mail:</label><input style="width:25%;" type=text id=cm-email class=cm-input placeholder=E-mail></input></div>');
-    	$('#chat-me-cont').append('<div class=reg-down width:100%;"><label for=cm-pass class=cm-label>Password:</label><input style="width:20%;" type=password id=cm-pass class=cm-input placeholder=Password></input>  <label style="width:50px;" for=cm-confirm class=cm-label>Confirm:</label><input style="width:25%;" type=password id=cm-confirm class=cm-input placeholder=Confirm></input></div>');
-    	$('#chat-me-cont').append('<div id=cm-error-cont></div>');
-    	$('#chat-me-cont').append('<div style="position:absolute; bottom:28%; right:6%; width:140px;"><button style="left:0%; height:20px;" id=cm-back class=cm-button>Back</button><button style="right:0%; height:20px;" id=cm-register class=cm-button>Sign up!</button></div>');
+
+    	$('#chat-me-cont').html('<div style="font-weight:bold; color:white; padding:5px; padding-bottom:10px; background:#8da4a7; margin: 8px -5px;">Sign up</div>')
+    	.append('<div id="signup-cont" class="cm-scroll" style="height:calc(100% - 60px);"></div>').find('#signup-cont')
+    	.append('<div style="display:flex; align-items:center;"><label for=cm-user class=cm-label>Username:</label><input style="margin-right:10px;" type=text id=cm-user class=cm-input placeholder=Username></div>')
+    	.append('<div style="display:flex; align-items:center;"><label for=cm-email class=cm-label>E-mail:</label><input style="margin-right:10px;" type=text id=cm-email class=cm-input placeholder=E-mail></div>')
+    	.append('<div style="display:flex; align-items:center;"><label for=cm-pass class=cm-label>Password:</label><input style="margin-right:10px;" type=password id=cm-pass class=cm-input placeholder=Password></div>')
+    	.append('<div style="display:flex; align-items:center;"><label for=cm-confirm class=cm-label>Confirm:</label><input style="margin-right:10px;" type=password id=cm-confirm class=cm-input placeholder=Confirm></div>')
+    	.append('<div id=cm-error-cont></div>')
+    	.append('<div style="position:absolute; bottom:30px; right:10px; width:140px;"><button style="left:0%; height:20px;" id=cm-back class=cm-button>Back</button><button style="right:0%; height:20px;" id=cm-register class=cm-button>Sign up!</button></div>');
+
+    	// $('#chat-me-cont').append('<div class=reg-up width:100%;"></input>  </input></div>');
+    	// $('#chat-me-cont').append('<div class=reg-down width:100%;"></input>  </input></div>');
 
         //        $('#chat-me-cont').append('<label for=cm-pass class=cm-label>Password:</label><input type=password id=cm-pass class=cm-input placeholder=Password></input><br>');
 
@@ -742,7 +775,6 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
             }, function(e) {
             	hideOptsWait();
             	$('#cm-error-cont').removeClass('success').html('');
-            	console.log(e);
             	if (e.result == 'success') {
             		$('#cm-error-cont').addClass('success').html(e.message)
             		.append('<br>Redirected in 3 seconds..');
@@ -776,7 +808,6 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     		if (custombg) loadBackground();
     		localStorage.latestUser = sess_user;
     		/* --------------- */
-
     		var delay = 0;
             Object.keys(data.activerooms).forEach(roomname => { // active tabs
             	var room = data.activerooms[roomname];
@@ -839,6 +870,10 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     		setHistory(data.history, noslide);
     		showChatNot(data.roomname);
     		noslide = !chatslide;
+    		/* recorder */
+    		if (recorder.isrecording) socket.emit('recording', true);
+    		/* -------- */
+
     	});
     	socket.on('refresh_user', function(user) {
     		refreshUser(user);
@@ -904,6 +939,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
             	domMsg.find('.pm-name').html(pmMsg.recipientnamefor);
             	domMsg.find('.pm-date').html(time);
             	domMsg.find('.pm-text').html('<span class="pm-msgowner">' + pmMsg.ownername + '</span>' + pmMsg.text);
+            	domMsg.attr('data-date', pmMsg.time);
 
             	refreshMsgsNot();
 
@@ -917,6 +953,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
             	domMsg.find('.pm-name').html(pmMsg.recipientnamefor);
             	domMsg.find('.pm-date').html(time);
             	domMsg.find('.pm-text').html('<span class="pm-msgowner">' + pmMsg.ownername + '</span>' + pmMsg.text);
+            	domMsg.attr('data-date', pmMsg.time);
 
             	domMsg.click(function() {
             		socket.emit('switch pmroom', pmMsg.recipientnamefor);
@@ -939,12 +976,14 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
             	domMsg.find('.pm-name').html(pmMsg.recipientnamefor);
             	domMsg.find('.pm-date').html(time);
             	domMsg.find('.pm-text').html('<span class="pm-msgowner">' + pmMsg.ownername + '</span>' + pmMsg.text);
+            	domMsg.attr('data-date', pmMsg.time);
             } else { //create new message
             	domMsg = $(pmMessage.cloneNode(true));
             	domMsg.addClass('pm-unseen').attr('data-recipient', pmMsg.recipientnamefor).attr('data-unseen', 1).find('.pm-not').html(1);
             	domMsg.find('.pm-name').html(pmMsg.recipientnamefor);
             	domMsg.find('.pm-date').html(time);
             	domMsg.find('.pm-text').html('<span class="pm-msgowner">' + pmMsg.ownername + '</span>' + pmMsg.text);
+            	domMsg.attr('data-date', pmMsg.time);
 
             	domMsg.click(function() {
             		socket.emit('switch pmroom', pmMsg.recipientnamefor);
@@ -981,6 +1020,10 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     			case 'stderror':
     			console.log(error.message);
     			showModalMessage(error.message);
+    			break;
+    			case 'chaterror':
+    				console.log(error.message);
+    				showChatNot(error.message, 'error');
     			break;
     			case 'invalidtoken':
     			console.log(error.message);
@@ -1061,7 +1104,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     	.find('#cm-message-panel')
     	.append('<div class="message-input-cont"></div>')
     	.find('.message-input-cont')
-    	.append('<input style="margin:0px; width:100%; height:100%; padding-right: 23px;" type=text id=cm-message-input class=cm-input placeholder=Message>')
+    	.append('<input maxlength="400" style="margin:0px; width:100%; height:100%; padding-right: 23px;" type=text id=cm-message-input class=cm-input placeholder=Message>')
     	.append('<span class="fa fa-smile-o emojis-btn"></span>')
     	.children('.emojis-btn').append(emojis).click(function(e) {
     		if (this != e.target) return;
@@ -1169,7 +1212,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     	$('#chat-me').attr('theme', selectedtheme);
 
     	/*css*/
-    	$('head').append('<style type=text/css>body {margin: 0;} #chat-me {position:relative; overflow:hidden; height:100vh; border-radius:3px;} #chat-me-cont {box-sizing:border-box; padding:5px; padding-top:28px; width:100%; height:100%; background-color:rgba(50,80,100,1.0); font-family:tahoma !important;} #cm-inline-btns {position:absolute; box-sizing:border-box; width:100%; height:15px; z-index: 10;} #cm-message-panel {position: absolute; bottom:0; height:25px; width:100%;} .cm-label {display:inline-block; color:rgb(230,230,230); font-weight:bold; margin:10px; width: 25%;} .cm-button {position:absolute; overflow:hidden; color:white; text-align:center; width:60px; font-size:10px; background-color:rgb(10,200,50); border:0px; box-shadow:none !important; cursor:pointer; height:100%; border-radius: 2px;} .cm-button:not(.recording):hover {background-color:rgb(20,220,60);} .message-input-cont {position: relative; box-sizing:border-box; width: 100%; height:100%; padding-right:45px; } .emojis-btn {position: absolute; top: 4px; right: 50px;} .emojis-btn:before {cursor: pointer;} .cm-input {box-sizing:border-box; background-color:rgb(240,240,240)!important; border:0px; font-size:12px!important; font-family:\'Montserrat\', sans-serif; width:230px; border:0px; border-radius:2px; padding-left:5px;} #cm-error-cont {color:rgb(220,0,0); font-size:12px; margin-left:8px; margin-top:10px; max-width:200px} #cm-error-cont.success {color: rgb(10,200,50);} #cm-chat {font-family:\'Montserrat\', sans-serif; width:100%; height:100%; background-color:rgb(240,240,240); border-radius:2px;} #cm-chat-list {margin:0; padding:3px 0; font-size:11px;} .cm-message:first-child {margin-top:0 !important}.cm-message:last-child {border:0;} .cm-message {padding: 3px 5px; padding-top:2px;} .cm-message-head {margin-bottom:4px;} .cm-message-body {display: inline-block; max-width:85%; margin: 3px 4%; margin-bottom: 0; border-radius: 5px; background: #d3e4f1; box-shadow: 1px 1px 0px #ddd; padding: 5px 6px;} .cm-clearafter:after {content:\'\'; display:block; clear: both;} .cm-message:hover,.cm-online-name:hover {background-color: rgba(220,220,220,0.4);} .cm-message-name:hover {text-decoration:underline;} .cm-message-name {font-family:\'Montserrat\', sans-serif; font-weight:bold; color:rgb(0,80,0); font-size:9px; cursor: pointer; margin-right: 23px;} .cm-online-name {padding-left:4px; margin-right:0;} .cm-online-name:hover {text-decoration:none;} .cm-message-name:hover .username {text-decoration:underline;} .cm-message-status {font-family:\'Montserrat\', sans-serif; color:grey; font-size: 8px;} .cm-message-text {display:block; margin: 0 4px; max-width:310px; word-wrap:break-word; color:#07324e;} .cm-message-date {float:right; text-align:right; color:grey; font-size:9px; min-width:70px;} #cm-display-panel {box-sizing:border-box; padding-top:20px; padding-bottom:30px; height: 100%; } #cm-display {position: relative; overflow: hidden; display:flex; height: 100%;} #cm-online-panel {margin-right:5px; width:90px;} #cm-online {height:100%; background-color:rgb(240,240,240); border-radius:2px;} #cm-online-list {margin:0; padding:5px 0; font-size:11px;} #cm-record {box-sizing:border-box; display:flex; align-items:center; width: 40px;} .micico {position: absolute; font-size: 165%; top: 0%; right: 15px; padding-top: 5px;}</style>');
+    	$('head').append('<style type=text/css>body {margin: 0;} #chat-me {position:relative; overflow:hidden; height:100vh; border-radius:3px;} #chat-me-cont {box-sizing:border-box; padding:5px; padding-top:28px; width:100%; height:100%; background-color:rgba(50,80,100,1.0); font-family:tahoma !important;} #cm-inline-btns {position:absolute; box-sizing:border-box; width:100%; height:15px; z-index: 10;} #cm-message-panel {position: absolute; bottom:0; height:25px; width:100%;} .cm-label {display:inline-block; color:rgb(230,230,230); font-weight:bold; margin:10px; width: 50%; max-width:110px; text-align:right;} .cm-button {position:absolute; overflow:hidden; color:white; text-align:center; width:60px; font-size:10px; background-color:rgb(10,200,50); border:0px; box-shadow:none !important; cursor:pointer; height:100%; border-radius: 2px;} .cm-button:not(.recording):hover {background-color:rgb(20,220,60);} .message-input-cont {position: relative; box-sizing:border-box; width: 100%; height:100%; padding-right:45px; } .emojis-btn {position: absolute; top: 4px; right: 50px;} .emojis-btn:before {cursor: pointer;} .cm-input {box-sizing:border-box; background-color:rgb(240,240,240)!important; border:0px; font-size:12px!important; font-family:\'Montserrat\', sans-serif; width:230px; border:0px; border-radius:2px; padding-left:5px; padding-top:3px; padding-bottom:3px;} #cm-error-cont {color:rgb(220,0,0); font-size:12px; margin-left:8px; margin-top:10px; max-width:200px} #cm-error-cont.success {color: rgb(10,200,50);} #cm-chat {font-family:\'Montserrat\', sans-serif; width:100%; height:100%; background-color:rgb(240,240,240); border-radius:2px;} #cm-chat-list {margin:0; padding:3px 0; font-size:11px;} .cm-message:first-child {margin-top:0 !important}.cm-message:last-child {border:0;} .cm-message {padding: 3px 5px; padding-top:2px;} .cm-message-head {margin-bottom:4px;} .cm-message-body {display: inline-block; max-width:85%; margin: 3px 4%; margin-bottom: 0; border-radius: 5px; background: #d3e4f1; box-shadow: 1px 1px 0px #ddd; padding: 5px 6px;} .cm-clearafter:after {content:\'\'; display:block; clear: both;} .cm-message:hover,.cm-online-name:hover {background-color: rgba(220,220,220,0.4);} .cm-message-name:hover {text-decoration:underline;} .cm-message-name {font-family:\'Montserrat\', sans-serif; font-weight:bold; color:rgb(0,80,0); font-size:9px; cursor: pointer; margin-right: 23px;} .cm-online-name {padding-left:4px; margin-right:0;} .cm-online-name:hover {text-decoration:none;} .cm-message-name:hover .username {text-decoration:underline;} .cm-message-status {font-family:\'Montserrat\', sans-serif; color:grey; font-size: 8px;} .cm-message-text {display:block; margin: 0 4px; max-width:310px; word-wrap:break-word; color:#07324e;} .cm-message-date {float:right; text-align:right; color:grey; font-size:9px; min-width:70px;} #cm-display-panel {box-sizing:border-box; padding-top:20px; padding-bottom:30px; height: 100%; } #cm-display {position: relative; overflow: hidden; display:flex; height: 100%;} #cm-online-panel {margin-right:5px; width:90px;} #cm-online {height:100%; background-color:rgb(240,240,240); border-radius:2px;} #cm-online-list {margin:0; padding:5px 0; font-size:11px;} #cm-record {box-sizing:border-box; display:flex; align-items:center; width: 40px;} .micico {position: absolute; font-size: 165%; top: 0%; right: 15px; padding-top: 5px;}</style>');
     	if (!$('#chat-me-cont').length) return;
 
     	if (!sess_token) InitDisplay();
@@ -1193,13 +1236,13 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     		},
 
     		userSettings: '<div class="settings cm-scroll"><div class="settings-row"> <span class="settings-text">User color:</span><select id="select-color" class="settings-select">' +
-    		'<option class="settings-option">green</option>' +
-    		'<option class="settings-option">red</option>' +
-    		'<option class="settings-option">blue</option>' +
-    		'<option class="settings-option">black</option>' +
-    		'<option class="settings-option">yellow</option>' +
-    		'<option class="settings-option">orange</option>' +
-    		'<option class="settings-option">skyblue</option>' +
+    		'<option class="settings-option" value="green">green</option>' +
+    		'<option class="settings-option" value="red">red</option>' +
+    		'<option class="settings-option" value="blue">blue</option>' +
+    		'<option class="settings-option" value="black">black</option>' +
+    		'<option class="settings-option" value="yellow">yellow</option>' +
+    		'<option class="settings-option" value="orange">orange</option>' +
+    		'<option class="settings-option" value="skyblue">skyblue</option>' +
     		'</select></div>' +
     		'<div class="settings-bottom"><button class="cm-button cm-confirm cm-right">Confirm</button><button class="cm-button cm-cancel cm-secondary cm-right">Cancel</button></div>' +
     		'</div>',
@@ -1241,6 +1284,8 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     	userSettingsDis: function() {
     		spinner.hide();
     		chatOptions.container.html(chatOptions.display.userSettings);
+    		var currentcolor = currentusers[sess_user].color;
+    		chatOptions.container.find('#select-color option[value='+currentcolor+']').attr('selected', '');
     		chatOptions.container.find('.cm-confirm').click(chatOptions.submitUserSettings);
     		chatOptions.container.find('.cm-cancel').click(chatOptions.initDis);
     	},
@@ -1970,7 +2015,9 @@ $(document).mouseleave(function() {
 });
 
 setInterval(function() {
-	$('#cm-chat-list').children('.cm-message').each(function() {
-		$(this).find('.cm-message-date').html(timeSince($(this).data('date')));
-	});
+	var updateDate = function() {
+		$(this).find('.update-date').html(timeSince($(this).data('date')));
+	};
+	$('#cm-chat-list').children('.cm-message').each(updateDate);
+	$('.pm-messages').children('.pm-message').each(updateDate);
 }, 30000);
