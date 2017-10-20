@@ -3,7 +3,6 @@ MANDATORY
 - change not sound
 - auto mute for spam
 - google analytics
-- server: try/catch for every 'emit' method (user hash of methods and loops)
 
 WHEN MANDATORY'S ARE COMPLETED
 - remove youtube/whatsapp match return
@@ -13,6 +12,7 @@ WHEN MANDATORY'S ARE COMPLETED
 - set safe server password
 
 LESS IMPORTANT
+- server: try/catch for every 'emit' method (use hash of methods and loops)
 - query rooms from db
 - remove rooms if not used anymore
 - substitute tab data-name and data-pass with just token

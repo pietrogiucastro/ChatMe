@@ -1,6 +1,6 @@
 var settings_page = 'chat.me';
 var server = document.domain;
-var latestClientVersion = "1.0.7";
+var latestClientVersion = "1.0.8";
 var myClientVersion;
 
 var site = (window.location != window.parent.location) ? document.referrer : document.location.href;
@@ -25,7 +25,9 @@ var transparent = $.cookie('transparent') == 'true';
 
 var sess_token = $.cookie('sess_token');
 var sess_user;
+
 var prevtyping = false;
+var onmodalclose;
 
 var options = $('#chat-me-options');
 var spinner = $('<center id="opts-spinner-cont" style="display:none;"><div class="opts-spinner"></div></center>');
@@ -792,6 +794,10 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
 
     	socket = io();
 
+    	socket.on('connect_error', function() {
+    		showModalMessage("There was a problem connecting to the server. Please try again later.", function() {InitDisplay();});
+    	});
+
     	socket.emit('define user', sess_token);
 
     	socket.on('init', function(data) {
@@ -1127,10 +1133,15 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     		socket.emit('send message', $(this).data('key'));
     	});
 
-    	$('#cm-display').append('<div id="pending-img" style="display: none;"> <img style="bottom: -100%;"> <span class="cancel-img"></span> </div>')
+    	$('#cm-display').append('<div id="pending-img" tabindex="0" style="display: none;"> <img style="bottom: -100%;"> <span class="cancel-img"></span> </div>')
     	.find('.cancel-img').click(function() {
     		cancelPendingImg();
     	});
+
+    	$('#cm-display').find('#pending-img').bind('keydown', function(e) {
+    		e = e || event;
+    		if (e.keyCode == 13 && imgIsPending()) sendImg();
+    	})
 
     	$('#cm-message-panel').append(micbtn);
     	micbtn.prepend(mictime);
@@ -1144,7 +1155,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     		hidePmModal();
     	});
     	messagemodal.find('.modal-close').click(function() {
-    		$(this).parents('.cm-message-modal:first').hide();
+    		hideModalMessage();
     		hideOpts();
     		hidePmModal();
     	});
@@ -1153,7 +1164,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     	input = $('#cm-message-input');
 
     	input.keydown(function(e) {
-            e = e || event; // to deal with IE
+            e = e || event;
             if (e.keyCode == 13) postMessage();
         });
 
@@ -1178,7 +1189,9 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     		myClientVersion = event.data.value;
     		if (myClientVersion < latestClientVersion) {
     			postParentMessage('update-client', latestClientVersion);
-    			showModalMessage("A new version is available. Please refresh the page to download it.");
+    			showModalMessage("A new client version is available. Close this message or reload the page to update chat.me.", function() {
+    				postParentMessage('refresh-page');
+    			});
     		}
     		break;
     		case 'show-client-version':
@@ -1901,13 +1914,19 @@ function postParentMessage(key, value) {
 	}, '*');
 }
 
-function showModalMessage(message) {
+function showModalMessage(message, closecallback) {
 	$('.cm-message-modal').show()
 	.find('.message-modal-body').html(message);
+
+	onmodalclose = closecallback;
 }
 
 function hideModalMessage() {
 	$('.cm-message-modal').hide();
+	if (onmodalclose) {
+		onmodalclose();
+		onmodalclose = undefined;
+	}
 }
 
 function convertDate(inputFormat) {
@@ -1980,7 +1999,7 @@ $(document).on('click', '.chat-row', function() {
 		showTypePass(roomname);
 	}
 }).on('keydown', '#type-password', function(e) {
-    e = e || event; // to deal with IE
+    e = e || event;
     if (e.keyCode == 13) joinPassRoom();
 });
 
@@ -2021,3 +2040,12 @@ setInterval(function() {
 	$('#cm-chat-list').children('.cm-message').each(updateDate);
 	$('.pm-messages').children('.pm-message').each(updateDate);
 }, 30000);
+
+!function trigger() {
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-105840630-1', 'auto');
+  ga('send', 'pageview', site);
+}();

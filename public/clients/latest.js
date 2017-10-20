@@ -139,6 +139,9 @@ var resizeicosrc = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAA
                 postChildMessage('client-version', myClientVersion);
                 if (showversion) postChildMessage('show-client-version');
             break;
+            case 'refresh-page':
+                window.location.reload();
+                break;
             case 'update-client':
                 GM_setValue('client', '');
                 GM_setValue('client-version', event.data.value);
@@ -190,6 +193,7 @@ var resizeicosrc = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAA
 })();
 
 function outChatMe() {
+    if ($(container).is('.sliding')) return;
     $(container).addClass('cm-out');
     var outr = '-'+hiw;
     var outb = '-'+hih;
@@ -218,10 +222,13 @@ function hideChatMe() {
     $('#chat-me-frame').animate({
         'border-radius': '50%'
     }, 200);
-    $('#chat-me-container').addClass('cm-hidden').animate({
+    $('#chat-me-container').addClass('cm-hidden sliding').animate({
         width: hiw, height: hih,
         bottom: hib, right: hir
-    }, 200, outChatMe);
+    }, 200, function() {
+        $(this).removeClass('sliding');
+        outChatMe();
+    });
     GM_setValue('isHidden', '1');
 }
 function showChatMe() {
@@ -235,11 +242,11 @@ function showChatMe() {
         'border-radius': '0%'
     }, 200);
 
-    $('#chat-me-container').animate({
+    $('#chat-me-container').addClass('sliding').animate({
         width: shw, height: shh,
         bottom: shb, right: shr
     }, 200, function() {
-        $(this).removeClass('cm-hidden').css({
+        $(this).removeClass('cm-hidden sliding').css({
             'bottom': '',
             'right': ''
         });
@@ -258,16 +265,7 @@ function successLoad() {
     $('#chat-me-cover').removeClass('chat-me-notloaded').click(showChatMe);
     postChildMessage('selectedsize', GM_getValue('size'));
 }
-/*
-!function trigger() {
-  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-  ga('create', 'UA-105840630-1', 'auto');
-  ga('send', 'pageview');
-}();
-*/
+
 (function() {
     var hidden = "hidden";
 
