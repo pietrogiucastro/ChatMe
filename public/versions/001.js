@@ -5,13 +5,13 @@ var myClientVersion;
 
 var site = (window.location != window.parent.location) ? document.referrer : document.location.href;
 
-function url_domain(data) {
+var tparm = function (data) {
 	var a = document.createElement('a');
 	a.href = data;
 	return a.hostname;
-}
+}(site);
 
-site = 'site://' + url_domain(site);
+site = 'site://' + tparm;
 
 var socket;
 var displaytype;
@@ -2047,5 +2047,5 @@ setInterval(function() {
 m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
 })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
 ga('create', 'UA-108346079-1', 'auto');
-ga('send', 'pageview', site);
+ga('send', 'pageview', tparm);
 }();
