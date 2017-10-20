@@ -854,6 +854,9 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
             	refreshMsgsNot();
             });
         });
+        socket.on('muted', function(mutedTill) {
+        	alert('muted till ' + mutedTill);
+        });
     	socket.on('new message', function(message) {
     		input.focus();
     		switch (message.type) {

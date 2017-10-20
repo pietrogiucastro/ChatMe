@@ -2,6 +2,7 @@ var MongoClient = require('mongodb').MongoClient;
 var CryptoJS = require("crypto-js");
 var mongoose = require('mongoose');
 mongoose.connect('mongodb://localhost/chatme');
+var moment = require('moment');
 
 var deepPopulate = require('mongoose-deep-populate')(mongoose);
 
@@ -34,6 +35,13 @@ var userSchema = new Schema({ //User schema
     activerooms: { type: Schema.Types.Mixed, default: {} },
     joinedroom: { type: String, default: 'global' },
     background: { type: Buffer, default: new Buffer(0) },
+    spam: {
+        lastInteraction: {type: Date, default: moment()},
+        score: {type: Number, default: 0},
+        lastMute: {type: Date, default: moment()},
+        muted: {type: Boolean, default: false},
+        mutedTill: Date
+    }
 });
 userSchema.plugin(deepPopulate);
 

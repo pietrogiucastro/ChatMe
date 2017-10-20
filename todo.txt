@@ -2,7 +2,6 @@ MANDATORY
 - create css themes
 - change not sound
 - auto mute for spam
-- google analytics
 
 WHEN MANDATORY'S ARE COMPLETED
 - remove youtube/whatsapp match return
@@ -32,6 +31,8 @@ LESS IMPORTANT
 - set ownercolor in pm
 - set emoji in cookies and reduce their quality
 - refresh client button refresh also background and emojis
+- set a proper way to use the ORM. (socket.user = returned User so that socket.user.save()
+  references to User.save());
 
 
 

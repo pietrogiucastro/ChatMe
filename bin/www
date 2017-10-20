@@ -122,7 +122,17 @@ var db = require('../db/mongoose.js');
 var connectedSockets = {};
 var history = {};
 var io = require('socket.io').listen(server);
-var ss = require('socket.io-stream');
+
+var antispam = require('../antispam/antispam');
+
+antispam.init(connectedSockets);
+
+antispam.event.on('muted', function(id, mutedTill) {
+    connectedSockets[id].forEach(function(socket) {
+        socket.emit('muted', mutedTill);
+    })
+});
+
 var r_global = 'global';
 
 var rooms = {};
@@ -237,7 +247,14 @@ var startChatMe = function(socket) {
                 isrecording: false,
                 activerooms: user.activerooms,
                 joinedroom: user.joinedroom,
-                pmRecipient: undefined
+                pmRecipient: undefined,
+                spam: {
+                    lastInteraction: user.spam.lastInteraction,
+                    score: user.spam.score,
+                    lastMute: user.spam.lastMute,
+                    muted: user.spam.muted,
+                    mutedTill: user.spam.mutedTill
+                }
             };
 
             user = undefined;
@@ -255,6 +272,8 @@ var startChatMe = function(socket) {
                 joinedroom: socket.user.joinedroom
             });
 
+            if (socket.muted) socket.emit('muted', mutedTill);
+
             socket.on('send message', function(msg) {
                 if (typeof msg != "string") {
                     console.log("ERROR! Wrong msg datatype");
@@ -271,6 +290,9 @@ var startChatMe = function(socket) {
                     Jsonerror(socket, 'stderror', 'room does not exist!');
                     return;
                 }
+
+                antispam.addSpam(socket.user.id); // elab if message will trigger muted event
+                if (socked.muted) return;
 
                 msg = elabMessage(msg);
                 var msgobj = {

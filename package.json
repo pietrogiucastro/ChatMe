@@ -35,7 +35,8 @@
     "serve-favicon": "^2.4.0",
     "sharp": "*",
     "socket.io": "^2.0.3",
-    "socket.io-stream": "*",
-    "uuid": "*"
+    "uuid": "*",
+    "socket-anti-spam": "*",
+    "moment": "*"
   }
 }

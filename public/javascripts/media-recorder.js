@@ -1,4 +1,4 @@
-var Recorder = {
+var recorder = {
     constraints: { audio: true },
     chunkstime: 1000,
     elapsedtime: 0,
@@ -6,7 +6,7 @@ var Recorder = {
     isrecording: false,
     record: function() {
         socket.emit('recording', true);
-        this.isrecording = true;
+        recorder.isrecording = true;
         recorder.elapsedtime = 0;
         var mediaRecorder;
         navigator.mediaDevices.getUserMedia(recorder.constraints).then(function(mediaStream) {
@@ -16,8 +16,6 @@ var Recorder = {
             };
             mediaRecorder.ondataavailable = function(e) {
                 this.chunks.push(e.data);
-                //recorder.elapsedtime += recorder.chunkstime;
-                //mictime.html(recorder.getTimeByMs(recorder.elapsedtime));
             };
             recorder.timeInterval = setInterval(function() {
                 recorder.elapsedtime += recorder.chunkstime;
@@ -37,7 +35,7 @@ var Recorder = {
                 mediaRecorder = undefined;
                 clearInterval(recorder.timeInterval);
                 socket.emit('recording', false);
-                this.isrecording = false;
+                recorder.isrecording = false;
             };
             recorder.stopAndSendRecord = function() {
                 if (mediaRecorder)
@@ -62,6 +60,4 @@ var Recorder = {
 
         return (parseInt(hours) ? hours + ":" : '') + minutes + ":" + seconds;
     }
-},
-
-recorder = new (function() {return Recorder})();
+};
