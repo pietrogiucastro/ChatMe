@@ -28,6 +28,7 @@ var sess_user;
 
 var prevtyping = false;
 var onmodalclose;
+var mutedinterval;
 
 var options = $('#chat-me-options');
 var spinner = $('<center id="opts-spinner-cont" style="display:none;"><div class="opts-spinner"></div></center>');
@@ -855,7 +856,10 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
             });
         });
         socket.on('muted', function(mutedTill) {
-        	alert('muted till ' + mutedTill);
+            var now = new Date().getTime();
+            var seconds = Math.ceil((new Date(mutedTill).getTime() - now) / 1000);
+
+        	mutedMessage(seconds);
         });
     	socket.on('new message', function(message) {
     		input.focus();
@@ -1114,6 +1118,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     	.append('<div class="message-input-cont"></div>')
     	.find('.message-input-cont')
     	.append('<input maxlength="400" style="margin:0px; width:100%; height:100%; padding-right: 23px;" type=text id=cm-message-input class=cm-input placeholder=Message>')
+        .append('<div id="muted-message" style="display:none;">You have been muted for spamming. <span id="muted-seconds"></span> seconds left </div>')
     	.append('<span class="fa fa-smile-o emojis-btn"></span>')
     	.children('.emojis-btn').append(emojis).click(function(e) {
     		if (this != e.target) return;
@@ -1223,7 +1228,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     }
 
     $(function main() {
-    	postParentMessage('successload');
+    	postParentMessage('successload', {transparent: transparent});
     	selectedtheme = $.cookie('theme') || 'default';
     	$('#chat-me').attr('theme', selectedtheme);
 
@@ -1915,6 +1920,24 @@ function postParentMessage(key, value) {
 		value: value,
 		type: 'cm-event'
 	}, '*');
+}
+
+function mutedMessage(seconds) {
+    $('#muted-message').find('#muted-seconds').html(seconds);
+    $('#cm-message-input').attr('disabled', true);
+    $('#muted-message').slideDown();
+
+    clearInterval(mutedinterval);
+
+    mutedinterval = setInterval(function() {
+        seconds--;
+        $('#muted-message').find('#muted-seconds').html(seconds);
+        if (seconds <= 0) {
+            clearInterval(mutedinterval);
+            $('#cm-message-input').removeAttr('disabled');
+            $('#muted-message').slideUp();
+        }
+    }, 1000);
 }
 
 function showModalMessage(message, closecallback) {

@@ -125,12 +125,14 @@ var io = require('socket.io').listen(server);
 
 var antispam = require('../antispam/antispam');
 
-antispam.init(connectedSockets);
+antispam.init(connectedSockets, io);
 
 antispam.event.on('muted', function(id, mutedTill) {
-    connectedSockets[id].forEach(function(socket) {
+    connectedSockets[id].forEach(function(socketid) {
+        var socket = io.sockets.connected[socketid];
+        if (!socket) return console.log("ERROR! No socket connected with socketid %s .", socketid);
         socket.emit('muted', mutedTill);
-    })
+    });
 });
 
 var r_global = 'global';
@@ -253,7 +255,8 @@ var startChatMe = function(socket) {
                     score: user.spam.score,
                     lastMute: user.spam.lastMute,
                     muted: user.spam.muted,
-                    mutedTill: user.spam.mutedTill
+                    mutedTill: user.spam.mutedTill,
+                    muteLevel: user.spam.muteLevel
                 }
             };
 
@@ -272,7 +275,7 @@ var startChatMe = function(socket) {
                 joinedroom: socket.user.joinedroom
             });
 
-            if (socket.muted) socket.emit('muted', mutedTill);
+            if (socket.user.spam.muted) socket.emit('muted', socket.user.spam.mutedTill);
 
             socket.on('send message', function(msg) {
                 if (typeof msg != "string") {
@@ -292,7 +295,7 @@ var startChatMe = function(socket) {
                 }
 
                 antispam.addSpam(socket.user.id); // elab if message will trigger muted event
-                if (socked.muted) return;
+                if (socket.user.spam.muted) return;
 
                 msg = elabMessage(msg);
                 var msgobj = {
@@ -373,6 +376,9 @@ var startChatMe = function(socket) {
 
                 var roomname = getsocketroom(socket);
                 if (!roomname) return Jsonerror(socket);
+
+                antispam.addSpam(socket.user.id); // elab if message will trigger muted event
+                if (socket.user.spam.muted) return;
 
                 var messageid = db.getNewId();
 

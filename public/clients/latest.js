@@ -134,7 +134,7 @@ var resizeicosrc = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAA
 
         switch (event.data.key) {
             case 'successload':
-                successLoad();
+                successLoad(event.data.value);
                 var myClientVersion = GM_getValue('client-version') || "0.0.0";
                 postChildMessage('client-version', myClientVersion);
                 if (showversion) postChildMessage('show-client-version');
@@ -172,7 +172,7 @@ var resizeicosrc = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAA
     });
 
     $(container).mouseleave(function() {
-        if (!transparent) return;
+        if (!transparent || $(this).is('.fs')) return;
         if ($(this).children('#chat-me-frame').is('.dragging')) return;
         $(this).animate({'opacity': 0.2}, 'fast');
     }).mouseenter(function() {
@@ -260,10 +260,12 @@ function postChildMessage(key, value) {
     cmframe.contentWindow.postMessage({key: key, value: value, type: 'cm-event'}, '*');
 }
 
-function successLoad() {
+function successLoad(data) {
     console.log('cmloaded');
     $('#chat-me-cover').removeClass('chat-me-notloaded').click(showChatMe);
     postChildMessage('selectedsize', GM_getValue('size'));
+    transparent = data.transparent;
+    if (transparent) $(container).trigger('mouseleave');
 }
 
 (function() {

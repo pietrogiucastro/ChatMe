@@ -38,6 +38,7 @@ var userSchema = new Schema({ //User schema
     spam: {
         lastInteraction: {type: Date, default: moment()},
         score: {type: Number, default: 0},
+        muteLevel: {type: Number, default: 0},
         lastMute: {type: Date, default: moment()},
         muted: {type: Boolean, default: false},
         mutedTill: Date
