@@ -1,7 +1,7 @@
 MANDATORY
 - create css themes
 - change not sound
-- auto mute for spam
+- fix user colors
 
 WHEN MANDATORY'S ARE COMPLETED
 - remove youtube/whatsapp match return

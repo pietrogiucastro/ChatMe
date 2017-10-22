@@ -275,6 +275,7 @@ var startChatMe = function(socket) {
                 joinedroom: socket.user.joinedroom
             });
 
+            antispam.checkSpam(socket);
             if (socket.user.spam.muted) socket.emit('muted', socket.user.spam.mutedTill);
 
             socket.on('send message', function(msg) {
@@ -294,7 +295,7 @@ var startChatMe = function(socket) {
                     return;
                 }
 
-                antispam.addSpam(socket.user.id); // elab if message will trigger muted event
+                antispam.addSpam(socket); // elab if message will trigger muted event
                 if (socket.user.spam.muted) return;
 
                 msg = elabMessage(msg);

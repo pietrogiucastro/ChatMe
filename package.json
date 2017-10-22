@@ -36,7 +36,6 @@
     "sharp": "*",
     "socket.io": "^2.0.3",
     "uuid": "*",
-    "socket-anti-spam": "*",
     "moment": "*"
   }
 }

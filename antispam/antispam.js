@@ -23,14 +23,18 @@ exports.init = function(_connectedSockets, _io) {
 	io = _io;
 }
 
-exports.addSpam = function(userid) {
-	var socket, updatehash = {};
+exports.checkSpam = function(socket) {
+	var userid = socket.user.id;
 
-	try {
-		var socketid = connectedSockets[userid][0];
-		socket = io.sockets.connected[socketid];
-		if (!socket) throw "ERROR! Socket with userid " + userid + " and socketid " + socketid + " is not connected!";
-	} catch(e) {return console.log(e)}
+	if (socket.user.spam.muted) { //check if user can talk
+		var canTalk = moment().diff(socket.user.spam.mutedTill) > 0;
+		if (canTalk) setField(userid, {muted: false});
+	}
+
+}
+
+exports.addSpam = function(socket) {
+	var userid = socket.user.id, updatehash = {};
 
 	if (socket.user.spam.muted) { //check if user can talk
 		var canTalk = moment().diff(socket.user.spam.mutedTill) > 0;
@@ -78,7 +82,13 @@ function setField(userid, hash) {
 		var socket = io.sockets.connected[socketid];
 		Object.assign(socket.user.spam, hash);
 	});
-	db.updateUserData(userid, {spam: hash}, function(err, result) {
+
+	var dbhash = {};
+	for (var key in hash) {
+		dbhash['spam.' + key] = hash[key];
+	}
+
+	db.updateUserData(userid, dbhash, function(err, result) {
 		if (err) return console.log(err);
 		if (!result || !result.nModified) console.log("ERROR! No user found with id " + userid);
 	});
