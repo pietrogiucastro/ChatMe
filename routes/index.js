@@ -40,18 +40,21 @@ router.post('/signup', function(req, res, next) {
 		return;
 	}
 
-	db.createUser(username, password, email, function(err) {
-		if (err) {
-			if (err.type == "cm-error") {
+	db.createUser(username, password, email, function(err, token) {
+		if (err || !token) {
+			if (!err && !token) res.json({result: 'error', error: 'Internal error. Try again later.'});
+
+			else if (err.type == "cm-error") {
 				res.json(err);
 			} else {
+				console.log(err);
 				res.json({result: 'error', error: 'Internal error. Try again later.'});
 			}
 
 			return;
 		}
 		console.log('created new account. username: ' + username);
-		res.json({result: 'success', message: 'Account created! Login with your credentials.'});
+		res.json({result: 'success', message: 'Account created! Login with your credentials.', token: token});
 	});
 });
 

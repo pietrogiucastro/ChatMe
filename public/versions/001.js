@@ -13,10 +13,17 @@ var tparm = function (data) {
 
 site = 'site://' + tparm;
 
+var welcomeMessage = "Welcome to Chat me! Version %VERSION% ";
+
 var socket;
 var displaytype;
 var selectedsize;
 var selectedtheme;
+var selectmsgnot, selectpmnot;
+
+var msgnotSound;
+var pmnotSound;
+var emojinotSound;
 
 var collapsetabs = $.cookie('collapsetabs') == 'true';
 var chatslide = $.cookie('chatslide') == 'true';
@@ -43,10 +50,6 @@ var mictime = $('<span class="record-time" style="display:none;">00:00</span>');
 var fullImageCover = $('<div id="full-image-cover"></div>');
 var fullImageBtns = $('<div id="full-image-btns"><span class="fullimg-down fa-fw"></span><span class="fullimg-close fa-fw"></span></div>');
 var fullImage = $('<div id="full-image"></div>');
-
-var msgnotSound = new Audio('/sounds/not1.mp3');
-var pmnotSound = new Audio('/sounds/pmnot.mp3');
-var emojinotSound = new Audio('/sounds/pmnot.mp3');
 
 var mute = false;
 var showusers = true;
@@ -78,6 +81,28 @@ var pmModal = $('<div class="pm-msgs-modal" style="z-index:1000; display:none;">
 var pmnot = 0;
 var pmMessage = $('<div class="pm-message"><div class="pm-head cm-clearafter"><div class="pm-name"></div><div class="pm-date update-date"></div></div><div class="pm-body"><div class="pm-text"><span class="pm-msgowner"></span></div><div class="pm-not"></div></div>')[0];
 
+function getEmoji(emocat, emoname, emopath, callback) {
+	var fetchurl = localStorage[emoname] || emopath;
+	try {
+		fetch(fetchurl)
+		.then(res => {if (res.status == 200) return res.blob(); else throw "Error! Emoji not found";})
+		.then(blob => {
+			if (!blob) return;
+
+			var bufferReader = new FileReader();
+			bufferReader.onload = function() {
+				localStorage[emoname] = this.result;
+			};
+			if (!localStorage[emoname]) bufferReader.readAsDataURL(blob);
+			var objecturl = window.URL.createObjectURL(blob);
+			emojismatcher.objecturl[emoname] = objecturl;
+			callback(emocat, emoname, objecturl);
+		});
+	} catch(e) {
+		console.log(e);
+	}
+}
+
 var emojismatcher = {
 	emojis: {
 		':smsad:' : {name: 'smileysmsad.png', category: 'images'},
@@ -97,7 +122,8 @@ var emojismatcher = {
 
 		':sunglasses_g:' : {name: 'sunglasses.gif', category: 'gifs'}
 	},
-	setter: {}
+	setter: {},
+	objecturl: {}
 };
 
 for (var key in emojismatcher.emojis) {
@@ -109,9 +135,12 @@ for (var key in emojismatcher.emojis) {
 var emojis = $('<div id="emojis" class="noselect"> <div class="emoji-tabs"> <div class="emoji-tab active" target="images"></div><div class="emoji-tab" target="gifs"></div> </div> <div class="emoji-body"> <div class="emoji-overflow cm-scroll"> <div class="emoji-category cm-clearafter images active"></div> <div class="emoji-category cm-clearafter gifs"></div> </div> </div> </div>');
 
 for (var category in emojismatcher.setter) {
-	emojismatcher.setter[category].forEach(key => {
-		var emojipath = emojismatcher.emojis[key].category + '/' + emojismatcher.emojis[key].name;
-		emojis.find('.emoji-body .'+category).append('<div class="emoji" data-key="'+key+'"><img src="/emo/'+emojipath+'"></div>');
+	emojismatcher.setter[category].forEach(function(key) {
+		var emopath = '/emo/' + category + '/' + emojismatcher.emojis[key].name;
+		emojis.find('.emoji-body .'+category).append('<div class="emoji" data-key="'+key+'"></div>');
+		getEmoji(category, key, emopath, function(emocat, emokey, emosrc) {
+			emojis.find('.emoji-body .'+emocat).children('.emoji[data-key="'+emokey+'"]').append('<img src="'+emosrc+'">');
+		})
 	});
 }
 
@@ -167,8 +196,8 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     function setEmojis(text, callback) {
     	var emoji = emojismatcher.emojis[text];
     	if (emoji) {
-    		var emojipath = emoji.category+'/'+emoji.name;
-    		text = '<div class="emoji-msg"><img src="/emo/'+emojipath+'"></div>';
+    		var emojipath = emojismatcher.objecturl[text] || localStorage[text] || "/emo/" + emoji.category + "/" + emoji.name;
+    		text = '<div class="emoji-msg"><img src="'+emojipath+'"></div>';
     	}
     	callback(!!emoji);
     	return text;
@@ -552,7 +581,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     }
 
     function PlayMsgNot(emojinot) {
-    	var msgsound = emojinot ? emojinotSound : msgnotSound;
+    	var msgsound = emojinot ? msgnotSound : msgnotSound; //change with custom emoji sound
     	msgsound.currentTime = 0;
     	msgsound.play();
     }
@@ -734,7 +763,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
 
     	$('#chat-me-cont').html('<div style="font-weight:bold; color:white; padding:5px; padding-bottom:10px; background:#8da4a7; margin: 8px -5px;">Sign up</div>')
     	.append('<div id="signup-cont" class="cm-scroll" style="height:calc(100% - 60px);"></div>').find('#signup-cont')
-    	.append('<div style="display:flex; align-items:center;"><label for=cm-user class=cm-label>Username:</label><input style="margin-right:10px;" type=text id=cm-user class=cm-input placeholder=Username></div>')
+    	.append('<div style="display:flex; align-items:center;"><label for=cm-user class=cm-label>Username:</label><input maxlength="10" style="margin-right:10px;" type=text id=cm-user class=cm-input placeholder=Username></div>')
     	.append('<div style="display:flex; align-items:center;"><label for=cm-email class=cm-label>E-mail:</label><input style="margin-right:10px;" type=text id=cm-email class=cm-input placeholder=E-mail></div>')
     	.append('<div style="display:flex; align-items:center;"><label for=cm-pass class=cm-label>Password:</label><input style="margin-right:10px;" type=password id=cm-pass class=cm-input placeholder=Password></div>')
     	.append('<div style="display:flex; align-items:center;"><label for=cm-confirm class=cm-label>Confirm:</label><input style="margin-right:10px;" type=password id=cm-confirm class=cm-input placeholder=Confirm></div>')
@@ -779,9 +808,14 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
             	hideOptsWait();
             	$('#cm-error-cont').removeClass('success').html('');
             	if (e.result == 'success') {
+            		console.log(e);
             		$('#cm-error-cont').addClass('success').html(e.message)
-            		.append('<br>Redirected in 3 seconds..');
-            		setTimeout(InitDisplay, 3000);
+            		.append('<br>Automatic login in 3 seconds..');
+            		setTimeout(function() {
+            			sess_token = e.token;
+            			$.cookie('sess_token', sess_token);
+            			LoggedDisplay();
+            		}, 3000);
             	} else $('#cm-error-cont').html(e.error);
             });
         });
@@ -809,11 +843,15 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     		{name: data.joinedroom.split('pm:')[1], type: 'pm'} :
     		{name: data.joinedroom}
 
+    		/* notification sounds */
+    		msgnotSound = localStorage.msgnot ? new Audio(localStorage.msgnot) : setSound('msg', selectmsgnot);
+    		pmnotSound = localStorage.pmnot ? new Audio(localStorage.pmnot) : setSound('pmmsg', selectpmnot);
+    		emojinotSound = localStorage.pmnot ? new Audio(localStorage.pmnot) : setSound('pmmsg', selectpmnot);
     		/* init background */
-    		var latestUser = localStorage.latestUser;
+    		var latestUser = atob(localStorage.latestUser || '');
     		if (latestUser != sess_user) localStorage.background = '';
     		if (custombg) loadBackground();
-    		localStorage.latestUser = sess_user;
+    		localStorage.latestUser = btoa(sess_user);
     		/* --------------- */
     		var delay = 0;
             Object.keys(data.activerooms).forEach(roomname => { // active tabs
@@ -829,7 +867,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
 
 
             pmModal.find('.pm-messages').empty().removeClass('nomsg msgs');
-            socket.emit('get pmlist', null, function(err, pmlist) {
+            socket.emit('get pmlist', function(pmlist) {
             	if (!pmlist.length) pmModal.find('.pm-messages').addClass('nomsg');
             	else pmModal.find('.pm-messages').addClass('msgs');
             	pmlist.forEach(pmrow => {
@@ -842,6 +880,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
             		domRow.find('.pm-date').html(msgtime);
             		domRow.find('.pm-msgowner').html(sess_user == pmrow.lastmsg.ownername ? 'You' : pmrow.lastmsg.ownername);
             		domRow.find('.pm-text').append(pmrow.lastmsg.text);
+            		domRow.attr('data-date', pmrow.lastmsg.time);
 
             		if (pmrow.unseen) domRow.addClass('pm-unseen').find('.pm-not').html(pmrow.unseen);
             		domRow.click(function() {
@@ -1194,13 +1233,17 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     	if (event.data.type != 'cm-event') return;
     	switch (event.data.key) {
     		case 'client-version':
-    		myClientVersion = event.data.value;
-    		if (myClientVersion < latestClientVersion) {
-    			postParentMessage('update-client', latestClientVersion);
-    			showModalMessage("A new client version is available. Close this message or reload the page to update chat.me.", function() {
-    				postParentMessage('refresh-page');
-    			});
-    		}
+	    		myClientVersion = event.data.value;
+	    		if (myClientVersion < latestClientVersion) {
+	    			postParentMessage('update-client', latestClientVersion);
+	    			showModalMessage("A new client version is available. Close this message or reload the page to update chat.me.", function() {
+	    				postParentMessage('refresh-page');
+	    			});
+	    		}
+	    		if (!$.cookie('already_signed')) {
+	    			showModalMessage(welcomeMessage.replace('%VERSION%'), myClientVersion);
+	    			$.cookie('already_signed', 1);
+	    		}
     		break;
     		case 'show-client-version':
     			showModalMessage("Current version: " + myClientVersion);
@@ -1230,6 +1273,8 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     $(function main() {
     	postParentMessage('successload', {transparent: transparent});
     	selectedtheme = $.cookie('theme') || 'default';
+    	selectmsgnot = $.cookie('msgnot') || 'default';
+    	selectpmnot = $.cookie('pmnot') || 'active';
     	$('#chat-me').attr('theme', selectedtheme);
 
     	/*css*/
@@ -1257,31 +1302,46 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     		},
 
     		userSettings: '<div class="settings cm-scroll"><div class="settings-row"> <span class="settings-text">User color:</span><select id="select-color" class="settings-select">' +
-    		'<option class="settings-option" value="green">green</option>' +
-    		'<option class="settings-option" value="red">red</option>' +
-    		'<option class="settings-option" value="blue">blue</option>' +
-    		'<option class="settings-option" value="black">black</option>' +
-    		'<option class="settings-option" value="yellow">yellow</option>' +
-    		'<option class="settings-option" value="orange">orange</option>' +
-    		'<option class="settings-option" value="skyblue">skyblue</option>' +
+	    		'<option class="settings-option" value="green">green</option>' +
+	    		'<option class="settings-option" value="red">red</option>' +
+	    		'<option class="settings-option" value="blue">blue</option>' +
+	    		'<option class="settings-option" value="black">black</option>' +
+	    		'<option class="settings-option" value="gold">gold</option>' +
+	    		'<option class="settings-option" value="orange">orange</option>' +
+	    		'<option class="settings-option" value="skyblue">skyblue</option>' +
     		'</select></div>' +
     		'<div class="settings-bottom"><button class="cm-button cm-confirm cm-right">Confirm</button><button class="cm-button cm-cancel cm-secondary cm-right">Cancel</button></div>' +
     		'</div>',
 
-    		displaySettings: '<div class="settings cm-scroll"><div class="settings-row"><span class="settings-text">Size:</span><select id="select-size" class="settings-select">' +
-    		'<option class="settings-option" value="xs">small</option><option class="settings-option" value="sm">medium</option><option class="settings-option" value="lg">large</option><option class="settings-option" value="res">custom (resizable)</option></select></div>' +
-    		'<div class="settings-row"><span class="settings-text">Theme:</span><select id="select-theme" class="settings-select">' +
-    		'<option class="settings-option" value="default">default</option><option class="settings-option" value="dark">dark</option><option class="settings-option" value="holo">holo</option></select></div>' +
+    		displaySettings: '<div class="settings cm-scroll">' +
 
-    		'<div class="settings-row"><span class="settings-text">Custom background:</span><input type="checkbox" id="custom-background" class="settings-input"></div>' +
+    		'<div class="settings-row"><span class="settings-text">Theme</span><select id="select-theme" class="settings-select">' +
+    		'<option class="settings-option" value="default">default</option><option class="settings-option" value="dark">dark</option></select></div>' +
+
+    		'<div class="settings-row"><span class="settings-text">Size</span><select id="select-size" class="settings-select">' +
+    		'<option class="settings-option" value="xs">small</option><option class="settings-option" value="sm">medium</option><option class="settings-option" value="lg">large</option><option class="settings-option" value="res">custom (resizable)</option></select></div>' +
+    		
+    		'<div class="settings-row"><span class="settings-text">Message sound</span><select id="select-msgnot" class="settings-select">' +
+	    		'<option class="settings-option" value="seat-belt">seat belt</option>' +
+	    		'<option class="settings-option" value="inbox">inbox</option>' +
+	    		'<option class="settings-option" value="tina">tina</option>' +
+    		'</select></div>' +
+    		
+    		'<div class="settings-row"><span class="settings-text">Private message notif.</span><select id="select-pmnot" class="settings-select">' +
+	    		'<option class="settings-option" value="bell">bell</option>' +
+	    		'<option class="settings-option" value="jingle-bells">jingle bells</option>' +
+	    		'<option class="settings-option" value="harry-potter">harry potter</option>' +
+    		'</select></div>' +
+
+    		'<div class="settings-row"><span class="settings-text">Custom background</span><input type="checkbox" id="custom-background" class="settings-input"></div>' +
     		'<div id="custom-background-opts" class="settings-row">' +
 			'<div class="settings-row child"><span class="settings-text">Update background:</span><input style="width: 50%;" type="file" accept="image/*" id="background-input"></div>' +
     		'</div>' +
 
-    		'<div class="settings-row"><span class="settings-text">Collapse tabs:</span><input type="checkbox" id="collapse-input" class="settings-input"></div>' +
-    		'<div class="settings-row"><span class="settings-text">Slide chat history:</span><input type="checkbox" id="chat-slide-input" class="settings-input"></div>' +
-    		'<div class="settings-row"><span class="settings-text">Transparent:</span><input type="checkbox" id="transparent" class="settings-input"></div>' +
-    		'<div class="settings-row"><span class="settings-text">Force refresh:</span><button id="refresh-client" class="cm-button" style="float: left; width: 80px; height: 25px; position: relative;">Refresh client</button></div>' +
+    		'<div class="settings-row"><span class="settings-text">Collapse tabs</span><input type="checkbox" id="collapse-input" class="settings-input"></div>' +
+    		'<div class="settings-row"><span class="settings-text">Slide chat history</span><input type="checkbox" id="chat-slide-input" class="settings-input"></div>' +
+    		'<div class="settings-row"><span class="settings-text">Transparent</span><input type="checkbox" id="transparent" class="settings-input"></div>' +
+    		'<div class="settings-row"><span class="settings-text">Force refresh</span><button id="refresh-client" class="cm-button" style="float: left; width: 80px; height: 25px; position: relative;">Refresh client</button></div>' +
     		'<div class="settings-bottom"><button class="cm-button cm-cancel cm-secondary cm-right">Back</button></div>' +
     		'</div>',
 
@@ -1315,9 +1375,31 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     		chatOptions.container.html(chatOptions.display.displaySettings);
     		var sizeopt = '.settings-option[value=' + selectedsize + ']';
     		var themeopt = '.settings-option[value=' + selectedtheme + ']';
-    		chatOptions.container.find('#select-size ' + sizeopt).attr('selected', '');
-    		chatOptions.container.find('#select-theme ' + themeopt).attr('selected', '');
-    		chatOptions.container.find('#collapse-input').attr('checked', collapsetabs).click( function() {
+    		var msgnotopt = '.settings-option[value=' + selectmsgnot + ']';
+    		var pmnotopt = '.settings-option[value=' + selectpmnot + ']';
+
+    		chatOptions.container.find('#select-size').change(function() {
+    			postParentMessage('windowsize', $(this).val());
+    		}).children(sizeopt).attr('selected', '');
+
+    		chatOptions.container.find('#select-theme').change(function() {
+				$('#chat-me').attr('theme', $(this).val());
+				selectedtheme = $(this).val();
+				$.cookie('theme', selectedtheme);
+			}).children(themeopt).attr('selected', '');
+
+    		chatOptions.container.find('#select-msgnot').change(function() {
+    			showOptsWait('light');
+    			setSound('msg', $(this).val());
+    		}).children(msgnotopt).attr('selected', '');
+
+    		chatOptions.container.find('#select-pmnot').change(function() {
+    			showOptsWait('light');
+    			setSound('pmmsg', $(this).val());
+    		}).children(pmnotopt).attr('selected', '');
+
+    		chatOptions.container.find('#collapse-input').attr('checked', collapsetabs)
+    		.click(function() {
     			collapsetabs = $(this).is(':checked');
     			$.cookie('collapsetabs', collapsetabs);
     			if (collapsetabs)
@@ -1325,6 +1407,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     			else
     				$('#chat-me-tabs').removeClass('collapse');
     		});
+
     		chatOptions.container.find('#chat-slide-input').attr('checked', chatslide).click(function() {
     			chatslide = $(this).is(':checked');
     			$.cookie('chatslide', chatslide);
@@ -1357,6 +1440,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
 
     		chatOptions.container.find('#refresh-client').click(function() {
     			showOptsWait();
+    			for (var key in localStorage) { localStorage[key] = ''; }
     			postParentMessage('reset-client', latestClientVersion);
     		});
 
@@ -1550,6 +1634,40 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
 
 })();
 
+function setSound(soundtype, soundurl) {
+	try {
+		fetch('/sounds/' + soundurl + '.mp3')
+		.then(res => {if (res.status == 200) return res.blob(); else throw "Error! Notification not found";})
+		.then(blob => {
+			if (!blob) return;
+			var bufferReader = new FileReader();
+			bufferReader.onload = function() {
+				if (soundtype == 'msg') {
+					localStorage.msgnot = this.result;
+					msgnotSound = new Audio(this.result);
+
+					selectmsgnot = soundurl;
+					$.cookie('msgnot', selectmsgnot);
+
+				} else if (soundtype == 'pmmsg') {
+					localStorage.pmnot = this.result;
+					pmnotSound = new Audio(this.result);
+
+					selectpmnot = soundurl;
+					$.cookie('pmnot', selectpmnot);
+				}
+				hideOptsWait();
+				console.log('sound set');
+			};
+			bufferReader.readAsDataURL(blob);
+		});
+	} catch(e) {
+		hideOptsWait();
+		console.log(e);
+		showModalMessage("Internal error. Try again later", function() {hideOpts()});
+	}
+}
+
 function sendBackground(data) {
 	showOptsWait();
 	try {
@@ -1586,7 +1704,6 @@ function setBackground(dataurl, closeopts) {
 }
 
 function saveBackground(buffer) {
-	console.log(buffer);
 	var bufferReader = new FileReader();
 	bufferReader.onload = function() {
 		localStorage.background = this.result;
@@ -2027,16 +2144,6 @@ $(document).on('click', '.chat-row', function() {
 }).on('keydown', '#type-password', function(e) {
     e = e || event;
     if (e.keyCode == 13) joinPassRoom();
-});
-
-$(document).on('change', '#select-size', function() {
-	postParentMessage('windowsize', $(this).val());
-});
-
-$(document).on('change', '#select-theme', function() {
-	$('#chat-me').attr('theme', $(this).val());
-	selectedtheme = $(this).val();
-	$.cookie('theme', selectedtheme);
 });
 
 $(document).on('keyup', '#cm-message-input', checkTyping);

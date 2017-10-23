@@ -1,16 +1,13 @@
 MANDATORY
-- create css themes
-- change not sound
-- fix user colors
 
 WHEN MANDATORY'S ARE COMPLETED
-- remove youtube/whatsapp match return
 - remove server = localhost line when everything done
 - start npm with "infinite" on the server
 - test server users online number limit
 - set safe server password
 
 LESS IMPORTANT
+- create css themes
 - server: try/catch for every 'emit' method (use hash of methods and loops)
 - query rooms from db
 - remove rooms if not used anymore
@@ -20,7 +17,6 @@ LESS IMPORTANT
 - fix multi tabs name disappear bug
 - my messages history with arrows up and down
 - prevent socket to be global
-- no connection error handling
 - description popover on hover for tabs and buttons
 - add password for mongodb login!
 - compress media quality (think just audio)
@@ -29,8 +25,6 @@ LESS IMPORTANT
 - search rooms via db
 - insert enter + shift to wrap message text
 - set ownercolor in pm
-- set emoji in cookies and reduce their quality
-- refresh client button refresh also background and emojis
 - set a proper way to use the ORM. (socket.user = returned User so that socket.user.save()
   references to User.save());
 

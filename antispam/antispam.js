@@ -6,7 +6,7 @@ var eventEmitter = new events.EventEmitter();
 var db = require('../db/mongoose.js');
 
 var options = {
-	muteThreshold: 6,
+	muteThreshold: 5,
 	muteSeconds : [
 		30,
 		60,

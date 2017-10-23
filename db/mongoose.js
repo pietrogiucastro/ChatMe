@@ -211,7 +211,10 @@ module.exports = {
                 color: 'default',
                 status: 'online'
             });
-            connection.collection('users').insert(newuser, callback);
+            var token = AesEncrypt(username + ' ' + codedp);
+            connection.collection('users').insert(newuser, function(err) {
+                callback(err, token);
+            });
         });
     },
     findUserByCredentials: function(username, password, callback) {

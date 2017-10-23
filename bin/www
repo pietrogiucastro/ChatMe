@@ -164,14 +164,14 @@ var status = {
 };
 
 var color = {
-    default: 'darkgreen',
-    red: 'red',
-    green: 'darkgreen',
-    blue: 'blue',
-    black: 'black',
-    yellow: 'yellow',
-    orange: 'orange',
-    skyblue: 'skyblue'
+    default: '#0e8600',
+    red: '#ff0000',
+    green: '#0e8600',
+    blue: '#000b36',
+    black: '#000000',
+    gold: '#807d01',
+    orange: '#ba5700',
+    skyblue: '#0386b0'
 };
 
 function elabMessage(msg) {
@@ -326,7 +326,7 @@ var startChatMe = function(socket) {
                     .toBuffer()
                     .then(sharpbg => {
                         updateUserData({background: sharpbg}, {}, function() {
-                            callback(sharpbg);
+                            if (typeof callback == 'function') callback(sharpbg);
                         });
                     });
 
@@ -339,7 +339,7 @@ var startChatMe = function(socket) {
                         return;
                     }
 
-                    callback(background);
+                    if (typeof callback == 'function') callback(background);
                 });
             });
 
@@ -378,7 +378,7 @@ var startChatMe = function(socket) {
                 var roomname = getsocketroom(socket);
                 if (!roomname) return Jsonerror(socket);
 
-                antispam.addSpam(socket.user.id); // elab if message will trigger muted event
+                antispam.addSpam(socket); // elab if message will trigger muted event
                 if (socket.user.spam.muted) return;
 
                 var messageid = db.getNewId();
@@ -654,7 +654,7 @@ var startChatMe = function(socket) {
 
             });
 
-            socket.on('get pmlist', function(data, callback) {
+            socket.on('get pmlist', function(callback) {
                 db.getPmList(socket.user.id, function(err, pmlist) {
                     if (err) {
                         console.log(err);
@@ -664,7 +664,7 @@ var startChatMe = function(socket) {
                         console.log("Error! No user found for id " + socket.user.id);
                         return Jsonerror(socket);
                     }
-                    if (typeof callback == 'function') callback(null, pmlist);
+                    if (typeof callback == 'function') callback(pmlist);
                 });
             });
 
