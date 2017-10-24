@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node ./bin/www",
     "reset": "node ./bin/resetDb.js",
-    "forever": "forever start -l /var/log/logfile.log -o /var/log/outfile.log -e /var/log/errfile.log ./bin/www"
+    "forever": "forever start -l /var/log/ChatMe/logfile.log -o /var/log/ChatMe/outfile.log -e /var/log/ChatMe/errfile.log ./bin/www"
   },
   "repository": {
     "type": "git",
