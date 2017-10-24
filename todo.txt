@@ -1,12 +1,11 @@
 MANDATORY
 
 WHEN MANDATORY'S ARE COMPLETED
-- remove server = localhost line when everything done
-- start npm with "infinite" on the server
 - test server users online number limit
-- set safe server password
+- remove server = localhost line when everything done
 
 LESS IMPORTANT
+- set safe server password
 - create css themes
 - server: try/catch for every 'emit' method (use hash of methods and loops)
 - query rooms from db

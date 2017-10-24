@@ -227,6 +227,7 @@ socket.on('disconnect', function() {
 });
 
 socket.on('define user', function(token) {
+    console.log('connecting..');
     if (!token) {
         console.log("ERROR! No token sent");
         Jsonerror(socket);

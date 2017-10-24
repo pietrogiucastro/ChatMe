@@ -121,8 +121,12 @@ function AesEncrypt(text) {
 
 function AesDecrypt(ciphertext) {
     var bytes = CryptoJS.AES.decrypt(ciphertext, secretkey);
-    var plaintext = bytes.toString(CryptoJS.enc.Utf8);
-    return plaintext;
+    try {
+        var plaintext = bytes.toString(CryptoJS.enc.Utf8);
+        return plaintext;
+    } catch(e) {
+        return [1]; // to make finduser return not found error
+    }
 }
 
 function validateEmail(email) {

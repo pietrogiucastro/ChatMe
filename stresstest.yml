@@ -1,0 +1,22 @@
+config:
+  target: "https://localhost:3000"
+  phases:
+    - duration: 2
+      arrivalRate: 1
+    - duration: 2
+      arrivalRate: 5
+scenarios:
+  - name: "a user saying hello"
+    weight: 100
+    engine: "socketio"
+    flow:
+      - emit:
+          channel: "define user"
+          data: "U2FsdGVkX1%2FKEov8qf487boZ4bneeSSv206JMG0oqBmyspEFrP0t2IZqNLbWf5Bm"
+      - emit:
+          channel: "switch room"
+          data: "global"
+      - emit:
+          channel: "new message"
+        data: "hello to all the world!"
+
