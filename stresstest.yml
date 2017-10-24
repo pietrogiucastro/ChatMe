@@ -2,9 +2,9 @@ config:
   target: "https://chatme.me"
   phases:
     - duration: 10
-      arrivalRate: 1
+      arrivalRate: 10
     - duration: 30
-      arrivalRate: 1
+      arrivalRate: 10
 scenarios:
   - name: "a user saying hello"
     weight: 100
