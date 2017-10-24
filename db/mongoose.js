@@ -125,7 +125,7 @@ function AesDecrypt(ciphertext) {
         var plaintext = bytes.toString(CryptoJS.enc.Utf8);
         return plaintext;
     } catch(e) {
-        return [1]; // to make finduser return not found error
+        return ""; // to make finduser return not found error
     }
 }
 

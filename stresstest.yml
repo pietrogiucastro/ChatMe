@@ -1,10 +1,10 @@
 config:
-  target: "https://localhost:3000"
+  target: "https://chatme.me"
   phases:
-    - duration: 2
+    - duration: 10
       arrivalRate: 1
-    - duration: 2
-      arrivalRate: 5
+    - duration: 30
+      arrivalRate: 1
 scenarios:
   - name: "a user saying hello"
     weight: 100
@@ -12,11 +12,33 @@ scenarios:
     flow:
       - emit:
           channel: "define user"
-          data: "U2FsdGVkX1%2FKEov8qf487boZ4bneeSSv206JMG0oqBmyspEFrP0t2IZqNLbWf5Bm"
+          data: "U2FsdGVkX1+lFm9bpNnZM95SHOz4XmoQFQErNx6ZggrOt7urNG8DDziHDOyWRY4f"
+      - think: 2
       - emit:
           channel: "switch room"
-          data: "global"
+          data: {name: "global", type: "global"}
+      - think: 2
       - emit:
-          channel: "new message"
-        data: "hello to all the world!"
+          channel: "send message"
+          data: "hello to all the world!"
+      - think: 4
+      - emit:
+          channel: "send message"
+          data: "I like ponyes!"
+      - think: 3
+      - emit:
+          channel: "send message"
+          data: "hello kitty rules!"
+      - think: 2
+      - emit:
+          channel: "send message"
+          data: "hello to all the world!"
+      - think: 5
+      - emit:
+          channel: "send message"
+          data: "Lol123321334l234l32l4k32lk4lk32l4k3l234k!"
+      - think: 2
+      - emit:
+          channel: "send message"
+          data: "hello to all the world!"
 

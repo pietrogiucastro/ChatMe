@@ -51,7 +51,7 @@ exports.addSpam = function(socket) {
 		var newScore = Math.max(socket.user.spam.score - Math.round(lastInteraction), 0);
 		updatehash.score = newScore;
 
-	    if (socket.user.spam.muteLevel >= 0) { // 20 min of silence = lower Mute level
+	    if (socket.user.spam.muteLevel > 0) { // 20 min of silence = lower Mute level
 	    	var lastMute = moment.duration(moment().diff(socket.user.spam.lastMute)).asSeconds();
 	    	if (lastMute >= 1200) {
 		    	updatehash.lastMute = moment();
@@ -64,12 +64,11 @@ exports.addSpam = function(socket) {
 
 	if (socket.user.spam.score >= options.muteThreshold) { //muted!
 		var mutehash = {};
-		if (socket.user.spam.muteLevel < 5) mutehash.muteLevel = socket.user.spam.muteLevel+1;
 		mutehash.score = 0;
-		console.log(socket.user.spam.muteLevel);
 		mutehash.mutedTill = moment().add(options.muteSeconds[socket.user.spam.muteLevel], 'seconds');
 		mutehash.muted = true;
 		mutehash.lastMute = moment();
+		if (socket.user.spam.muteLevel < 5) mutehash.muteLevel = socket.user.spam.muteLevel+1;
 
 		setField(userid, mutehash);
 
