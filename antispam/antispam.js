@@ -66,6 +66,7 @@ exports.addSpam = function(socket) {
 		var mutehash = {};
 		if (socket.user.spam.muteLevel < 5) mutehash.muteLevel = socket.user.spam.muteLevel+1;
 		mutehash.score = 0;
+		console.log(socket.user.spam.muteLevel);
 		mutehash.mutedTill = moment().add(options.muteSeconds[socket.user.spam.muteLevel], 'seconds');
 		mutehash.muted = true;
 		mutehash.lastMute = moment();

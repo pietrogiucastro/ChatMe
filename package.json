@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "node ./bin/www",
-    "reset": "node ./bin/resetDb.js"
+    "reset": "node ./bin/resetDb.js",
+    "forever": "forever start -l /var/log/logfile.log -o /var/log/outfile.log -e /var/log/errfile.log ./bin/www"
   },
   "repository": {
     "type": "git",

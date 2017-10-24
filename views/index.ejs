@@ -686,8 +686,8 @@
               }
               .cm-system-msg hr {
                 width: 100%;
+                border: 0;
                 border-top: 1px solid #ccc;
-                border-bottom: 0;
               }
               .cm-system-msg .system-text {
                 white-space: nowrap;
@@ -695,6 +695,14 @@
                 font-style: italic;
                 font-size: 9px;
                 color: #555;
+              }
+
+              .cm-system-msg.mute hr {
+                border-top-color: #ef0000;
+              }
+
+              .cm-system-msg.mute .system-text {
+                color: #ef0000;
               }
 
               #cm-chat-panel {
@@ -1809,13 +1817,14 @@
 #chat-me[theme=dark] #chat-me-cont, #chat-me[theme=dark] {
   background: #2b2b2b !important;
 }
-#chat-me[theme=dark] #cm-online, #chat-me[theme=dark] .message-input-cont > input,
+#chat-me[theme=dark] #cm-online, #chat-me[theme=dark] #cm-online-users, #chat-me[theme=dark] .message-input-cont > input,
 #chat-me[theme=dark] .emoji-body {
   background: #383838 !important;
 }
 #chat-me[theme=dark] #cm-online-panel {
   box-shadow: 3px 3px 2px #222;
 }
+
 #chat-me[theme=dark] #cm-chat {
   /*background: #2b2b2b;*/
   background: #383838;
@@ -1906,7 +1915,7 @@
 }
 
 #chat-me[theme=dark] .btn:hover {
-  background: #ccc;
+  background: #aaa;
 }
 
 #chat-me[theme=dark].logged #cm-inline-btns {
@@ -2022,6 +2031,14 @@
 
 #chat-me[theme=dark] #background-input {
   color: #aaa;
+}
+
+#chat-me[theme=dark] .cm-system-msg.mute hr {
+  border-top-color: #ffab0c;
+}
+
+#chat-me[theme=dark] .cm-system-msg.mute .system-text {
+  color: #ffab0c;
 }
 </style>
 

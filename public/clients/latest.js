@@ -2,6 +2,7 @@ var connection;
 var transparent;
 var sess_token = GM_getValue('sess_token');
 var sess_user = GM_getValue('sess_user');
+var welcomeMessage = "Welcome to Chat me, %USERNAME%! <br><br> Current version %VERSION% ";
 
 var container;
 
@@ -138,36 +139,40 @@ var resizeicosrc = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAA
                 var myClientVersion = GM_getValue('client-version') || "0.0.0";
                 postChildMessage('client-version', myClientVersion);
                 if (showversion) postChildMessage('show-client-version');
-            break;
+                break;
             case 'refresh-page':
                 window.location.reload();
                 break;
             case 'update-client':
                 GM_setValue('client', '');
                 GM_setValue('client-version', event.data.value);
-            break;
+                break;
             case 'reset-client':
                 GM_setValue('client', '');
                 GM_setValue('client-version', event.data.value);
                 window.location.reload();
-            break;
+                break;
+            case 'show-welcome':
+                var myClientVersion = GM_getValue('client-version') || "0.0.0";
+                postChildMessage('show-welcome', welcomeMessage);
+                break;
             case 'transparent':
                 transparent = event.data.value;
                 if (!transparent) $(container).css('opacity', '');
                 break;
             case "windowsize":
                 setWindowSize(event.data.value);
-            break;
+                break;
                 case "minify":
                 hideChatMe();
-            break;
-                case "togglefs":
+                break;
+            case "togglefs":
                 $(container).toggleClass('fs');
                 if ($(container).is('.fs')) $('body').addClass('chatme-fs');
                 else $('body').removeClass('chatme-fs');
-            break;
+                break;
             default:
-                console.log('unhandled event: ' + event.data);
+                console.log('unhandled event: ' + JSON.stringify(event.data));
         }
     });
 

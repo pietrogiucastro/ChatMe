@@ -13,8 +13,6 @@ var tparm = function (data) {
 
 site = 'site://' + tparm;
 
-var welcomeMessage = "Welcome to Chat me! Version %VERSION% ";
-
 var socket;
 var displaytype;
 var selectedsize;
@@ -350,7 +348,6 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     		'type': 'audio/ogg; codecs=opus'
     	});
     	audio.src = window.URL.createObjectURL(blob);
-    	console.log(blob.size);
 
     	audio.currentTime = 999999999999999999999999999999999;
     	audio.play();
@@ -629,6 +626,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     	status.classname += typingclass;
     	$('#cm-online-list').prepend('<li class="cm-message-name cm-online-name" id="user-' + user.name + '" style="color:' + user.color + ';" data-name="' + user.name + '"><div class="username">' + user.name + '</div><div class="cm-message-status ' + status.classname + '">' + status.message + '</div></li>');
     	currentusers[user.name] = {color: user.color};
+    	$('#online-users').html(Object.keys(currentusers).length);
     }
 
     function refreshUser(user) {
@@ -639,6 +637,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     function removeUser(username) {
     	$('#user-' + username).remove();
     	delete currentusers[username];
+    	$('#online-users').html(Object.keys(currentusers).length);
     }
 
     function UserMsgOnOff(username, isOnline) {
@@ -742,7 +741,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     			if (e.result == 'success') {
     				sess_token = e.token;
     				$.cookie('sess_token', sess_token);
-    				LoggedDisplay();
+    				LoggedDisplay(false, true);
     			} else $('#cm-error-cont').html(e.error);
     		});
     	});
@@ -762,7 +761,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     	$('#chat-me').find(tabs).remove();
 
     	$('#chat-me-cont').html('<div style="font-weight:bold; color:white; padding:5px; padding-bottom:10px; background:#8da4a7; margin: 8px -5px;">Sign up</div>')
-    	.append('<div id="signup-cont" class="cm-scroll" style="height:calc(100% - 60px);"></div>').find('#signup-cont')
+    	.append('<div id="signup-cont" class="cm-scroll" style="height:calc(100% - 90px);"></div>').find('#signup-cont')
     	.append('<div style="display:flex; align-items:center;"><label for=cm-user class=cm-label>Username:</label><input maxlength="10" style="margin-right:10px;" type=text id=cm-user class=cm-input placeholder=Username></div>')
     	.append('<div style="display:flex; align-items:center;"><label for=cm-email class=cm-label>E-mail:</label><input style="margin-right:10px;" type=text id=cm-email class=cm-input placeholder=E-mail></div>')
     	.append('<div style="display:flex; align-items:center;"><label for=cm-pass class=cm-label>Password:</label><input style="margin-right:10px;" type=password id=cm-pass class=cm-input placeholder=Password></div>')
@@ -790,7 +789,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
 
         	$('#cm-error-cont').html('');
         	if (!user || !pass || !conf || !email) {
-        		$('#cm-error-cont').html("You must fill all the fields in");
+        		$('#cm-error-cont').html("Please fill all the fields");
         		return;
         	}
         	if (pass != conf) {
@@ -808,13 +807,12 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
             	hideOptsWait();
             	$('#cm-error-cont').removeClass('success').html('');
             	if (e.result == 'success') {
-            		console.log(e);
             		$('#cm-error-cont').addClass('success').html(e.message)
             		.append('<br>Automatic login in 3 seconds..');
             		setTimeout(function() {
             			sess_token = e.token;
             			$.cookie('sess_token', sess_token);
-            			LoggedDisplay();
+            			LoggedDisplay(false, true);
             		}, 3000);
             	} else $('#cm-error-cont').html(e.error);
             });
@@ -823,7 +821,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
         inlinebtns.appendbtns(displaytype);
     }
 
-    function LoggedDisplay(noslide) {
+    function LoggedDisplay(noslide, justlogged) {
     	noslide = chatslide ? noslide : true;
     	setDisplayStyle('logged');
 
@@ -843,6 +841,8 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     		{name: data.joinedroom.split('pm:')[1], type: 'pm'} :
     		{name: data.joinedroom}
 
+    		/* just logged */
+    		if (justlogged) postParentMessage('show-welcome');
     		/* notification sounds */
     		msgnotSound = localStorage.msgnot ? new Audio(localStorage.msgnot) : setSound('msg', selectmsgnot);
     		pmnotSound = localStorage.pmnot ? new Audio(localStorage.pmnot) : setSound('pmmsg', selectpmnot);
@@ -913,7 +913,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     			setMessage(message);
     			break;
     			case 'system_msg':
-    			setSystemMsg(message.text);
+    			setSystemMsg(message.text, message.class);
     			break;
     		}
     	});
@@ -1148,7 +1148,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     	$('#chat-me-label').append(inlinebtns.container)
     	.append('<div id="cm-display-panel"><div id="cm-display"></div></div>')
     	.find('#cm-display')
-    	.append('<div id="cm-online-panel" class="cm-scroll scroll-x"><div id=cm-online> <ul id=cm-online-list></ul> </div></div>')
+    	.append('<div id="cm-online-panel" class="cm-scroll scroll-x"><div id="cm-online-users">online: <span id="online-users">0</span></div><div id=cm-online> <ul id=cm-online-list></ul> </div></div>')
     	.append('<div id="cm-chat-panel"><div id="cm-chat-not"><span id="cm-not" style="display:none;"></span></div><div id=cm-chat class="cm-scroll"> <div id=cm-chat-list></div> </div> <div id="unseen-icon" onclick="slidebottom()" style="display:none;"></div> </div>')
     	.find('#cm-chat-list').append('<div class="cm-system-msg empty-chat-msg"><hr><div class="system-text">Select a chat</div><hr></div>');
     	$('#chat-me-label')
@@ -1240,11 +1240,10 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
 	    				postParentMessage('refresh-page');
 	    			});
 	    		}
-	    		if (!$.cookie('already_signed')) {
-	    			showModalMessage(welcomeMessage.replace('%VERSION%'), myClientVersion);
-	    			$.cookie('already_signed', 1);
-	    		}
     		break;
+    		case 'show-welcome':
+    			showModalMessage(event.data.value.replace('%USERNAME%', sess_user).replace('%VERSION%', myClientVersion));
+    			break;
     		case 'show-client-version':
     			showModalMessage("Current version: " + myClientVersion);
     		break;
@@ -1273,12 +1272,12 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     $(function main() {
     	postParentMessage('successload', {transparent: transparent});
     	selectedtheme = $.cookie('theme') || 'default';
-    	selectmsgnot = $.cookie('msgnot') || 'default';
-    	selectpmnot = $.cookie('pmnot') || 'active';
+    	selectmsgnot = $.cookie('msgnot') || 'seat-belt';
+    	selectpmnot = $.cookie('pmnot') || 'bell';
     	$('#chat-me').attr('theme', selectedtheme);
 
     	/*css*/
-    	$('head').append('<style type=text/css>body {margin: 0;} #chat-me {position:relative; overflow:hidden; height:100vh; border-radius:3px;} #chat-me-cont {box-sizing:border-box; padding:5px; padding-top:28px; width:100%; height:100%; background-color:rgba(50,80,100,1.0); font-family:tahoma !important;} #cm-inline-btns {position:absolute; box-sizing:border-box; width:100%; height:15px; z-index: 10;} #cm-message-panel {position: absolute; bottom:0; height:25px; width:100%;} .cm-label {display:inline-block; color:rgb(230,230,230); font-weight:bold; margin:10px; width: 50%; max-width:110px; text-align:right;} .cm-button {position:absolute; overflow:hidden; color:white; text-align:center; width:60px; font-size:10px; background-color:rgb(10,200,50); border:0px; box-shadow:none !important; cursor:pointer; height:100%; border-radius: 2px;} .cm-button:not(.recording):hover {background-color:rgb(20,220,60);} .message-input-cont {position: relative; box-sizing:border-box; width: 100%; height:100%; padding-right:45px; } .emojis-btn {position: absolute; top: 4px; right: 50px;} .emojis-btn:before {cursor: pointer;} .cm-input {box-sizing:border-box; background-color:rgb(240,240,240)!important; border:0px; font-size:12px!important; font-family:\'Montserrat\', sans-serif; width:230px; border:0px; border-radius:2px; padding-left:5px; padding-top:3px; padding-bottom:3px;} #cm-error-cont {color:rgb(220,0,0); font-size:12px; margin-left:8px; margin-top:10px; max-width:200px} #cm-error-cont.success {color: rgb(10,200,50);} #cm-chat {font-family:\'Montserrat\', sans-serif; width:100%; height:100%; background-color:rgb(240,240,240); border-radius:2px;} #cm-chat-list {margin:0; padding:3px 0; font-size:11px;} .cm-message:first-child {margin-top:0 !important}.cm-message:last-child {border:0;} .cm-message {padding: 3px 5px; padding-top:2px;} .cm-message-head {margin-bottom:4px;} .cm-message-body {display: inline-block; max-width:85%; margin: 3px 4%; margin-bottom: 0; border-radius: 5px; background: #d3e4f1; box-shadow: 1px 1px 0px #ddd; padding: 5px 6px;} .cm-clearafter:after {content:\'\'; display:block; clear: both;} .cm-message:hover,.cm-online-name:hover {background-color: rgba(220,220,220,0.4);} .cm-message-name:hover {text-decoration:underline;} .cm-message-name {font-family:\'Montserrat\', sans-serif; font-weight:bold; color:rgb(0,80,0); font-size:9px; cursor: pointer; margin-right: 23px;} .cm-online-name {padding-left:4px; margin-right:0;} .cm-online-name:hover {text-decoration:none;} .cm-message-name:hover .username {text-decoration:underline;} .cm-message-status {font-family:\'Montserrat\', sans-serif; color:grey; font-size: 8px;} .cm-message-text {display:block; margin: 0 4px; max-width:310px; word-wrap:break-word; color:#07324e;} .cm-message-date {float:right; text-align:right; color:grey; font-size:9px; min-width:70px;} #cm-display-panel {box-sizing:border-box; padding-top:20px; padding-bottom:30px; height: 100%; } #cm-display {position: relative; overflow: hidden; display:flex; height: 100%;} #cm-online-panel {margin-right:5px; width:90px;} #cm-online {height:100%; background-color:rgb(240,240,240); border-radius:2px;} #cm-online-list {margin:0; padding:5px 0; font-size:11px;} #cm-record {box-sizing:border-box; display:flex; align-items:center; width: 40px;} .micico {position: absolute; font-size: 165%; top: 0%; right: 15px; padding-top: 5px;}</style>');
+    	$('head').append('<style type=text/css>body {margin: 0;} #chat-me {position:relative; overflow:hidden; height:100vh; border-radius:3px;} #chat-me-cont {box-sizing:border-box; padding:5px; padding-top:28px; width:100%; height:100%; background-color:rgba(50,80,100,1.0); font-family:tahoma !important;} #cm-inline-btns {position:absolute; box-sizing:border-box; width:100%; height:15px; z-index: 10;} #cm-message-panel {position: absolute; bottom:0; height:25px; width:100%;} .cm-label {display:inline-block; color:rgb(230,230,230); font-weight:bold; margin:10px; width: 50%; max-width:110px; text-align:right;} .cm-button {position:absolute; overflow:hidden; color:white; text-align:center; width:60px; font-size:10px; background-color:rgb(10,200,50); border:0px; box-shadow:none !important; cursor:pointer; height:100%; border-radius: 2px;} .cm-button:not(.recording):hover {background-color:rgb(20,220,60);} .message-input-cont {position: relative; box-sizing:border-box; width: 100%; height:100%; padding-right:45px; } .emojis-btn {position: absolute; top: 4px; right: 50px;} .emojis-btn:before {cursor: pointer;} .cm-input {box-sizing:border-box; background-color:rgb(240,240,240)!important; border:0px; font-size:12px!important; font-family:\'Montserrat\', sans-serif; width:230px; border:0px; border-radius:2px; padding-left:5px; padding-top:3px; padding-bottom:3px;} #cm-error-cont {color:rgb(220,0,0); font-size:12px; margin-left:8px; margin-top:10px; max-width:200px} #cm-error-cont.success {color: rgb(10,200,50);} #cm-chat {font-family:\'Montserrat\', sans-serif; width:100%; height:100%; background-color:rgb(240,240,240); border-radius:2px;} #cm-chat-list {margin:0; padding:3px 0; font-size:11px;} .cm-message:first-child {margin-top:0 !important}.cm-message:last-child {border:0;} .cm-message {padding: 3px 5px; padding-top:2px;} .cm-message-head {margin-bottom:4px;} .cm-message-body {display: inline-block; max-width:85%; margin: 3px 4%; margin-bottom: 0; border-radius: 5px; background: #d3e4f1; box-shadow: 1px 1px 0px #ddd; padding: 5px 6px;} .cm-clearafter:after {content:\'\'; display:block; clear: both;} .cm-message:hover,.cm-online-name:hover {background-color: rgba(220,220,220,0.4);} .cm-message-name:hover {text-decoration:underline;} .cm-message-name {font-family:\'Montserrat\', sans-serif; font-weight:bold; color:rgb(0,80,0); font-size:9px; cursor: pointer; margin-right: 23px;} .cm-online-name {padding-left:4px; margin-right:0;} .cm-online-name:hover {text-decoration:none;} .cm-message-name:hover .username {text-decoration:underline;} .cm-message-status {font-family:\'Montserrat\', sans-serif; color:grey; font-size: 8px;} .cm-message-text {display:block; margin: 0 4px; max-width:310px; word-wrap:break-word; color:#07324e;} .cm-message-date {float:right; text-align:right; color:grey; font-size:9px; min-width:70px;} #cm-display-panel {box-sizing:border-box; padding-top:20px; padding-bottom:30px; height: 100%; } #cm-display {position: relative; overflow: hidden; display:flex; height: 100%;} #cm-online-panel {position: relative; padding-top: 16px; margin-right:5px; width:90px;} #online-users {font-family: Montserrat;} #cm-online-users {box-sizing: border-box; font-family: Montserrat; color: #00822f; position: absolute; padding: 0 3px; padding-top: 2px; top: 0; width: 100%; height: 17px; background-color:rgb(240,240,240); font-size: 11px; border-top-left-radius: 2px; border-top-right-radius: 2px; overflow: hidden;} #cm-online {height:100%; background-color:rgb(240,240,240); border-radius:2px;} #cm-online-list {margin:0; padding:5px 0; font-size:11px;} #cm-record {box-sizing:border-box; display:flex; align-items:center; width: 40px;} .micico {position: absolute; font-size: 165%; top: 0%; right: 15px; padding-top: 5px;}</style>');
     	if (!$('#chat-me-cont').length) return;
 
     	if (!sess_token) InitDisplay();
@@ -1327,7 +1326,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
 	    		'<option class="settings-option" value="tina">tina</option>' +
     		'</select></div>' +
     		
-    		'<div class="settings-row"><span class="settings-text">Private message notif.</span><select id="select-pmnot" class="settings-select">' +
+    		'<div class="settings-row"><span class="settings-text">Private message sound</span><select id="select-pmnot" class="settings-select">' +
 	    		'<option class="settings-option" value="bell">bell</option>' +
 	    		'<option class="settings-option" value="jingle-bells">jingle bells</option>' +
 	    		'<option class="settings-option" value="harry-potter">harry potter</option>' +
@@ -1684,26 +1683,26 @@ function sendBackground(data) {
 };
 
 function setBackground(dataurl, closeopts) {
-	try {
-		fetch(dataurl)
-		.then(res => res.blob())
-		.then(blob => {
-	    	var bufferurl = window.URL.createObjectURL(blob);
-	    	var tmpImg = new Image();
-	    	tmpImg.src = bufferurl;
-	    	tmpImg.onload = function() {
-		    	$('#cm-chat').addClass('bg').css('background-image', 'url('+bufferurl+')');
-		    	hideOptsWait();
-		    	if (closeopts) hideOpts();
-	    	}
-		});
-	} catch(e) {
+	fetch(dataurl)
+	.then(res => res.blob())
+	.then(blob => {
+    	var bufferurl = window.URL.createObjectURL(blob);
+    	var tmpImg = new Image();
+    	tmpImg.src = bufferurl;
+    	tmpImg.onload = function() {
+	    	$('#cm-chat').addClass('bg').css('background-image', 'url('+bufferurl+')');
+	    	hideOptsWait();
+	    	if (closeopts) hideOpts();
+    	}
+	})
+	.catch(err => {
 		hideOptsWait();
-		console.log(e);
-	}
+		console.log(err);
+	});
 }
 
 function saveBackground(buffer) {
+	if (!buffer.byteLength) return hideOptsWait();
 	var bufferReader = new FileReader();
 	bufferReader.onload = function() {
 		localStorage.background = this.result;
@@ -2040,6 +2039,7 @@ function postParentMessage(key, value) {
 }
 
 function mutedMessage(seconds) {
+	$('#cm-message-input').val('');
     $('#muted-message').find('#muted-seconds').html(seconds);
     $('#cm-message-input').attr('disabled', true);
     $('#muted-message').slideDown();

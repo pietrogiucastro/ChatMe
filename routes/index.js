@@ -18,10 +18,12 @@ router.post('/login', function(req, res, next) {
 
 	db.getTokenByCredentials(username, password, function(err, token) {
 		if(err) {
+			console.log(err),
 			res.json({result: 'error', error: 'Internal error. Try again later.'});
 			return;
 		}
 		if (!token) {
+			console.log("Wrong username or password for user " + username);
 			res.json({result: 'error', error: 'Wrong username or password'});
 			return;
 		}
