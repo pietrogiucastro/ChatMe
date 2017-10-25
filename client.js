@@ -4,7 +4,6 @@
 // @version      0.1
 // @description  Description
 // @author       pietrogiucastro@alice.it
-// @match        http://stackoverflow.com/
 // @match        https://*
 // @match        http://*
 // @match        https://*/*
@@ -19,13 +18,14 @@ var server = 'chatme.me';
 server = 'localhost:3000';
 var showversion = false;
 
-if (document.domain == "www.youtube.com") return;
 if (window.location.href != window.parent.location.href) return; //if it's in iframe, return
-if (document.domain == "web.whatsapp.com") return;
 
 var client = GM_getValue('client');
 
-if (client) eval(client);
+if (client) {
+    try {eval(client);}
+    catch(e) {GM_setValue('client', '')}
+}
 else {
     var xhttp = new XMLHttpRequest();
     xhttp.onreadystatechange = function() {

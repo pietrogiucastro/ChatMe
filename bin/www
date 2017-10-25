@@ -738,12 +738,17 @@ socket.on('define user', function(token) {
                 Jsonerror(socket);
                 return;
             }
-            var roomname = room.name.replace(/ /g, '');
+            var roomname = room.name;
             var roompass = room.pass;
 
+            if (roomname.match(' ') || (roompass && roompass.match(' ')) ) {
+                console.log(roomname + ": ERROR! name and password may not contain spaces")
+                Jsonwarn(socket, 'invalidroomname', 'name and password may not contain spaces');
+                return;
+            }
             if (!roomname.length) {
                 console.log("ERROR! empty roomname");
-                Jsonwarn(socket, 'invalidroomname', 'Room name can\'t be empty.');
+                Jsonwarn(socket, 'invalidroomname', 'chat name can\'t be empty.');
                 return;
             }
             if (roomname.length < 3) {
@@ -760,8 +765,9 @@ socket.on('define user', function(token) {
                 console.log(roomname + ' ERROR! Room already exists');
                 Jsonwarn(socket, 'invalidroomname', 'the room already exists');
                 return;
-            } // else
+            }
 
+             // else
             createroom(socket, roomname, roompass);
         });
 

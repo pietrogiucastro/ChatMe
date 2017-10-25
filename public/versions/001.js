@@ -1,6 +1,6 @@
 var settings_page = 'chat.me';
 var server = document.domain;
-var latestClientVersion = "1.0.8";
+var latestClientVersion = "1.1.0";
 var myClientVersion;
 
 var site = (window.location != window.parent.location) ? document.referrer : document.location.href;
@@ -67,7 +67,7 @@ var emptychatmsg = 'Empty chat. Be the first to send a message!';
 var currentchat;
 var currentusers = {};
 
-var tabs = $('<div id="chat-me-head"><div id="chat-me-tabs" class="cm-scroll scroll-x cm-tabs-scroll"><div class="chat-tab base global-tab noselect" name="global" data-type="global"><span class="volume-icon vol-true"></span><div class="tab-text">Global</div></div><div class="chat-tab base site-tab noselect" name="site" data-type="site"><span class="volume-icon vol-true"></span><div class="tab-text">Site</div></div></div><div id="pm-msgs"></div></div>');
+var tabs = $('<div id="chat-me-head"><div id="chat-me-tabs" class="cm-scroll scroll-x scroll-thin cm-tabs-scroll"><div class="chat-tab base global-tab noselect" name="global" data-type="global"><span class="volume-icon vol-true"></span><div class="tab-text">Global</div></div><div class="chat-tab base site-tab noselect" name="site" data-type="site"><span class="volume-icon vol-true"></span><div class="tab-text">Site</div></div></div><div id="pm-msgs"></div></div>');
 var msgbtn = $('<div id="pm-msgs-btn"><div class="pm-msgs-nots" style="display:none;"></div></div>');
 var msgnots = msgbtn.find('.pm-msgs-nots');
 
@@ -169,6 +169,27 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     		$('#unseen-icon').stop().fadeIn('fast');
     	} else
     	$('#unseen-icon').fadeOut();
+    }
+
+    var shiftinterval;
+    function horizontalShift(e) {
+    	var limit = 40;
+    	var that = $(this);
+
+    	var width = $(this).width();
+    	var left = e.pageX - $(this).offset().left;
+        var right = width - left;
+        var distance = Math.min(left, right);
+
+    	clearInterval(shiftinterval);
+        if (distance < limit) {
+        	var direction = (left - right) / Math.abs(left - right);
+        	var disspeed = Math.ceil((limit - distance) / 10);
+        	shiftinterval = setInterval(function() {
+        		var scrollx = that.scrollLeft() + direction * disspeed;
+        		that.scrollLeft(scrollx);
+        	}, 10);
+        }
     }
 
     function isToRescroll() {
@@ -759,6 +780,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     function RegisterDisplay(user, pass) {
     	setDisplayStyle('register');
     	$('#chat-me').find(tabs).remove();
+    	tabs.find('.chat-tab:not(.base)').remove();
 
     	$('#chat-me-cont').html('<div style="font-weight:bold; color:white; padding:5px; padding-bottom:10px; background:#8da4a7; margin: 8px -5px;">Sign up</div>')
     	.append('<div id="signup-cont" class="cm-scroll" style="height:calc(100% - 90px);"></div>').find('#signup-cont')
@@ -952,9 +974,8 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     		hideOptsWait();
     		hidePmModal();
 
-    		createTab(room);
-
-    		selectchat(room.name);
+    		var newtab = createTab(room);
+    		selectchat(newtab);
     	});
     	socket.on('rooms result', function(result) {
     		hideOptsWait();
@@ -1124,6 +1145,14 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     	$('#chat-me').prepend(tabs);
     	if (collapsetabs) tabs.children('#chat-me-tabs').addClass('collapse');
 
+    	/* horizontal shift */
+
+    	tabs.children('#chat-me-tabs')
+    	.mousemove(horizontalShift)
+    	.mouseleave(function() {
+    		clearInterval(shiftinterval);
+    	});
+
     	$('#chat-me-cont').html('');
     	$('#chat-me-cont').append(fullImageCover);
     	$('#chat-me-cont').append(fullImageBtns);
@@ -1148,7 +1177,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     	$('#chat-me-label').append(inlinebtns.container)
     	.append('<div id="cm-display-panel"><div id="cm-display"></div></div>')
     	.find('#cm-display')
-    	.append('<div id="cm-online-panel" class="cm-scroll scroll-x"><div id="cm-online-users">online: <span id="online-users">0</span></div><div id=cm-online> <ul id=cm-online-list></ul> </div></div>')
+    	.append('<div id="cm-online-panel"><div id="cm-online-users">online: <span id="online-users">0</span></div><div id="cm-online" class="cm-scroll"> <ul id=cm-online-list></ul> </div></div>')
     	.append('<div id="cm-chat-panel"><div id="cm-chat-not"><span id="cm-not" style="display:none;"></span></div><div id=cm-chat class="cm-scroll"> <div id=cm-chat-list></div> </div> <div id="unseen-icon" onclick="slidebottom()" style="display:none;"></div> </div>')
     	.find('#cm-chat-list').append('<div class="cm-system-msg empty-chat-msg"><hr><div class="system-text">Select a chat</div><hr></div>');
     	$('#chat-me-label')
@@ -1734,7 +1763,9 @@ function createTab(room) {
 		volume: true
 	};
 
-	$('.chat-tab[name="' + room.name + '"]').remove();
+	var roomtype = room.type || 'custom';
+
+	$('.chat-tab[name="' + room.name + '"][data-type="'+roomtype+'"]').remove();
 	var type = room.type ? room.type : 'custom';
 	var newTab = $('<div class="chat-tab custom noselect" data-type="' + type + '" name="' + room.name + '" pass="' + room.pass + '"><span class="volume-icon vol-true"></span><div class="tab-text">' + room.html + '</div><i class="fa fa-times remove-tab"></i></div>');
 
@@ -1762,13 +1793,9 @@ function switchchat(tab) {
 	socket.emit('switch room', room);
 }
 
-function selectchat(chat) {
+function selectchat(tab) {
 	tabs.find('.chat-tab').removeClass('sel');
-	if (typeof chat == 'string') {
-		tabs.find('.chat-tab[name="' + chat + '"]').addClass('sel');
-	} else if (typeof chat == 'object') {
-		tabs.find(chat).addClass('sel');
-	}
+	tabs.find(tab).addClass('sel');
 }
 
 function removeTab(el) {

@@ -15,11 +15,11 @@ var input;
 
 var sizes = {
     xs: {
-        x: '380px',
-        y: '194px'
+        x: '340px',
+        y: '200px'
     },
     sm: {
-        x: '400px',
+        x: '360px',
         y: '280px'
     },
     lg: {
