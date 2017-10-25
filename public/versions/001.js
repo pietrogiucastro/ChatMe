@@ -2067,6 +2067,7 @@ function postParentMessage(key, value) {
 
 function mutedMessage(seconds) {
 	$('#cm-message-input').val('');
+	socket.emit('typingstatus', false);
     $('#muted-message').find('#muted-seconds').html(seconds);
     $('#cm-message-input').attr('disabled', true);
     $('#muted-message').slideDown();

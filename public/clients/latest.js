@@ -39,7 +39,7 @@ var resizeicosrc = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAA
 (function() {
     'use strict';
 
-    if (document.domain == settings_page) return document.write('chat me settings. Under construction..');
+    if (document.domain == "chat.me") return window.location.href = 'https://chatme.me';
     if (document.domain == server) return;
 
     $('head').append('<style type=text/css>.chat-me-notloaded {cursor:pointer; display:block !important; background: gray !important;} #chat-me-cover { position:absolute; width:100%; height:100%; background-color:rgb(50,80,100); top:0; opacity:0.0; cursor:pointer; } #chat-me-container {position: fixed; z-index:99999999999999999999; bottom:'+shb+'; right:'+shr+';  border-radius: 5px; } #chat-me-container:not(.cm-hidden) {box-shadow: 2px 2px 1px #111;} #chat-me-container.cm-hidden > #chat-me-frame {pointer-events: none;}  #chat-me-container.resizable:not(.fs):not(.cm-hidden) {min-width: 300px; min-height: 200px; max-width: 100vw; max-height: 100vh; max-width:calc(100vw - '+shr+' - 30px); max-height:calc(100vh - '+shb+' - 20px);} #chat-me-container.resizable:not(.cm-hidden) > #chat-me-frame {border-top-left-radius: 10px !important;} #chat-me-container.resizable:not(.cm-hidden) #chat-me-resbtn {display: block !important;} #chat-me-resbtn {display: none; position: absolute; left: 1px; top: 2px; cursor: nwse-resize;} #chat-me-frame {border:0; width:100%; height:100%; overflow:hidden;} #chat-me-frame.dragging {pointer-events: none;} </style>');

@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         chat.me client
 // @namespace    http://tampermonkey.net/
-// @version      0.1
-// @description  Description
+// @version      1.1
+// @description  Welcome to Chat.me! Chat.me is a free non-profit chat. Chat.me is embedded in every site via iframe. It's super safe to use (the chat uses SSL certificates (HTTPS), and it's embedded in an iframe: CORS and XSS protection guaranteed). You will find a global tab to chat with everyone around the world, a site tab to chat with everyone who is visiting your own site, furthermore you can create custom rooms to chat with your friends, and pm message them too. Chat, send messages, audios and medias to everyone and have fun with Chat.me!
 // @author       pietrogiucastro@alice.it
 // @match        https://*
 // @match        http://*
@@ -13,18 +13,19 @@
 // @grant        GM_getValue
 // ==/UserScript==
 
-var settings_page = 'chat.me';
 var server = 'chatme.me';
-server = 'localhost:3000';
+//server = 'localhost:3000';
 var showversion = false;
 
 if (window.location.href != window.parent.location.href) return; //if it's in iframe, return
 
 var client = GM_getValue('client');
 
+function errHandler(e) {$('body').append('<div style="position: fixed; bottom: 10px; right: 10px; color: red; z-index: 999999999999999999999999999;">chat.me - error parsing the client</div>'); console.log(e);}
+
 if (client) {
     try {eval(client);}
-    catch(e) {GM_setValue('client', '')}
+    catch(e) {GM_setValue('client', ''); errHandler(e);}
 }
 else {
     var xhttp = new XMLHttpRequest();
@@ -33,7 +34,7 @@ else {
             showversion = true;
             client = this.responseText;
             GM_setValue('client', client);
-            eval(client);
+            try {eval(client);} catch(e) {errHandler(e);}
         }
 
         else if (this.readyState == 4) {
