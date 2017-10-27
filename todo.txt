@@ -2,10 +2,8 @@ MANDATORY
 
 WHEN MANDATORY'S ARE COMPLETED
 - test server users online number limit
-- remove server = localhost line when everything done
 
 LESS IMPORTANT
-- set safe server password
 - create css themes
 - server: try/catch for every 'emit' method (use hash of methods and loops)
 - query rooms from db
