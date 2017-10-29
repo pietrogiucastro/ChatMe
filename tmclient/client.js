@@ -33,7 +33,7 @@ else {
             showversion = true;
             client = this.responseText;
             GM_setValue('client', client);
-            try {eval(client);} catch(e) {errHandler("chat.me - error parsing the client", e);}
+            try {eval(client);} catch(e) {GM_setValue('client', ''); errHandler("chat.me - error parsing the client", e);}
         }
 
         else if (this.readyState == 4) {

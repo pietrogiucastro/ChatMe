@@ -1,0 +1,27 @@
+{
+	"name": "Chat.me",
+	"version": "1.0.1",
+	"manifest_version": 2,
+	"description": "Welcome to Chat.me! Chat.me is a free non-profit embedded in-frame chat. Chat and send medias to your friends or averyone all over the world.",
+	"browser_action": {
+   		"default_icon": "icon.png",
+   		"default_popup": "popup.html"
+  	},
+  	"permissions": [
+   		"activeTab",
+   		"storage",
+   		"unlimitedStorage"
+   	],
+   	"content_scripts": [
+  		{
+		    "matches": [
+		      "http://*/*",
+		      "https://*/*"
+		    ],
+		    "js": ["jquery-3.2.1.min.js", "client.js"]
+		}
+	],
+	"background": {
+  		"scripts": ["background.js"]
+	}
+}
