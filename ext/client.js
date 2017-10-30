@@ -35,7 +35,6 @@ $(function() {
 
 	getValue('client', function(client) {
 		function errHandler(message, e) {$('body').append('<div style="position: fixed; bottom: 10px; right: 10px; color: red; z-index: 999999999999999999999999999;">'+message+'</div>'); if (e) console.log(e);}
-
 		if (client) {
 		    try {eval(client);}
 		    catch(e) {setValue('client', ''); errHandler("chat.me - error parsing the client", e);}
