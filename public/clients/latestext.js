@@ -137,11 +137,6 @@ var resizeicosrc = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAA
         switch (event.data.key) {
             case 'successload':
                 successLoad(event.data.value);
-                getValue('client-version', function(myClientVersion) {
-                    var myClientVersion = myClientVersion || "0.0.0";
-                    postChildMessage('client-version', myClientVersion);
-                });
-                if (showversion) postChildMessage('show-client-version');
                 break;
             case 'refresh-page':
                 window.location.reload();
@@ -269,10 +264,18 @@ function postChildMessage(key, value) {
 function successLoad(data) {
     console.log('cmloaded');
     $('#chat-me-cover').removeClass('chat-me-notloaded').click(showChatMe);
-    if (transparent) $(container).trigger('mouseleave');
+
     transparent = data.transparent;
+    if (transparent) $(container).trigger('mouseleave');
+
     getValue('size', function(size) {
         postChildMessage('selectedsize', size);
+    });
+
+    getValue('client-version', function(myClientVersion) {
+        myClientVersion = myClientVersion || "0.0.0";
+        postChildMessage('client-version', myClientVersion);
+        if (showversion) postChildMessage('show-client-version');
     });
 }
 

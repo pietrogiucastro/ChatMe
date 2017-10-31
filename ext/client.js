@@ -13,28 +13,29 @@ $(function() {
 	function getValue(key, callback) {
 		if (!key) callback();
 
-		var result = chrome.storage.sync.get(key, function(result) {
+		var result = chrome.storage.local.get(key, function(result) {
 			callback( typeof key == 'string' ? result[key] : result );
 		});
 	}
 
 	function setValue(key, value) {
 		if (typeof key == 'object') {
-			return chrome.storage.sync.set(key);
+			return chrome.storage.local.set(key);
 		}
 		var setter = {};
 		setter[key] = value;
-		chrome.storage.sync.set(setter);
+		chrome.storage.local.set(setter);
 	}
 
 	var server = 'chatme.me';
-	server = 'localhost:3000';
+	//server = 'localhost:3000';
 	var showversion = false;
 
 	if (window.location.href != window.parent.location.href) return; //if it's in iframe, return
 
 	getValue('client', function(client) {
 		function errHandler(message, e) {$('body').append('<div style="position: fixed; bottom: 10px; right: 10px; color: red; z-index: 999999999999999999999999999;">'+message+'</div>'); if (e) console.log(e);}
+		console.log('client: ' + !!client);
 		if (client) {
 		    try {eval(client);}
 		    catch(e) {setValue('client', ''); errHandler("chat.me - error parsing the client", e);}

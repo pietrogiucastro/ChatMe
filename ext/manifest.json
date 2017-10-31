@@ -9,15 +9,11 @@
   	},
   	"permissions": [
    		"activeTab",
-   		"storage",
-   		"unlimitedStorage"
+   		"storage"
    	],
    	"content_scripts": [
   		{
-		    "matches": [
-		      "http://*/*",
-		      "https://*/*"
-		    ],
+		    "matches": ["<all_urls>"],
 		    "js": ["jquery-3.2.1.min.js", "client.js"]
 		}
 	],
