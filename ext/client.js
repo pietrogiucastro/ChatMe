@@ -28,14 +28,13 @@ $(function() {
 	}
 
 	var server = 'chatme.me';
-	//server = 'localhost:3000';
+	server = 'localhost:3000';
 	var showversion = false;
 
 	if (window.location.href != window.parent.location.href) return; //if it's in iframe, return
 
 	getValue('client', function(client) {
 		function errHandler(message, e) {$('body').append('<div style="position: fixed; bottom: 10px; right: 10px; color: red; z-index: 999999999999999999999999999;">'+message+'</div>'); if (e) console.log(e);}
-		console.log('client: ' + !!client);
 		if (client) {
 		    try {eval(client);}
 		    catch(e) {setValue('client', ''); errHandler("chat.me - error parsing the client", e);}

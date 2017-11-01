@@ -28,18 +28,59 @@ body {
 }
 
 .switch-btn {
-	width: 60px;
-	height: 25px;
+	position: relative;
+	box-sizing: border-box;
+	width: 50px;
+	height: 22px;
 	background: white;
+	padding: 3px;
 }
 
 .switch-silhouette {
+	position: relative;
 	width: 100%;
 	height: 100%;
-	box-sizing: border-box;
-	padding: 5px;
 	background: #aaa;
 	border-radius: 25px;
+	overflow: hidden;
+}
+
+.switch-track {
+	position: absolute;
+	box-sizing: border-box;
+	width: 100%;
+	height: 100%;
+	top: 0; left: 0;
+	background-color: green;
+	padding-left: 5px;
+	/*left: -100%;*/
+}
+
+.switch-track:before {
+	display: block;
+	color: white;
+	content: "ON";
+	font-size: 10px;
+}
+
+.switch-track:after {
+	position: absolute;
+	top: 0; right: -40px;
+	display: block;
+	color: gray;
+	content: "OFF";
+	font-size: 10px;
+}
+
+.switch-thumb {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 22px;
+	height: 22px;
+	border-radius: 56px;
+	background: #999;
+	left: calc(100% - 22px);
 }
 
 .cm-button {
@@ -59,7 +100,7 @@ body {
 }
 
 .cm-button:hover > .cm-shadow {
-	background: #89f965;
+	background: #75e861;
 }
 
 .cm-shadow {
@@ -67,5 +108,5 @@ body {
 	top: 2px; left: 2px;
 	width: 56px; height: 5px;
 	border-radius: 5px;
-	background: #79e665;
+	background: #6ddc59;
 }
