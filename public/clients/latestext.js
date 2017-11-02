@@ -171,6 +171,21 @@ var resizeicosrc = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAA
         }
     });
 
+    chrome.runtime.onMessage.addListener(
+        function(request, sender, callback) {
+            switch(request.key) {
+                case 'reset-client':
+                    postChildMessage('reset-storage');
+
+                    setValue('client', '', function() {
+                        window.location.reload();
+                        if (callback) callback();
+                    });
+                break;
+            }
+
+        });
+
     $(container).mouseleave(function() {
         if (!transparent || $(this).is('.fs')) return;
         if ($(this).children('#chat-me-frame').is('.dragging')) return;

@@ -1276,6 +1276,9 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     		case 'show-client-version':
     			showModalMessage("Current version: " + myClientVersion);
     		break;
+            case 'reset-storage':
+                for (var key in localStorage) { localStorage[key] = ''; }
+            break;
     		case 'page-state':
     		console.log('page state event!: ' + event.data.value);
     		TriggerConnection(event.data.value);

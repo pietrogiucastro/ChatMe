@@ -2,7 +2,9 @@ body {
 	background: #325064;
 	margin: 0;
 	padding: 4px;
+	padding-bottom: 15px;
 	width: 210px;
+	border: 3px solid #00133f;
 }
 
 .title {
@@ -11,11 +13,12 @@ body {
     padding: 10px;
     color: wheat;
     font-weight: bold;
+    text-align: center;
 }
 
 .control-row {
 	width: 100%;
-	padding: 10px 5px;
+	padding: 10px 17px;
 	font-size: 14px;
 	display: flex;
 	align-items: center;
@@ -27,20 +30,27 @@ body {
 	font-weight: bold;
 }
 
+.button-center {
+	width: 60px;
+	height: 22px;
+	display: flex;
+}
+
 .switch-btn {
 	position: relative;
 	box-sizing: border-box;
-	width: 50px;
+	width: 48px;
 	height: 22px;
-	background: white;
 	padding: 3px;
+	margin: auto;
 }
 
 .switch-silhouette {
+	cursor: pointer;
 	position: relative;
 	width: 100%;
 	height: 100%;
-	background: #aaa;
+	background: #bbb;
 	border-radius: 25px;
 	overflow: hidden;
 }
@@ -51,25 +61,27 @@ body {
 	width: 100%;
 	height: 100%;
 	top: 0; left: 0;
-	background-color: green;
-	padding-left: 5px;
+	background-color: #15cb3b;
+	padding-left: 6px;
 	/*left: -100%;*/
 }
 
 .switch-track:before {
 	display: block;
 	color: white;
-	content: "ON";
+	content: "On";
 	font-size: 10px;
+	font-weight: bold;
 }
 
 .switch-track:after {
 	position: absolute;
-	top: 0; right: -40px;
+	top: 0; right: -37px;
 	display: block;
-	color: gray;
-	content: "OFF";
+	color: #888;
+	content: "Off";
 	font-size: 10px;
+	font-weight: bold;
 }
 
 .switch-thumb {
@@ -79,8 +91,13 @@ body {
 	width: 22px;
 	height: 22px;
 	border-radius: 56px;
-	background: #999;
+	background: #d8d8d8;
 	left: calc(100% - 22px);
+	cursor: pointer;
+
+	background: -webkit-radial-gradient(#aaa, #fff);
+	background: -o-radial-gradient(#aaa, #fff);
+	background: radial-gradient(#aaa, #fff);
 }
 
 .cm-button {
@@ -93,14 +110,17 @@ body {
 	color: white;
 	border: 0;
 	border-radius: 2px;
+	cursor: pointer;
 }
 
 .cm-button:hover {
-	background: linear-gradient(#0eff41, #009620);
+    background: -webkit-linear-gradient(#29f754, #099c28);
+    background: -o-linear-gradient(#29f754, #099c28);
+    background: linear-gradient(#29f754, #099c28);
 }
 
 .cm-button:hover > .cm-shadow {
-	background: #75e861;
+	background: #e1ffe5;
 }
 
 .cm-shadow {
@@ -108,5 +128,6 @@ body {
 	top: 2px; left: 2px;
 	width: 56px; height: 5px;
 	border-radius: 5px;
-	background: #6ddc59;
+	background: #edfbef;
+	opacity: 0.8;
 }

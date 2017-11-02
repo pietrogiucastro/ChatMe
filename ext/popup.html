@@ -3,18 +3,19 @@
   <head>
     <title>Chat.me</title>
     <link rel="stylesheet" type="text/css" href="popup.css">
+    <script src= "jquery-3.2.1.min.js"></script>
     <script src="popup.js"></script>
   </head>
   <body>
     <h1 class="title">Chat.me! Control panel</h1>
     <div id="controllers">
 		<div class="control-row">
-    		<label class="control-label">Status</label>
-			<div id="cm-onoff" class="switch-btn"><div class="switch-silhouette"><div class="switch-track"></div></div> <div class="switch-thumb"></div></div>
+    		<label class="control-label">Power</label>
+			<div class="button-center"><div id="cm-onoff" class="switch-btn" status="on"><div class="switch-silhouette"><div class="switch-track"><div class="cm-shadow" style="opacity: 0.6; left: 4px;"></div></div></div> <div class="switch-thumb"></div></div></div>
 		</div>
 		<div class="control-row">
 			<label class="control-label">Reset client</label>
-			<button class="cm-button"><div class="cm-shadow"></div>Reset</button>
+			<button id="cm-refresh" class="cm-button"><div class="cm-shadow"></div>Reset</button>
 		</div>
     </div>
   </body>

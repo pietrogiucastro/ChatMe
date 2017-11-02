@@ -1,3 +1,39 @@
-document.addEventListener('DOMContentLoaded', function() {
-  
-}, false);
+$(function() {
+	$('#cm-onoff').click(function() {
+		var newstatus = $(this).attr('status') == 'on' ? 'off' : 'on';
+
+		$(this).attr('status', newstatus)
+		.find('.switch-track').animate({
+			left: newstatus == 'off' ? '-100%' : '0%'
+		}, 180);
+		$(this).children('.switch-thumb').animate({
+			left: newstatus == 'off' ? '0' : '26px'
+		}, 200);
+
+		chrome.storage.local.set({status: newstatus}, function() {
+			postContentScriptMessage('refresh-page');
+		});
+
+	});
+
+	$('#cm-refresh').click(function() {
+		postContentScriptMessage('reset-client', undefined, function() {
+			window.close();
+		});
+	});
+
+	!function init() {
+		chrome.storage.local.get('status', function(response) {
+  			var status = response.status || 'on';
+  			$('#cm-onoff').attr('status', status)
+  			.find('.switch-track').css('left', status == 'off' ? '-100%' : '0%');
+  			$('#cm-onoff').children('.switch-thumb').css('left', status == 'off' ? '0' : '26px');
+  		});
+	}();
+});
+
+function postContentScriptMessage(key, value, callback) {
+	chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+		chrome.tabs.sendMessage(tabs[0].id, {key: key, value: value}, callback);
+	});
+}
