@@ -3,10 +3,10 @@ $(function() {
 		var newstatus = $(this).attr('status') == 'on' ? 'off' : 'on';
 
 		$(this).attr('status', newstatus)
-		.find('.switch-track').animate({
+		.find('.switch-track').stop().animate({
 			left: newstatus == 'off' ? '-100%' : '0%'
 		}, 180);
-		$(this).children('.switch-thumb').animate({
+		$(this).children('.switch-thumb').stop().animate({
 			left: newstatus == 'off' ? '0' : '26px'
 		}, 200);
 
