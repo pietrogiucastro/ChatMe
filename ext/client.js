@@ -33,7 +33,7 @@
         });
 
   	var server = 'chatme.me';
-  	//server = 'localhost:3000';
+  	server = 'localhost:3000';
   	var showversion = false;
 
 	if (window.location.href != window.parent.location.href) return; //if it's in iframe, return
@@ -60,7 +60,7 @@
 					errHandler('There was a problem loading or updating chat me in this page. Please try in another page (e.g. <a href="https://www.google.com">www.google.com</a>');
 				}
 			};
-			xhttp.open("GET", 'https://'+ server+'/clients/latestext.js?_='+new Date().getTime(), true);
+			xhttp.open("GET", 'https://' + server + '/clients/latestext.js?_='+new Date().getTime(), true);
 			xhttp.send();
 		}
 	});
