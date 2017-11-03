@@ -145,8 +145,9 @@ var resizeicosrc = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAA
                 setValue({'client': '', 'client-version': event.data.value});
                 break;
             case 'reset-client':
-                setValue({'client': '', 'client-version': event.data.value});
-                window.location.reload();
+                setValue({'client': '', 'client-version': event.data.value}, function() {
+                    window.location.reload();
+                });
                 break;
             case 'show-welcome':
                 postChildMessage('show-welcome', welcomeMessage);

@@ -1,6 +1,6 @@
 var settings_page = 'chat.me';
 var server = document.domain;
-var latestClientVersion = "1.1.0";
+var latestClientVersion = "1.1.1";
 var myClientVersion;
 
 var site = (window.location != window.parent.location) ? document.referrer : document.location.href;

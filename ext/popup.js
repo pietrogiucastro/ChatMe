@@ -8,10 +8,8 @@ $(function() {
 		}, 180);
 		$(this).children('.switch-thumb').stop().animate({
 			left: newstatus == 'off' ? '0' : '26px'
-		}, 200);
-
-		chrome.storage.local.set({status: newstatus}, function() {
-			postContentScriptMessage('refresh-page');
+		}, 200, function() {
+			chrome.storage.local.set({status: newstatus});
 		});
 
 	});
