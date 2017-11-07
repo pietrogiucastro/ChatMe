@@ -4,8 +4,13 @@
 	"manifest_version": 2,
 	"description": "Welcome to Chat.me! Chat.me is a free non-profit embedded in-frame chat. Chat and send medias to your friends or averyone all over the world.",
 	"browser_action": {
-   		"default_icon": "icon.png",
    		"default_popup": "popup.html"
+  	},
+  	"icons": {
+  		"16": "./icons/icon16.png",
+  		"32": "./icons/icon32.png",
+  		"48": "./icons/icon48.png",
+  		"128": "./icons/icon128.png"
   	},
   	"permissions": [
    		"activeTab",
