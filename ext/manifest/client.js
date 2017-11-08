@@ -27,7 +27,7 @@ chrome.runtime.onMessage.addListener(
 });
 
 var server = 'chatme.me';
-server = 'localhost:3000';
+
 var showversion = false;
 
 	if (window.location.href != window.parent.location.href) return; //if it's in iframe, return
