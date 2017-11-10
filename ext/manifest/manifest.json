@@ -1,6 +1,6 @@
 {
 	"name": "Chat.me",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"manifest_version": 2,
 	"description": "Welcome to Chat.me! Chat.me is a free non-profit embedded in-frame chat. Chat and send medias to averyone all over the world.",
 	"browser_action": {

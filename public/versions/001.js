@@ -940,6 +940,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
     		}
     	});
     	socket.on('history_users', function(data) {
+            hideOptsWait();
     		setUsers(data.users);
     		setHistory(data.history, noslide);
     		showChatNot(data.roomname);
@@ -1793,6 +1794,7 @@ function switchchat(tab) {
 		pass: roompass
 	}
 	selectchat(tab);
+    showOptsWait('light');
 	socket.emit('switch room', room);
 }
 

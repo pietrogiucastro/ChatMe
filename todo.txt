@@ -24,7 +24,7 @@ LESS IMPORTANT
 - set ownercolor in pm
 - set a proper way to use the ORM. (socket.user = returned User so that socket.user.save()
   references to User.save());
-
+- font size zoom - and zoom +
 
 
 
