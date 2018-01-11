@@ -276,7 +276,7 @@ module.exports = {
     queryUserNamesMatches: function(userquery, callback) {
     	userquery = new RegExp(userquery, 'i');
     	var userslist = User.aggregate([ {$match: {name: userquery}}, {$group: {_id: '$name'}}, {$limit: 50 } ], function(err, userslist) {
-    		if (err || !userslist) callback(err, userslist);
+    		if (err || !userslist) return callback(err, userslist);
     		callback(null, userslist.map(el => {return el._id}));
     	})
     },
