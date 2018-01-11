@@ -1472,7 +1472,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
 
     		chatOptions.container.find('#refresh-client').click(function() {
     			showOptsWait();
-    			for (var key in localStorage) { localStorage[key] = ''; }
+    			for (var key in localStorage) { if (key != 'length') localStorage[key] = ''; }
     			postParentMessage('reset-client', latestClientVersion);
     		});
 
