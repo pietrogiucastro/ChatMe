@@ -1970,7 +1970,7 @@ $(document).on('keyup', '.pm-search-input', function() {
 
 	$('.pm-messages').removeClass('nomsg msgs')
 	.find('.pm-message').each(function() {
-		var msgRecipient = $(this).data('recipient');
+		var msgRecipient = $(this).data('recipient').toString();
 		if (msgRecipient.match(query)) {
 			$(this).show();
 		} else {
